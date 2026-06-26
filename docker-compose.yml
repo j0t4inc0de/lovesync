@@ -16,14 +16,15 @@ services:
     build:
       context: ./backend
     container_name: lovesync-backend
-    ports:
-      - "3001:3000"
     environment:
       DATABASE_URL: postgres://lovesync:lovesync_password_secure@lovesync-db:5432/lovesync
       JWT_SECRET: lovesync-jwt-token-secret-9999
       PORT: 3000
     depends_on:
       - lovesync-db
+    networks:
+      - default
+      - proxy_network
     restart: always
 
   lovesync-frontend:
@@ -33,11 +34,17 @@ services:
       args:
         - VITE_API_URL=${VITE_API_URL}
     container_name: lovesync-frontend
-    ports:
-      - "3080:80"
     depends_on:
       - lovesync-backend
+    networks:
+      - default
+      - proxy_network
     restart: always
+
+networks:
+  default:
+  proxy_network:
+    external: true
 
 volumes:
   postgres_data:
