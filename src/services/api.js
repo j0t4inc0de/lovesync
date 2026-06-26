@@ -82,6 +82,19 @@ export const api = {
       body: JSON.stringify(dateData)
     });
   },
+
+  updateDate: async (id, dateData) => {
+    return request(`/api/dates/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(dateData)
+    });
+  },
+  
+  deleteDate: async (id) => {
+    return request(`/api/dates/${id}`, {
+      method: 'DELETE'
+    });
+  },
   
   logout: () => {
     removeToken();

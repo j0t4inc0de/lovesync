@@ -129,9 +129,13 @@
                     <span>{{ partnerName }} {{ date.rating_user_2 }}</span>
                     <svg class="w-3 h-3 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                   </div>
-                  <div class="flex items-center gap-1 text-[11px] font-medium" style="color: var(--text-muted);">
+                  <div v-if="getEditTimeLeft(date.created_at)" @click="openEditModal(date)" class="flex items-center gap-1 text-[11px] font-bold cursor-pointer select-none px-2 py-0.5 rounded-lg border border-[var(--accent)]/15 active:scale-95 transition-transform" style="background: var(--accent-soft); color: var(--accent);">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Editar · {{ getEditTimeLeft(date.created_at) }}
+                  </div>
+                  <div v-else class="flex items-center gap-1 text-[11px] font-medium" style="color: var(--text-muted);">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                    {{ date.timeLeftForEdit || 'Sincronizada' }}
+                    Sincronizada
                   </div>
                 </div>
 
@@ -398,6 +402,78 @@
       </div>
     </div>
 
+    <!-- Edit Date Modal -->
+    <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+      <div @click="closeEditModal" class="absolute inset-0 bg-black/25 backdrop-blur-md"></div>
+      <div class="relative w-full max-w-md glass-modal sm:rounded-2xl rounded-t-[2.2rem] shadow-2xl overflow-hidden animate-slide-up max-h-[90vh] flex flex-col">
+        <!-- iOS Sheet Grabber -->
+        <div class="w-12 h-1.5 bg-black/10 rounded-full mx-auto my-3 shrink-0"></div>
+
+        <div class="px-5 pb-3 flex justify-between items-center" style="border-bottom: 1px solid var(--border-subtle);">
+          <button @click="closeEditModal" class="text-[15px] font-medium transition-all active:scale-95" style="color: var(--text-secondary);">Cancelar</button>
+          <h3 class="text-[16px] font-bold m-0 flex items-center gap-1.5" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">
+            Editar Cita
+            <svg class="w-3.5 h-3.5 text-red-500 fill-current animate-pulse" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          </h3>
+          <button @click="submitEditDate" class="text-[15px] font-bold transition-all active:scale-95" style="color: var(--accent);">Guardar</button>
+        </div>
+        <div class="p-5 overflow-y-auto flex-1 space-y-4">
+          <div>
+            <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 block" style="color: var(--text-muted);">Lugar</label>
+            <input v-model="editingDate.location" type="text" placeholder="Cafetería, Cine, Playa..." class="input-field w-full px-4 py-3.5 text-[15px] focus:outline-none" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 block" style="color: var(--text-muted);">Ciudad</label>
+              <input v-model="editingDate.city" type="text" class="input-field w-full px-4 py-3.5 text-[15px] focus:outline-none" />
+            </div>
+            <div>
+              <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 block" style="color: var(--text-muted);">Fecha</label>
+              <input v-model="editingDate.date" type="date" class="input-field w-full px-4 py-3.5 text-[15px] focus:outline-none" />
+            </div>
+          </div>
+          <div>
+            <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-2 block" style="color: var(--text-muted);">Tags</label>
+            <div class="flex flex-wrap gap-2">
+              <button v-for="t in availableTags" :key="t" @click="() => {
+                const i = editingDate.tags.indexOf(t);
+                i > -1 ? editingDate.tags.splice(i, 1) : editingDate.tags.push(t);
+              }"
+                :class="['btn-sm transition-all active:scale-90', editingDate.tags.includes(t) ? 'btn-primary' : 'btn-ghost']">
+                {{ t }}
+              </button>
+            </div>
+          </div>
+          <div class="rounded-xl p-4 space-y-3 border" style="background: rgba(255, 55, 95, 0.03); border-color: rgba(255, 55, 95, 0.08);">
+            <p class="text-[0.65rem] font-bold uppercase tracking-wider m-0" style="color: var(--accent);">Valoraciones</p>
+            <div>
+              <div class="flex justify-between text-[13px] mb-1">
+                <span class="font-medium" style="color: var(--text-primary);">Tu Nota</span>
+                <span class="font-bold" style="color: var(--accent);">{{ editingDate.rating1 }} ★</span>
+              </div>
+              <input v-model.number="editingDate.rating1" type="range" min="1" max="5" step="0.5" class="w-full accent-[var(--accent)]" />
+            </div>
+            <div>
+              <div class="flex justify-between text-[13px] mb-1">
+                <span class="font-medium" style="color: var(--text-primary);">Nota de {{ partnerName }}</span>
+                <span class="font-bold" style="color: var(--accent);">{{ editingDate.rating2 }} ★</span>
+              </div>
+              <input v-model.number="editingDate.rating2" type="range" min="1" max="5" step="0.5" class="w-full accent-[var(--accent)]" />
+            </div>
+          </div>
+          <div>
+            <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 block" style="color: var(--text-muted);">Descripción</label>
+            <textarea v-model="editingDate.description" rows="3" placeholder="¿Qué recuerdan?" class="input-field w-full p-4 text-[15px] focus:outline-none resize-none"></textarea>
+          </div>
+          <div class="pt-2">
+            <button @click="deleteDate" class="w-full py-3.5 rounded-2xl text-[14px] font-bold tracking-wide transition-all active:scale-95 text-white bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20">
+              Eliminar Cita de la Bitácora
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Floating Slots Tooltip (Positioned globally with high z-index to escape shadow DOM clipping and overlay under bitacora) -->
     <div v-if="showSlotsTooltip" 
          class="fixed z-[9999] w-48 p-3 rounded-2xl glass text-[11px] leading-snug font-semibold text-center flex items-center justify-center gap-1.5 border border-white/60 animate-tooltip-in" 
@@ -445,6 +521,17 @@ const dateSlots = ref(0);
 const maxSlots = ref(10);
 const doubleLockState = ref('idle');
 const showDateModal = ref(false);
+const showEditModal = ref(false);
+const editingDate = ref({
+  id: null,
+  location: '',
+  city: '',
+  date: '',
+  description: '',
+  rating1: 5.0,
+  rating2: 5.0,
+  tags: []
+});
 const showHeartOverlay = ref(false);
 const showMatchCelebration = ref(false);
 const showSlotsTooltip = ref(false);
@@ -572,6 +659,81 @@ const loadExploreDates = async () => {
   }
 };
 
+const getEditTimeLeft = (createdAtStr) => {
+  if (!createdAtStr) return null;
+  const createdDate = new Date(createdAtStr);
+  const fiveDaysInMs = 5 * 24 * 60 * 60 * 1000;
+  const expiryTime = createdDate.getTime() + fiveDaysInMs;
+  const timeLeftMs = expiryTime - Date.now();
+  
+  if (timeLeftMs <= 0) return null;
+  
+  const daysLeft = Math.floor(timeLeftMs / (24 * 60 * 60 * 1000));
+  const hoursLeft = Math.floor((timeLeftMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+  
+  if (daysLeft > 0) {
+    return `${daysLeft}d ${hoursLeft}h`;
+  }
+  return `${hoursLeft}h`;
+};
+
+const openEditModal = (date) => {
+  editingDate.value = {
+    id: date.id,
+    location: date.location,
+    city: date.city,
+    date: new Date(date.date_time).toISOString().split('T')[0],
+    description: date.description || '',
+    rating1: parseFloat(date.rating_user_1) || 5.0,
+    rating2: parseFloat(date.rating_user_2) || 5.0,
+    tags: [...(date.tags || [])]
+  };
+  showEditModal.value = true;
+};
+
+const closeEditModal = () => {
+  showEditModal.value = false;
+};
+
+const submitEditDate = async () => {
+  if (!editingDate.value.location) { alert('Escribe la ubicación de la cita.'); return; }
+  
+  try {
+    const updatedObj = {
+      location: editingDate.value.location,
+      city: editingDate.value.city,
+      date_time: new Date(editingDate.value.date).toISOString(),
+      description: editingDate.value.description,
+      rating_user_1: editingDate.value.rating1,
+      rating_user_2: editingDate.value.rating2,
+      tags: editingDate.value.tags
+    };
+
+    await api.updateDate(editingDate.value.id, updatedObj);
+    showEditModal.value = false;
+    
+    await loadDates();
+    await loadExploreDates();
+  } catch (error) {
+    alert('Error al actualizar la cita: ' + error.message);
+  }
+};
+
+const deleteDate = async () => {
+  const confirmDelete = confirm('¿Estás seguro de que quieres eliminar este recuerdo para siempre?');
+  if (!confirmDelete) return;
+
+  try {
+    await api.deleteDate(editingDate.value.id);
+    showEditModal.value = false;
+    
+    await loadDates();
+    await loadExploreDates();
+  } catch (error) {
+    alert('Error al eliminar la cita: ' + error.message);
+  }
+};
+
 const closeDateModal = () => {
   showDateModal.value = false;
   doubleLockState.value = 'idle';
@@ -611,8 +773,8 @@ const submitNewDate = async () => {
   }
 };
 
-const buySlots = () => { showPopup('Próximamente ❤️'); };
-const buyPDF = () => { showPopup('Próximamente ❤️'); };
+const buySlots = () => { showPopup('Próximamente ♡'); };
+const buyPDF = () => { showPopup('Próximamente ♡'); };
 
 const handleUnpairRequest = async () => {
   if (!userCoupleId.value) return;
@@ -768,6 +930,16 @@ onMounted(async () => {
 
     // Listen for real-time date creation by partner
     socket.on('date_created', () => {
+      loadDates();
+      loadExploreDates();
+    });
+
+    socket.on('date_updated', () => {
+      loadDates();
+      loadExploreDates();
+    });
+
+    socket.on('date_deleted', () => {
       loadDates();
       loadExploreDates();
     });

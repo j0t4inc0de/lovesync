@@ -323,6 +323,90 @@ app.post('/api/dates', authenticateToken, async (req, res) => {
   }
 });
 
+// Edit date (PUT /api/dates/:id) - Enforces 5-day window
+app.put('/api/dates/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const { location, city, date_time, description, rating_user_1, rating_user_2, tags } = req.body;
+  
+  if (!location || !city || !date_time) {
+    return res.status(400).json({ error: 'Ubicación, ciudad y fecha son requeridas.' });
+  }
+  
+  try {
+    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    const user = userRes.rows[0];
+    if (!user.couple_id) {
+      return res.status(400).json({ error: 'Debes estar vinculado a una pareja.' });
+    }
+    
+    const dateRes = await pool.query('SELECT couple_id, created_at FROM dates WHERE id = $1', [id]);
+    if (dateRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Cita no encontrada.' });
+    }
+    
+    const date = dateRes.rows[0];
+    if (date.couple_id !== user.couple_id) {
+      return res.status(403).json({ error: 'No tienes permiso para modificar esta cita.' });
+    }
+    
+    const createdAt = new Date(date.created_at);
+    const fiveDaysInMs = 5 * 24 * 60 * 60 * 1000;
+    if (Date.now() - createdAt.getTime() > fiveDaysInMs) {
+      return res.status(400).json({ error: 'El plazo de 5 días para editar esta cita ha vencido.' });
+    }
+    
+    const updateRes = await pool.query(
+      'UPDATE dates SET location = $1, city = $2, date_time = $3, description = $4, rating_user_1 = $5, rating_user_2 = $6, tags = $7 WHERE id = $8 RETURNING *',
+      [location, city, date_time, description, rating_user_1, rating_user_2, tags || [], id]
+    );
+    
+    io.to(`couple_${user.couple_id}`).emit('date_updated', updateRes.rows[0]);
+    
+    res.json(updateRes.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar la cita.' });
+  }
+});
+
+// Delete date (DELETE /api/dates/:id) - Enforces 5-day window
+app.delete('/api/dates/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    const user = userRes.rows[0];
+    if (!user.couple_id) {
+      return res.status(400).json({ error: 'Debes estar vinculado a una pareja.' });
+    }
+    
+    const dateRes = await pool.query('SELECT couple_id, created_at FROM dates WHERE id = $1', [id]);
+    if (dateRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Cita no encontrada.' });
+    }
+    
+    const date = dateRes.rows[0];
+    if (date.couple_id !== user.couple_id) {
+      return res.status(403).json({ error: 'No tienes permiso para eliminar esta cita.' });
+    }
+    
+    const createdAt = new Date(date.created_at);
+    const fiveDaysInMs = 5 * 24 * 60 * 60 * 1000;
+    if (Date.now() - createdAt.getTime() > fiveDaysInMs) {
+      return res.status(400).json({ error: 'El plazo de 5 días para eliminar esta cita ha vencido.' });
+    }
+    
+    await pool.query('DELETE FROM dates WHERE id = $1', [id]);
+    
+    io.to(`couple_${user.couple_id}`).emit('date_deleted', { id: parseInt(id) });
+    
+    res.json({ message: 'Cita eliminada con éxito.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al eliminar la cita.' });
+  }
+});
+
 // ── WebSockets (Socket.io) double lock click syncing ──
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
