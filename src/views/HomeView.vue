@@ -712,7 +712,7 @@ const startPress = (date) => {
   pressTimer = setTimeout(() => {
     openEditModal(date);
     pressTimer = null;
-  }, 750);
+  }, 450);
 };
 
 const cancelPress = () => {
