@@ -689,7 +689,13 @@ const openEditModal = (date) => {
     id: date.id,
     location: date.location,
     city: date.city,
-    date: new Date(date.date_time).toISOString().split('T')[0],
+    date: (() => {
+      const localDate = new Date(date.date_time);
+      const y = localDate.getFullYear();
+      const m = String(localDate.getMonth() + 1).padStart(2, '0');
+      const d = String(localDate.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    })(),
     description: date.description || '',
     rating1: parseFloat(date.rating_user_1) || 5.0,
     rating2: parseFloat(date.rating_user_2) || 5.0,
@@ -727,7 +733,7 @@ const submitEditDate = async () => {
     const updatedObj = {
       location: editingDate.value.location,
       city: editingDate.value.city,
-      date_time: new Date(editingDate.value.date).toISOString(),
+      date_time: new Date(editingDate.value.date + 'T12:00:00').toISOString(),
       description: editingDate.value.description,
       rating_user_1: editingDate.value.rating1,
       rating_user_2: editingDate.value.rating2,
@@ -772,7 +778,7 @@ const submitNewDate = async () => {
     const dateObj = {
       location: newDate.value.location,
       city: newDate.value.city,
-      date_time: new Date(newDate.value.date).toISOString(),
+      date_time: new Date(newDate.value.date + 'T12:00:00').toISOString(),
       description: newDate.value.description,
       rating_user_1: newDate.value.rating1,
       rating_user_2: newDate.value.rating2,
