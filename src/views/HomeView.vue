@@ -329,13 +329,13 @@
 
     <!-- Date Modal -->
     <div v-if="showDateModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
-      <div @click="showDateModal = false" class="absolute inset-0 bg-black/25 backdrop-blur-md"></div>
+      <div @click="closeDateModal" class="absolute inset-0 bg-black/25 backdrop-blur-md"></div>
       <div class="relative w-full max-w-md glass-modal sm:rounded-2xl rounded-t-[2.2rem] shadow-2xl overflow-hidden animate-slide-up max-h-[90vh] flex flex-col">
         <!-- iOS Sheet Grabber -->
         <div class="w-12 h-1.5 bg-black/10 rounded-full mx-auto my-3 shrink-0"></div>
 
         <div class="px-5 pb-3 flex justify-between items-center" style="border-bottom: 1px solid var(--border-subtle);">
-          <button @click="showDateModal = false" class="text-[15px] font-medium transition-all active:scale-95" style="color: var(--text-secondary);">Cancelar</button>
+          <button @click="closeDateModal" class="text-[15px] font-medium transition-all active:scale-95" style="color: var(--text-secondary);">Cancelar</button>
           <h3 class="text-[16px] font-bold m-0 flex items-center gap-1.5" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">
             Nueva Cita
             <svg class="w-3.5 h-3.5 text-red-500 fill-current animate-pulse" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
@@ -515,7 +515,7 @@ const handleFirstLock = () => {
 
     setTimeout(() => {
       showMatchCelebration.value = false;
-      showDateModal.value = true;
+      doubleLockState.value = 'idle'; // Reset Persona 2 (matcher) to idle; Persona 1 (initiator) will open the modal
     }, 1800);
   }
 };
@@ -570,6 +570,11 @@ const loadExploreDates = async () => {
   } catch (error) {
     console.error('Error cargando exploración:', error.message);
   }
+};
+
+const closeDateModal = () => {
+  showDateModal.value = false;
+  doubleLockState.value = 'idle';
 };
 
 const submitNewDate = async () => {
@@ -759,6 +764,12 @@ onMounted(async () => {
           doubleLockState.value = 'waiting_partner';
         }
       }
+    });
+
+    // Listen for real-time date creation by partner
+    socket.on('date_created', () => {
+      loadDates();
+      loadExploreDates();
     });
 
   } catch (err) {

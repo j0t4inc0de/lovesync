@@ -313,6 +313,9 @@ app.post('/api/dates', authenticateToken, async (req, res) => {
       ]
     );
 
+    // Broadcast new date creation to the couple room via socket
+    io.to(`couple_${user.couple_id}`).emit('date_created', result.rows[0]);
+
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error(error);
