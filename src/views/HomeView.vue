@@ -102,7 +102,14 @@
 
           <!-- Memory Cards -->
           <div class="space-y-4">
-            <div v-for="date in datesList" :key="date.id" class="glass rounded-2xl overflow-hidden group">
+            <div v-for="date in datesList" :key="date.id" 
+                 class="glass rounded-2xl overflow-hidden group select-none active:scale-[0.99] transition-transform duration-300"
+                 @mousedown="startPress(date)"
+                 @mouseup="cancelPress"
+                 @mouseleave="cancelPress"
+                 @touchstart="startPress(date)"
+                 @touchend="cancelPress"
+                 @touchmove="cancelPress">
               <div class="h-44 relative">
                 <img :src="date.photo_url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80'" alt="Memory" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" />
                 <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
@@ -689,6 +696,24 @@ const openEditModal = (date) => {
     tags: [...(date.tags || [])]
   };
   showEditModal.value = true;
+};
+
+let pressTimer = null;
+
+const startPress = (date) => {
+  if (!getEditTimeLeft(date.created_at)) return;
+  if (pressTimer) clearTimeout(pressTimer);
+  pressTimer = setTimeout(() => {
+    openEditModal(date);
+    pressTimer = null;
+  }, 750);
+};
+
+const cancelPress = () => {
+  if (pressTimer) {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+  }
 };
 
 const closeEditModal = () => {

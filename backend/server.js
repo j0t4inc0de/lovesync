@@ -273,7 +273,7 @@ app.get('/api/dates', authenticateToken, async (req, res) => {
     }
 
     const datesRes = await pool.query(
-      'SELECT id, location, city, date_time, description, rating_user_1, rating_user_2, photo_url, tags FROM dates WHERE couple_id = $1 ORDER BY date_time DESC',
+      'SELECT id, location, city, date_time, description, rating_user_1, rating_user_2, photo_url, tags, created_at FROM dates WHERE couple_id = $1 ORDER BY date_time DESC',
       [user.couple_id]
     );
 
