@@ -98,12 +98,6 @@
               <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
               {{ doubleLockState === 'idle' ? 'Añadir Cita' : doubleLockState === 'waiting' ? 'Esperando a ' + partnerName + '...' : doubleLockState === 'waiting_partner' ? '¡' + partnerName + ' te espera! Presiona' : '¡Ambos Listos!' }}
             </button>
-
-            <button v-if="doubleLockState === 'waiting'" @click="simulatePartnerClick"
-              class="btn-ghost btn-sm mt-3 mx-auto flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-              Simular clic de {{ partnerName }}
-            </button>
           </div>
 
           <!-- Memory Cards -->
@@ -156,65 +150,77 @@
             <p class="text-[13px] font-medium" style="color: var(--text-secondary);">Responde correctamente para ganar +1 cupo</p>
           </div>
 
-          <div v-if="triviaState === 'active'" class="glass rounded-2xl p-5 relative overflow-hidden">
-            <div class="absolute top-0 left-0 right-0 h-1" style="background: var(--fill);">
-              <div class="h-full bg-[var(--accent)] transition-all duration-1000 ease-linear rounded-full" :style="{ width: (timerSeconds / 15) * 100 + '%' }"></div>
+          <!-- Locked State if less than 3 dates -->
+          <div v-if="datesList.length < 3" class="glass rounded-2xl p-6 text-center border border-white/50" style="background: rgba(255,255,255,0.65); backdrop-filter: blur(20px);">
+            <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center border bg-red-50 border-red-100 text-red-500">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
             </div>
-            <div class="flex justify-between items-center mb-4 mt-2">
-              <span class="text-[12px] font-bold uppercase tracking-wider" style="color: var(--accent);">Desafío</span>
-              <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-bold bg-red-50 text-red-500">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                {{ timerSeconds }}s
+            <h3 class="text-[17px] font-bold mb-1.5" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Trivia Bloqueada</h3>
+            <p class="text-[13.5px] leading-relaxed px-3 mb-0" style="color: var(--text-secondary);">Deben registrar al menos <strong>3 citas</strong> en su Bitácora para poder jugar la Trivia sobre sus recuerdos de pareja.</p>
+          </div>
+
+          <!-- Active Game States -->
+          <div v-else>
+            <div v-if="triviaState === 'active'" class="glass rounded-2xl p-5 relative overflow-hidden">
+              <div class="absolute top-0 left-0 right-0 h-1" style="background: var(--fill);">
+                <div class="h-full bg-[var(--accent)] transition-all duration-1000 ease-linear rounded-full" :style="{ width: (timerSeconds / 15) * 100 + '%' }"></div>
+              </div>
+              <div class="flex justify-between items-center mb-4 mt-2">
+                <span class="text-[12px] font-bold uppercase tracking-wider" style="color: var(--accent);">Desafío</span>
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-bold bg-red-50 text-red-500">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                  {{ timerSeconds }}s
+                </div>
+              </div>
+              <h3 class="text-[17px] font-bold mb-5 leading-snug" style="color: var(--text-primary);">{{ currentQuestion?.question }}</h3>
+              <div class="space-y-2.5">
+                <button v-for="(option, idx) in currentQuestion?.options" :key="idx" @click="selectOption(idx)"
+                  class="btn-ghost btn-left w-full text-[15px] hover:border-[var(--accent)]/30 hover:bg-[var(--accent-soft)]" style="color: var(--text-primary);">
+                  {{ option }}
+                </button>
+              </div>
+              <div class="mt-5 flex items-start gap-2.5 py-3 px-4 rounded-xl text-[12px] leading-snug bg-amber-50 text-amber-700">
+                <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <p class="m-0"><strong>Anti-Trampa:</strong> Si sales de la app o el tiempo expira, perderás este intento.</p>
               </div>
             </div>
-            <h3 class="text-[17px] font-bold mb-5 leading-snug" style="color: var(--text-primary);">{{ currentQuestion.question }}</h3>
-            <div class="space-y-2.5">
-              <button v-for="(option, idx) in currentQuestion.options" :key="idx" @click="selectOption(idx)"
-                class="btn-ghost btn-left w-full text-[15px] hover:border-[var(--accent)]/30 hover:bg-[var(--accent-soft)]" style="color: var(--text-primary);">
-                {{ option }}
-              </button>
-            </div>
-            <div class="mt-5 flex items-start gap-2.5 py-3 px-4 rounded-xl text-[12px] leading-snug bg-amber-50 text-amber-700">
-              <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              <p class="m-0"><strong>Anti-Trampa:</strong> Si sales de la app o el tiempo expira, perderás este intento.</p>
-            </div>
-          </div>
 
-          <div v-else-if="triviaState === 'cheated'" class="glass rounded-2xl p-6 text-center">
-            <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center border" style="background: rgba(255, 59, 48, 0.08); border-color: rgba(255, 59, 48, 0.15);">
-              <svg class="w-7 h-7 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            <div v-else-if="triviaState === 'cheated'" class="glass rounded-2xl p-6 text-center">
+              <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center border" style="background: rgba(255, 59, 48, 0.08); border-color: rgba(255, 59, 48, 0.15);">
+                <svg class="w-7 h-7 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              </div>
+              <h3 class="text-[17px] font-bold mb-1" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Intento Anulado</h3>
+              <p class="text-[13px] mb-5" style="color: var(--text-secondary);">Cambiaste de pestaña o saliste de la app.</p>
+              <button @click="restartTrivia" class="btn text-[15px] mx-auto block text-white font-semibold shadow-lg shadow-red-500/20" style="background: #ff3b30;">Nueva Pregunta</button>
             </div>
-            <h3 class="text-[17px] font-bold mb-1" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Intento Anulado</h3>
-            <p class="text-[13px] mb-5" style="color: var(--text-secondary);">Cambiaste de pestaña o saliste de la app.</p>
-            <button @click="restartTrivia" class="btn text-[15px] mx-auto block text-white font-semibold shadow-lg shadow-red-500/20" style="background: #ff3b30;">Nueva Pregunta</button>
-          </div>
 
-          <div v-else-if="triviaState === 'success'" class="glass rounded-2xl p-6 text-center">
-            <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center border" style="background: rgba(52, 199, 89, 0.08); border-color: rgba(52, 199, 89, 0.15);">
-              <svg class="w-7 h-7 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            <div v-else-if="triviaState === 'success'" class="glass rounded-2xl p-6 text-center">
+              <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center border" style="background: rgba(52, 199, 89, 0.08); border-color: rgba(52, 199, 89, 0.15);">
+                <svg class="w-7 h-7 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <h3 class="text-[17px] font-bold mb-1" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">¡Correcto!</h3>
+              <p class="text-[13px] mb-2" style="color: var(--text-secondary);">Ambos respondieron bien.</p>
+              <div class="inline-block px-3 py-1 rounded-full text-[12px] font-bold mb-5 border" style="background: rgba(52, 199, 89, 0.06); border-color: rgba(52, 199, 89, 0.12); color: #34c759;">+1 Cupo Ganado</div>
+              <button @click="restartTrivia" class="btn text-[15px] mx-auto block text-white font-semibold shadow-lg shadow-emerald-500/20" style="background: #34c759;">Volver a jugar</button>
             </div>
-            <h3 class="text-[17px] font-bold mb-1" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">¡Correcto!</h3>
-            <p class="text-[13px] mb-2" style="color: var(--text-secondary);">Ambos respondieron bien.</p>
-            <div class="inline-block px-3 py-1 rounded-full text-[12px] font-bold mb-5 border" style="background: rgba(52, 199, 89, 0.06); border-color: rgba(52, 199, 89, 0.12); color: #34c759;">+1 Cupo Ganado</div>
-            <button @click="restartTrivia" class="btn text-[15px] mx-auto block text-white font-semibold shadow-lg shadow-emerald-500/20" style="background: #34c759;">Volver a jugar</button>
-          </div>
 
-          <div v-else-if="triviaState === 'wrong'" class="glass rounded-2xl p-6 text-center">
-            <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center border" style="background: rgba(0, 0, 0, 0.04); border-color: rgba(0, 0, 0, 0.06);">
-              <svg class="w-7 h-7" style="color: var(--text-muted);" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <div v-else-if="triviaState === 'wrong'" class="glass rounded-2xl p-6 text-center">
+              <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center border" style="background: rgba(0, 0, 0, 0.04); border-color: rgba(0, 0, 0, 0.06);">
+                <svg class="w-7 h-7" style="color: var(--text-muted);" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </div>
+              <h3 class="text-[17px] font-bold mb-1" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Incorrecto</h3>
+              <p class="text-[13px] mb-5" style="color: var(--text-secondary);">La correcta era: <strong>{{ currentQuestion?.options[currentQuestion?.answerIdx] }}</strong></p>
+              <button @click="restartTrivia" class="btn-ghost text-[15px] mx-auto block">Otra pregunta</button>
             </div>
-            <h3 class="text-[17px] font-bold mb-1" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Incorrecto</h3>
-            <p class="text-[13px] mb-5" style="color: var(--text-secondary);">La correcta era: <strong>{{ currentQuestion.options[currentQuestion.answerIdx] }}</strong></p>
-            <button @click="restartTrivia" class="btn-ghost text-[15px] mx-auto block">Otra pregunta</button>
-          </div>
 
-          <div v-else class="glass rounded-2xl p-6 text-center">
-            <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center border" style="background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.15);">
-              <svg class="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+            <div v-else class="glass rounded-2xl p-6 text-center">
+              <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center border" style="background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.15);">
+                <svg class="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+              </div>
+              <h3 class="text-[17px] font-bold mb-1" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Desafío de Pareja</h3>
+              <p class="text-[13px] mb-5 px-2" style="color: var(--text-secondary);">Responde en 15 segundos sin salir de la app para ganar cupos extra.</p>
+              <button @click="startTrivia" class="btn-primary text-[15px] mx-auto block">Comenzar</button>
             </div>
-            <h3 class="text-[17px] font-bold mb-1" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Desafío de Pareja</h3>
-            <p class="text-[13px] mb-5 px-2" style="color: var(--text-secondary);">Responde en 15 segundos sin salir de la app para ganar cupos extra.</p>
-            <button @click="startTrivia" class="btn-primary text-[15px] mx-auto block">Comenzar</button>
           </div>
         </div>
 
@@ -421,6 +427,9 @@ import { useRouter } from 'vue-router';
 import { IonPage, IonHeader, IonToolbar, IonContent } from '@ionic/vue';
 import { api, getApiUrl } from '../services/api';
 import { io } from 'socket.io-client';
+import { usePopup } from '../services/popup';
+
+const { showPopup } = usePopup();
 
 const router = useRouter();
 
@@ -597,8 +606,8 @@ const submitNewDate = async () => {
   }
 };
 
-const buySlots = () => { alert('Compra procesada: 5 cupos por $5.000 CLP.'); };
-const buyPDF = () => { alert('Generando PDF del Scrapbook...'); };
+const buySlots = () => { showPopup('Próximamente ❤️'); };
+const buyPDF = () => { showPopup('Próximamente ❤️'); };
 
 const handleUnpairRequest = async () => {
   if (!userCoupleId.value) return;
@@ -625,16 +634,82 @@ const triviaState = ref('idle');
 const timerSeconds = ref(15);
 const currentQuestion = ref(null);
 let timerInterval = null;
-const triviaQuestions = [
-  { question: '¿Dónde fue su cita el 14 de Junio?', options: ['Cakao\'s Coffee Bar', 'Playa Amarilla', 'Cine Hoyts Quilpué', 'Jardín Botánico'], answerIdx: 1 },
-  { question: '¿Qué nota le dio María a Cakao\'s Coffee Bar?', options: ['4.0★', '4.5★', '4.8★', '5.0★'], answerIdx: 3 },
-  { question: '¿Qué comieron en su primera cita de Junio?', options: ['Empanadas', 'Waffles Gigantes', 'Popcorn', 'Comida China'], answerIdx: 1 }
-];
+
+const shuffleArray = (arr) => {
+  const originalCorrect = arr[0];
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return {
+    options: shuffled,
+    correctIndex: shuffled.indexOf(originalCorrect)
+  };
+};
+
+const generateDynamicTrivia = () => {
+  if (datesList.value.length < 3) return [];
+
+  const questions = [];
+
+  // Pregunta 1: Lugar por fecha
+  const dateForLoc = datesList.value[Math.floor(Math.random() * datesList.value.length)];
+  const formattedDate = formatDate(dateForLoc.date_time);
+  const otherLocations = datesList.value
+    .map(d => d.location)
+    .filter(loc => loc !== dateForLoc.location);
+  const fallbackLocs = ['Playa Amarilla', 'Cine Hoyts', 'Jardín Botánico', 'Cakao\'s Coffee Bar', 'Restobar Flor de Chile'];
+  const poolLocs = [...new Set([...otherLocations, ...fallbackLocs])].slice(0, 3);
+  const optionsLoc = [dateForLoc.location, ...poolLocs];
+  const shuffledLoc = shuffleArray(optionsLoc);
+  questions.push({
+    question: `¿Dónde fue su cita del ${formattedDate}?`,
+    options: shuffledLoc.options,
+    answerIdx: shuffledLoc.correctIndex
+  });
+
+  // Pregunta 2: Nota de la pareja
+  const dateForRating = datesList.value[Math.floor(Math.random() * datesList.value.length)];
+  const partnerRatingNum = parseFloat(dateForRating.rating_user_2 || 5.0);
+  const correctRating = `${partnerRatingNum.toFixed(1)}★`;
+  const ratingPool = ['3.0★', '3.5★', '4.0★', '4.5★', '5.0★'].filter(r => r !== correctRating);
+  const optionsRating = [correctRating, ...ratingPool.slice(0, 3)];
+  const shuffledRating = shuffleArray(optionsRating);
+  questions.push({
+    question: `¿Qué nota le dio ${partnerName.value} a "${dateForRating.location}"?`,
+    options: shuffledRating.options,
+    answerIdx: shuffledRating.correctIndex
+  });
+
+  // Pregunta 3: Ciudad
+  const dateForCity = datesList.value[Math.floor(Math.random() * datesList.value.length)];
+  const correctCity = dateForCity.city;
+  const otherCities = datesList.value
+    .map(d => d.city)
+    .filter(c => c !== correctCity);
+  const fallbackCities = ['Viña del Mar', 'Valparaíso', 'Villa Alemana', 'Quilpué', 'Santiago'];
+  const poolCities = [...new Set([...otherCities, ...fallbackCities])].slice(0, 3);
+  const optionsCity = [correctCity, ...poolCities];
+  const shuffledCity = shuffleArray(optionsCity);
+  questions.push({
+    question: `¿En qué ciudad fue su cita en "${dateForCity.location}"?`,
+    options: shuffledCity.options,
+    answerIdx: shuffledCity.correctIndex
+  });
+
+  return questions;
+};
 
 const handleVisibilityChange = () => { if (document.hidden && triviaState.value === 'active') triggerCheatAnnullment(); };
+
 const startTrivia = () => {
-  currentQuestion.value = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
-  timerSeconds.value = 15; triviaState.value = 'active';
+  const dynamicQuestions = generateDynamicTrivia();
+  if (dynamicQuestions.length === 0) return;
+
+  currentQuestion.value = dynamicQuestions[Math.floor(Math.random() * dynamicQuestions.length)];
+  timerSeconds.value = 15;
+  triviaState.value = 'active';
   document.addEventListener('visibilitychange', handleVisibilityChange);
   if (timerInterval) clearInterval(timerInterval);
   timerInterval = setInterval(() => { if (timerSeconds.value > 0) timerSeconds.value -= 1; else { clearInterval(timerInterval); triviaState.value = 'wrong'; document.removeEventListener('visibilitychange', handleVisibilityChange); } }, 1000);
