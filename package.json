@@ -1,0 +1,30 @@
+{
+  "name": "lovesync",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.4.1",
+    "@ionic/vue": "^8.8.12",
+    "@ionic/vue-router": "^8.8.12",
+    "@supabase/supabase-js": "^2.108.2",
+    "ionicons": "^8.0.13",
+    "socket.io-client": "^4.8.3",
+    "vue": "^3.5.38",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.4.1",
+    "@tailwindcss/vite": "^4.3.1",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "autoprefixer": "^10.5.2",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^4.3.1",
+    "vite": "^8.1.0"
+  }
+}
