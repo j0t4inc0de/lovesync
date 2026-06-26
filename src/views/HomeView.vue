@@ -543,7 +543,7 @@ const showHeartOverlay = ref(false);
 const showMatchCelebration = ref(false);
 const showSlotsTooltip = ref(false);
 const unpairState = ref('idle');
-const availableTags = ['Comida', 'Baile', 'Paseo', 'Cine', 'Naturaleza', 'Playa', 'Cafecito'];
+const availableTags = ['Comida', 'Baile', 'Paseo', 'Cine', 'Naturaleza', 'Playa', 'Cafecito', 'En Casa'];
 
 const currentUser = ref(null);
 const partnerName = ref('Pareja');
