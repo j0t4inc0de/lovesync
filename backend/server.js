@@ -231,10 +231,16 @@ app.post('/api/profile/pair', authenticateToken, async (req, res) => {
   }
 });
 
-// Unpair / Desvincularse
+// Unpair / Desvincularse (Decouples both partners but keeps the dates in DB)
 app.post('/api/profile/unpair', authenticateToken, async (req, res) => {
   try {
-    await pool.query('UPDATE users SET couple_id = NULL WHERE id = $1', [req.user.id]);
+    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    const coupleId = userRes.rows[0]?.couple_id;
+    
+    if (coupleId) {
+      await pool.query('UPDATE users SET couple_id = NULL WHERE couple_id = $1', [coupleId]);
+    }
+    
     res.json({ message: 'Te has desvinculado con éxito.' });
   } catch (error) {
     console.error(error);
@@ -243,6 +249,19 @@ app.post('/api/profile/unpair', authenticateToken, async (req, res) => {
 });
 
 // ── Dates (Bitácora) Endpoints ──
+
+// Fetch all dates for exploration (anonymous display)
+app.get('/api/dates/explore', authenticateToken, async (req, res) => {
+  try {
+    const datesRes = await pool.query(
+      'SELECT id, location, city, date_time, description, rating_user_1, rating_user_2, photo_url, tags, created_at FROM dates ORDER BY created_at DESC'
+    );
+    res.json(datesRes.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al cargar exploración.' });
+  }
+});
 
 // Fetch dates
 app.get('/api/dates', authenticateToken, async (req, res) => {

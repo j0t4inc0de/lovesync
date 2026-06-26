@@ -9,7 +9,7 @@
             </div>
             <div>
               <h1 class="text-[18px] font-bold tracking-tight m-0" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">LoveSync</h1>
-              <p class="text-[12px] font-medium m-0" style="color: var(--text-secondary);">Vinculado con María</p>
+              <p class="text-[12px] font-medium m-0" style="color: var(--text-secondary);">Vinculado con {{ partnerName }}</p>
             </div>
           </div>
           <div @click="toggleSlotsTooltip" class="px-3 py-1 rounded-full text-[12px] font-bold border cursor-pointer select-none active:scale-95 transition-transform" style="background: rgba(255, 55, 95, 0.06); border-color: rgba(255, 55, 95, 0.12); color: var(--accent);">
@@ -57,7 +57,7 @@
             <div class="w-16 h-16 rounded-2xl bg-pink-500 flex items-center justify-center shadow-lg shadow-pink-500/20 text-white">
               <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
             </div>
-            <span class="text-[11px] font-bold mt-2 uppercase tracking-wider" style="color: var(--text-primary);">María</span>
+            <span class="text-[11px] font-bold mt-2 uppercase tracking-wider" style="color: var(--text-primary);">{{ partnerName }}</span>
           </div>
 
           <!-- Sparkle stars and miniature heart particles bursting from the center -->
@@ -239,7 +239,7 @@
             <div v-for="exp in exploreList" :key="exp.id" class="glass rounded-2xl p-4">
               <div class="flex items-center justify-between mb-2.5">
                 <span class="px-2.5 py-1 rounded-lg text-[11px] font-medium" style="background: var(--fill); color: var(--text-secondary);">{{ exp.tag }}</span>
-                <span class="text-[12px] font-medium" style="color: var(--text-muted);">Hace 2 días</span>
+                <span class="text-[12px] font-medium" style="color: var(--text-muted);">{{ formatRelativeTime(exp.created_at) }}</span>
               </div>
               <h4 class="text-[15px] font-bold mb-0.5" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">{{ exp.location }}</h4>
               <p class="text-[12px] font-medium flex items-center gap-1 mb-3" style="color: var(--text-secondary);">
@@ -371,7 +371,7 @@
             </div>
             <div>
               <div class="flex justify-between text-[13px] mb-1">
-                <span class="font-medium" style="color: var(--text-primary);">Nota de María</span>
+                <span class="font-medium" style="color: var(--text-primary);">Nota de {{ partnerName }}</span>
                 <span class="font-bold" style="color: var(--accent);">{{ newDate.rating2 }} ★</span>
               </div>
               <input v-model.number="newDate.rating2" type="range" min="1" max="5" step="0.5" class="w-full accent-[var(--accent)]" />
@@ -462,6 +462,19 @@ const formatDate = (dateStr) => {
   return new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'short', year: 'numeric' }).format(d);
 };
 
+const formatRelativeTime = (dateStr) => {
+  if (!dateStr) return 'Hace un momento';
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMins < 1) return 'Hace un momento';
+  if (diffMins < 60) return `Hace ${diffMins} min`;
+  if (diffHours < 24) return `Hace ${diffHours} hr`;
+  return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+};
+
 const getAvgStars = (r1, r2) => {
   const num1 = parseFloat(r1) || 0;
   const num2 = parseFloat(r2) || 0;
@@ -531,6 +544,25 @@ const loadDates = async () => {
   }
 };
 
+const loadExploreDates = async () => {
+  try {
+    const dates = await api.getExploreDates();
+    if (dates && dates.length > 0) {
+      exploreList.value = dates.map(date => ({
+        id: date.id,
+        location: date.location,
+        city: date.city,
+        tag: date.tags && date.tags.length > 0 ? date.tags[0] : 'Cita',
+        avgStars: getAvgStars(date.rating_user_1, date.rating_user_2),
+        description: date.description || 'Sin descripción...',
+        created_at: date.created_at
+      }));
+    }
+  } catch (error) {
+    console.error('Error cargando exploración:', error.message);
+  }
+};
+
 const submitNewDate = async () => {
   if (!newDate.value.location) { alert('Escribe la ubicación de la cita.'); return; }
   if (!userCoupleId.value) return;
@@ -556,6 +588,7 @@ const submitNewDate = async () => {
 
     // Reload list from DB
     await loadDates();
+    await loadExploreDates();
 
     // Reset form
     newDate.value = { location: '', city: 'Villa Alemana', date: new Date().toISOString().split('T')[0], tags: [], rating1: 5.0, rating2: 5.0, description: '' };
@@ -630,6 +663,7 @@ onMounted(async () => {
 
     // Load actual dates list from Database
     await loadDates();
+    await loadExploreDates();
 
     // Subscribe to couple WebSocket channel for real-time clicks
     socket = io(getApiUrl());

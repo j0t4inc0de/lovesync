@@ -71,6 +71,10 @@ export const api = {
   getDates: async () => {
     return request('/api/dates');
   },
+
+  getExploreDates: async () => {
+    return request('/api/dates/explore');
+  },
   
   createDate: async (dateData) => {
     return request('/api/dates', {
