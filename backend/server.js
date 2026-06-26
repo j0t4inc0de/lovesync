@@ -32,15 +32,27 @@ const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL
 });
 
-// Auto-run schema.sql on startup to ensure tables exist
-const initDatabase = async () => {
-  try {
-    const schemaPath = path.join(__dirname, 'schema.sql');
-    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-    await pool.query(schemaSql);
-    console.log('PostgreSQL database schemas verified/created successfully.');
-  } catch (error) {
-    console.error('Failed to initialize database schema:', error);
+// Auto-run schema.sql on startup to ensure tables exist (with retry logic)
+const initDatabase = async (retries = 10, delay = 3000) => {
+  const schemaPath = path.join(__dirname, 'schema.sql');
+  const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+
+  for (let i = 1; i <= retries; i++) {
+    try {
+      // Test connection
+      await pool.query('SELECT 1');
+      // Run schema
+      await pool.query(schemaSql);
+      console.log('PostgreSQL database schemas verified/created successfully.');
+      return;
+    } catch (error) {
+      console.warn(`Failed to connect or initialize database (attempt ${i}/${retries}): ${error.message}`);
+      if (i === retries) {
+        console.error('Max database retries reached. Exiting.');
+        process.exit(1);
+      }
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
   }
 };
 
