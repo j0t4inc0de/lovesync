@@ -326,7 +326,7 @@ app.post('/api/dates', authenticateToken, async (req, res) => {
 // Edit date (PUT /api/dates/:id) - Enforces 5-day window
 app.put('/api/dates/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
-  const { location, city, date_time, description, rating_user_1, rating_user_2, tags } = req.body;
+  const { location, city, date_time, description, rating_user_1, rating_user_2, tags, photo_url } = req.body;
   
   if (!location || !city || !date_time) {
     return res.status(400).json({ error: 'Ubicación, ciudad y fecha son requeridas.' });
@@ -356,8 +356,8 @@ app.put('/api/dates/:id', authenticateToken, async (req, res) => {
     }
     
     const updateRes = await pool.query(
-      'UPDATE dates SET location = $1, city = $2, date_time = $3, description = $4, rating_user_1 = $5, rating_user_2 = $6, tags = $7 WHERE id = $8 RETURNING *',
-      [location, city, date_time, description, rating_user_1, rating_user_2, tags || [], id]
+      'UPDATE dates SET location = $1, city = $2, date_time = $3, description = $4, rating_user_1 = $5, rating_user_2 = $6, tags = $7, photo_url = $8 WHERE id = $9 RETURNING *',
+      [location, city, date_time, description, rating_user_1, rating_user_2, tags || [], photo_url, id]
     );
     
     io.to(`couple_${user.couple_id}`).emit('date_updated', updateRes.rows[0]);

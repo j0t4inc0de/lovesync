@@ -396,9 +396,18 @@
           </div>
           <div>
             <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 block" style="color: var(--text-muted);">Foto</label>
-            <div class="input-field p-5 text-center cursor-pointer hover:bg-white/80" style="border-style: dashed; border-color: rgba(0,0,0,0.15);">
-              <svg class="w-6 h-6 mx-auto mb-1" style="color: var(--text-muted);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              <span class="text-[13px] font-medium" style="color: var(--text-muted);">Subir foto</span>
+            <input type="file" ref="createFileInput" accept="image/*" class="hidden" @change="e => handlePhotoUpload(e, 'create')" />
+            <div @click="triggerPhotoUpload('create')" class="input-field overflow-hidden relative cursor-pointer hover:bg-white/80 transition-all flex flex-col items-center justify-center min-h-[96px] p-2" style="border-style: dashed; border-color: rgba(0,0,0,0.15);">
+              <template v-if="newDate.photo_url">
+                <img :src="newDate.photo_url" class="absolute inset-0 w-full h-full object-cover" />
+                <div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                  <span class="text-white text-[12px] font-bold">Cambiar foto</span>
+                </div>
+              </template>
+              <template v-else>
+                <svg class="w-6 h-6 mb-1" style="color: var(--text-muted);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <span class="text-[13px] font-medium" style="color: var(--text-muted);">Subir foto</span>
+              </template>
             </div>
           </div>
           <div>
@@ -469,11 +478,27 @@
             </div>
           </div>
           <div>
+            <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 block" style="color: var(--text-muted);">Foto</label>
+            <input type="file" ref="editFileInput" accept="image/*" class="hidden" @change="e => handlePhotoUpload(e, 'edit')" />
+            <div @click="triggerPhotoUpload('edit')" class="input-field overflow-hidden relative cursor-pointer hover:bg-white/80 transition-all flex flex-col items-center justify-center min-h-[96px] p-2" style="border-style: dashed; border-color: rgba(0,0,0,0.15);">
+              <template v-if="editingDate.photo_url">
+                <img :src="editingDate.photo_url" class="absolute inset-0 w-full h-full object-cover" />
+                <div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                  <span class="text-white text-[12px] font-bold">Cambiar foto</span>
+                </div>
+              </template>
+              <template v-else>
+                <svg class="w-6 h-6 mb-1" style="color: var(--text-muted);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <span class="text-[13px] font-medium" style="color: var(--text-muted);">Subir foto</span>
+              </template>
+            </div>
+          </div>
+          <div>
             <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 block" style="color: var(--text-muted);">Descripción</label>
             <textarea v-model="editingDate.description" rows="3" placeholder="¿Qué recuerdan?" class="input-field w-full p-4 text-[15px] focus:outline-none resize-none"></textarea>
           </div>
           <div class="pt-2">
-            <button @click="deleteDate" class="w-full py-3.5 rounded-2xl text-[14px] font-bold tracking-wide transition-all active:scale-95 text-white bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20">
+            <button @click="deleteDate" class="btn-danger w-full">
               Eliminar Cita de la Bitácora
             </button>
           </div>
@@ -537,7 +562,8 @@ const editingDate = ref({
   description: '',
   rating1: 5.0,
   rating2: 5.0,
-  tags: []
+  tags: [],
+  photo_url: ''
 });
 const showHeartOverlay = ref(false);
 const showMatchCelebration = ref(false);
@@ -557,7 +583,7 @@ const exploreList = ref([
   { id: 3, location: 'La Flor de Chile', city: 'Valparaíso', tag: 'Comida', avgStars: 4.5, description: 'Las mejores chorrillanas de la región. Ideal para ir con hambre.' }
 ]);
 
-const newDate = ref({ location: '', city: 'Villa Alemana', date: new Date().toISOString().split('T')[0], tags: [], rating1: 5.0, rating2: 5.0, description: '' });
+const newDate = ref({ location: '', city: 'Villa Alemana', date: new Date().toISOString().split('T')[0], tags: [], rating1: 5.0, rating2: 5.0, description: '', photo_url: '' });
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -765,6 +791,32 @@ const deleteDate = async () => {
   }
 };
 
+const createFileInput = ref(null);
+const editFileInput = ref(null);
+
+const triggerPhotoUpload = (mode) => {
+  if (mode === 'create') {
+    createFileInput.value?.click();
+  } else {
+    editFileInput.value?.click();
+  }
+};
+
+const handlePhotoUpload = (event, mode) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    if (mode === 'create') {
+      newDate.value.photo_url = e.target.result;
+    } else {
+      editingDate.value.photo_url = e.target.result;
+    }
+  };
+  reader.readAsDataURL(file);
+};
+
 const closeDateModal = () => {
   showDateModal.value = false;
   doubleLockState.value = 'idle';
@@ -783,7 +835,7 @@ const submitNewDate = async () => {
       rating_user_1: newDate.value.rating1,
       rating_user_2: newDate.value.rating2,
       tags: newDate.value.tags,
-      photo_url: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80' // default placeholder
+      photo_url: newDate.value.photo_url || 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80'
     };
 
     await api.createDate(dateObj);
@@ -798,7 +850,7 @@ const submitNewDate = async () => {
     await loadExploreDates();
 
     // Reset form
-    newDate.value = { location: '', city: 'Villa Alemana', date: new Date().toISOString().split('T')[0], tags: [], rating1: 5.0, rating2: 5.0, description: '' };
+    newDate.value = { location: '', city: 'Villa Alemana', date: new Date().toISOString().split('T')[0], tags: [], rating1: 5.0, rating2: 5.0, description: '', photo_url: '' };
   } catch (error) {
     alert('Error al guardar la cita: ' + error.message);
   }
