@@ -52,7 +52,7 @@ ion-toolbar {
 }
 
 /* ── Buttons (niun-style: rounded-xl, glowing shadows, scale on press) ── */
-.btn-primary, .btn-soft, .btn-ghost, .btn {
+.btn-primary, .btn-soft, .btn-ghost, .btn-danger, .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -73,7 +73,7 @@ ion-toolbar {
   line-height: 1.2;
 }
 
-.btn-primary:active, .btn-soft:active, .btn-ghost:active, .btn:active {
+.btn-primary:active, .btn-soft:active, .btn-ghost:active, .btn-danger:active, .btn:active {
   transform: scale(0.96);
 }
 

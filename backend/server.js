@@ -28,6 +28,9 @@ app.use(express.urlencoded({ limit: '100mb', extended: true }));
 const JWT_SECRET = process.env.JWT_SECRET || 'lovesync-super-secret-key-123';
 const PORT = process.env.PORT || 3000;
 
+// Global map to store pending locks for couples during double-lock synchronization
+const pendingLocks = new Map();
+
 // PostgreSQL Connection Pool
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL
@@ -424,6 +427,8 @@ io.on('connection', (socket) => {
   socket.on('partner_lock', (data) => {
     const { coupleId, userId } = data;
     if (coupleId) {
+      // Set the pending lock state in the Map
+      pendingLocks.set(coupleId, userId);
       // Broadcast partner click to other users in the couple room
       socket.to(`couple_${coupleId}`).emit('partner_lock_event', { userId });
       setTimeout(() => {

@@ -500,7 +500,7 @@
             <textarea v-model="editingDate.description" rows="3" placeholder="¿Qué recuerdan?" class="input-field w-full p-4 text-[15px] focus:outline-none resize-none"></textarea>
           </div>
           <div class="pt-2">
-            <button @click="deleteDate" class="btn w-full text-[15px] text-white font-semibold shadow-lg shadow-red-500/20 transition-all active:scale-95" style="background: #ff3b30;">
+            <button @click="deleteDate" class="btn-danger w-full text-[15px]">
               Eliminar Cita
             </button>
           </div>
@@ -854,19 +854,62 @@ const triggerPhotoUpload = (mode) => {
   }
 };
 
-const handlePhotoUpload = (event, mode) => {
+const compressImage = (file, maxWidth = 1024, maxHeight = 1024, quality = 0.7) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(img.src);
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      
+      // Fill white background for transparent images
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+      
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const dataUrl = canvas.toDataURL('image/jpeg', quality);
+      resolve(dataUrl);
+    };
+    img.onerror = (err) => {
+      reject(err);
+    };
+  });
+};
+
+const handlePhotoUpload = async (event, mode) => {
   const file = event.target.files?.[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
+  try {
+    const compressedBase64 = await compressImage(file);
     if (mode === 'create') {
-      newDate.value.photo_url = e.target.result;
+      newDate.value.photo_url = compressedBase64;
     } else {
-      editingDate.value.photo_url = e.target.result;
+      editingDate.value.photo_url = compressedBase64;
     }
-  };
-  reader.readAsDataURL(file);
+  } catch (error) {
+    console.error('Error compressing image:', error);
+    alert('Error al procesar la imagen.');
+  }
 };
 
 const buySlots = () => { showPopup('Próximamente ♡'); };
