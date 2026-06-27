@@ -351,7 +351,9 @@
             Nueva Cita
             <svg class="w-3.5 h-3.5 text-red-500 fill-current animate-pulse" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
           </h3>
-          <button @click="submitNewDate" class="text-[15px] font-bold transition-all active:scale-95" style="color: var(--accent);">Guardar</button>
+          <button @click="submitNewDate" :disabled="isSubmitting" class="text-[15px] font-bold transition-all disabled:opacity-50 disabled:active:scale-100 active:scale-95" style="color: var(--accent);">
+            {{ isSubmitting ? 'Guardando...' : 'Guardar' }}
+          </button>
         </div>
         <div class="p-5 overflow-y-auto flex-1 space-y-4">
           <div>
@@ -547,7 +549,51 @@ const tabs = [
   { id: 'explore', label: 'Explorar', icon: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>' },
   { id: 'settings', label: 'Ajustes', icon: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 010 4h-.09c-.658.003-1.25.396-1.51 1z"/>' },
 ];
+const isSubmitting = ref(false);
 
+const submitNewDate = async () => {
+  if (isSubmitting.value) return;
+  if (!newDate.value.location) { alert('Escribe la ubicación de la cita.'); return; }
+  if (!userCoupleId.value) return;
+
+  isSubmitting.value = true;
+
+  try {
+    const dateObj = {
+      location: newDate.value.location,
+      city: newDate.value.city,
+      date_time: new Date(newDate.value.date + 'T12:00:00Z').toISOString(),
+      description: newDate.value.description,
+      rating_user_1: newDate.value.rating1,
+      rating_user_2: newDate.value.rating2,
+      tags: newDate.value.tags,
+      photo_url: newDate.value.photo_url || 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80'
+    };
+
+    await api.createDate(dateObj);
+
+    socket.emit('clear_lock', userCoupleId.value);
+    showDateModal.value = false;
+    doubleLockState.value = 'idle';
+    showHeartOverlay.value = true;
+    setTimeout(() => { showHeartOverlay.value = false; }, 2500);
+
+    await loadDates();
+    await loadExploreDates();
+
+    newDate.value = { location: '', city: 'Villa Alemana', date: new Date().toISOString().split('T')[0], tags: [], rating1: 5.0, rating2: 5.0, description: '', photo_url: '' };
+  } catch (error) {
+    alert('Error al guardar la cita: ' + error.message);
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+const closeDateModal = () => {
+  showDateModal.value = false;
+  doubleLockState.value = 'idle';
+  socket.emit('clear_lock', userCoupleId.value);
+};
 const currentTab = ref('timeline');
 const dateSlots = ref(0);
 const maxSlots = ref(10);

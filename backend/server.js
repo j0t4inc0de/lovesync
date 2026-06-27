@@ -415,6 +415,10 @@ io.on('connection', (socket) => {
   socket.on('join_couple', (coupleId) => {
     socket.join(`couple_${coupleId}`);
     console.log(`Socket ${socket.id} joined room couple_${coupleId}`);
+    const waitingUser = pendingLocks.get(coupleId);
+    if (waitingUser) {
+      socket.emit('partner_lock_event', { userId: waitingUser });
+    }
   });
 
   socket.on('partner_lock', (data) => {
@@ -422,7 +426,16 @@ io.on('connection', (socket) => {
     if (coupleId) {
       // Broadcast partner click to other users in the couple room
       socket.to(`couple_${coupleId}`).emit('partner_lock_event', { userId });
+      setTimeout(() => {
+        if (pendingLocks.get(coupleId) === userId) {
+          pendingLocks.delete(coupleId);
+        }
+      }, 600000);
     }
+  });
+
+  socket.on('clear_lock', (coupleId) => {
+    pendingLocks.delete(coupleId);
   });
 
   socket.on('disconnect', () => {
