@@ -572,15 +572,19 @@ const submitNewDate = async () => {
 
     await api.createDate(dateObj);
 
-    socket.emit('clear_lock', userCoupleId.value);
+    if (socket) {
+      socket.emit('clear_lock', userCoupleId.value);
+    }
     showDateModal.value = false;
     doubleLockState.value = 'idle';
     showHeartOverlay.value = true;
     setTimeout(() => { showHeartOverlay.value = false; }, 2500);
 
+    // Recargar listas desde la BD
     await loadDates();
     await loadExploreDates();
 
+    // Resetear formulario
     newDate.value = { location: '', city: 'Villa Alemana', date: new Date().toISOString().split('T')[0], tags: [], rating1: 5.0, rating2: 5.0, description: '', photo_url: '' };
   } catch (error) {
     alert('Error al guardar la cita: ' + error.message);
@@ -592,7 +596,9 @@ const submitNewDate = async () => {
 const closeDateModal = () => {
   showDateModal.value = false;
   doubleLockState.value = 'idle';
-  socket.emit('clear_lock', userCoupleId.value);
+  if (socket) {
+    socket.emit('clear_lock', userCoupleId.value);
+  }
 };
 const currentTab = ref('timeline');
 const dateSlots = ref(0);
@@ -861,45 +867,6 @@ const handlePhotoUpload = (event, mode) => {
     }
   };
   reader.readAsDataURL(file);
-};
-
-const closeDateModal = () => {
-  showDateModal.value = false;
-  doubleLockState.value = 'idle';
-};
-
-const submitNewDate = async () => {
-  if (!newDate.value.location) { alert('Escribe la ubicación de la cita.'); return; }
-  if (!userCoupleId.value) return;
-
-  try {
-    const dateObj = {
-      location: newDate.value.location,
-      city: newDate.value.city,
-      date_time: new Date(newDate.value.date + 'T12:00:00').toISOString(),
-      description: newDate.value.description,
-      rating_user_1: newDate.value.rating1,
-      rating_user_2: newDate.value.rating2,
-      tags: newDate.value.tags,
-      photo_url: newDate.value.photo_url || 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80'
-    };
-
-    await api.createDate(dateObj);
-
-    showDateModal.value = false;
-    doubleLockState.value = 'idle';
-    showHeartOverlay.value = true;
-    setTimeout(() => { showHeartOverlay.value = false; }, 2500);
-
-    // Reload list from DB
-    await loadDates();
-    await loadExploreDates();
-
-    // Reset form
-    newDate.value = { location: '', city: 'Villa Alemana', date: new Date().toISOString().split('T')[0], tags: [], rating1: 5.0, rating2: 5.0, description: '', photo_url: '' };
-  } catch (error) {
-    alert('Error al guardar la cita: ' + error.message);
-  }
 };
 
 const buySlots = () => { showPopup('Próximamente ♡'); };
