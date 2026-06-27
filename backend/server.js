@@ -22,7 +22,7 @@ const io = new Server(httpServer, {
 });
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'lovesync-super-secret-key-123';
 const PORT = process.env.PORT || 3000;

@@ -498,8 +498,8 @@
             <textarea v-model="editingDate.description" rows="3" placeholder="¿Qué recuerdan?" class="input-field w-full p-4 text-[15px] focus:outline-none resize-none"></textarea>
           </div>
           <div class="pt-2">
-            <button @click="deleteDate" class="btn-danger w-full">
-              Eliminar Cita de la Bitácora
+            <button @click="deleteDate" class="btn w-full text-[15px] text-white font-semibold shadow-lg shadow-red-500/20 transition-all active:scale-95" style="background: #ff3b30;">
+              Eliminar Cita
             </button>
           </div>
         </div>
