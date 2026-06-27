@@ -293,7 +293,10 @@
                   </p>
                 </div>
               </div>
-              <button @click="logOut" class="btn btn-ghost btn-sm text-[12px] py-1.5 px-3">Salir</button>
+              <div class="text-right">
+                <p class="text-[9px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-muted);">Tu Código</p>
+                <span class="text-[12px] font-mono font-bold bg-black/5 px-2.5 py-1.5 rounded-lg select-all" style="color: var(--text-primary);">{{ currentUser?.invite_code }}</span>
+              </div>
             </div>
           </div>
 
@@ -316,6 +319,22 @@
             <h3 class="text-[17px] font-bold mb-1" style="font-family: 'Comfortaa', sans-serif;">¿Más espacio?</h3>
             <p class="text-[13px] mb-4 leading-relaxed text-white/60">5 citas adicionales por un pago único.</p>
             <button @click="buySlots" class="btn-primary w-full text-[15px]">$5.000 CLP · 5 cupos</button>
+          </div>
+
+          <!-- Cerrar Sesión -->
+          <div class="glass rounded-2xl p-5 mb-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="background: var(--fill);">
+                  <svg class="w-5 h-5" style="color: var(--text-secondary);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                </div>
+                <div>
+                  <h3 class="text-[15px] font-bold" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Cerrar Sesión</h3>
+                  <p class="text-[12px] m-0" style="color: var(--text-muted);">Salir de tu cuenta actual.</p>
+                </div>
+              </div>
+              <button @click="logOut" class="btn btn-ghost btn-sm text-[12px] py-1.5 px-3">Salir</button>
+            </div>
           </div>
 
           <!-- Divider line to visually isolate the Danger Zone -->
