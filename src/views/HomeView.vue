@@ -357,6 +357,15 @@
             <button @click="buySlots" class="btn-primary w-full text-[15px]">$4.990 CLP · +5 cupos</button>
           </div>
 
+          <!-- Panel de Control Administrador (Secret Card only for Admins) -->
+          <div v-if="currentUser?.is_admin" class="rounded-2xl p-5 mb-4 relative overflow-hidden text-white border border-amber-500/20" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.25) 100%); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);">
+            <div class="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-amber-500/10 blur-xl"></div>
+            <p class="text-[0.65rem] font-bold uppercase tracking-widest mb-3 text-amber-400">Administrador</p>
+            <h3 class="text-[17px] font-bold mb-1" style="font-family: 'Comfortaa', sans-serif;">Panel de Control</h3>
+            <p class="text-[13px] mb-4 leading-relaxed text-amber-200/80">Gestiona parejas, asigna planes de prueba o actualiza cupos mensuales.</p>
+            <button @click="openAdminModal" class="btn w-full text-[15px] bg-amber-500 text-white font-semibold shadow-lg shadow-amber-500/20 hover:bg-amber-600 transition-colors active:scale-95">Abrir Panel Admin</button>
+          </div>
+
           <!-- Cerrar Sesión -->
           <div class="glass rounded-2xl p-5 mb-4">
             <div class="flex items-center justify-between">
@@ -563,6 +572,73 @@
       </div>
     </div>
 
+    <!-- Admin Dashboard Modal -->
+    <div v-if="showAdminModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+      <div @click="closeAdminModal" class="absolute inset-0 bg-black/25 backdrop-blur-md"></div>
+      <div class="relative w-full max-w-md glass-modal sm:rounded-2xl rounded-t-[2.2rem] shadow-2xl overflow-hidden animate-slide-up max-h-[90vh] flex flex-col">
+        <!-- grabber -->
+        <div class="w-12 h-1.5 bg-black/10 rounded-full mx-auto my-3 shrink-0"></div>
+
+        <div class="px-5 pb-3 flex justify-between items-center" style="border-bottom: 1px solid var(--border-subtle);">
+          <button @click="closeAdminModal" class="text-[15px] font-medium transition-all active:scale-95" style="color: var(--text-secondary);">Cerrar</button>
+          <h3 class="text-[16px] font-bold m-0 flex items-center gap-1.5" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">
+            Control de Parejas
+            <svg class="w-4 h-4 text-amber-500 fill-current" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 6h2v2h-2V7zm0 4h2v6h-2v-6z"/></svg>
+          </h3>
+          <div class="w-12"></div> <!-- spacer -->
+        </div>
+
+        <div class="p-5 overflow-y-auto flex-1 space-y-4">
+          <!-- Search couples -->
+          <div class="relative">
+            <input v-model="adminSearchQuery" type="text" placeholder="Buscar por email o nombre..." class="input-field w-full pl-10 pr-4 py-2.5 text-[14px] focus:outline-none" />
+            <div class="absolute left-3.5 top-3 flex items-center">
+              <svg class="w-4 h-4" style="color: var(--text-muted);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+          </div>
+
+          <!-- Couples List -->
+          <div class="space-y-3">
+            <div v-for="cp in filteredAdminCouples" :key="cp.id" class="glass rounded-xl p-4 border border-black/5 space-y-3">
+              <div class="flex justify-between items-start">
+                <div>
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Pareja ID: {{ cp.id }}</span>
+                  <p class="text-[11px] text-[var(--text-muted)] mt-1">Registrada: {{ formatDate(cp.created_at) }}</p>
+                </div>
+                <!-- Action: Set 999 slots or 20 slots -->
+                <div class="flex gap-1.5">
+                  <button @click="quickSetSlots(cp.id, 20)" class="px-2 py-1 rounded bg-[var(--accent-soft)] text-[var(--accent)] text-[10px] font-bold active:scale-95 transition-transform">Premium (20)</button>
+                  <button @click="quickSetSlots(cp.id, 999)" class="px-2 py-1 rounded bg-amber-100 text-amber-700 text-[10px] font-bold active:scale-95 transition-transform">Tester (999)</button>
+                </div>
+              </div>
+
+              <!-- Members -->
+              <div class="space-y-1.5 pt-1.5" style="border-top: 1px dashed var(--border-subtle);">
+                <div v-for="member in cp.members" :key="member.id" class="text-[12px] flex items-center justify-between">
+                  <span class="font-semibold" style="color: var(--text-primary);">{{ member.name }}</span>
+                  <span class="font-mono text-[var(--text-muted)]">{{ member.email }}</span>
+                </div>
+                <div v-if="!cp.members || cp.members.length === 0" class="text-[12px] italic text-[var(--text-muted)]">Sin integrantes vinculados.</div>
+              </div>
+
+              <!-- Edit Cupos Base -->
+              <div class="flex items-center justify-between pt-2">
+                <span class="text-[12px] font-medium" style="color: var(--text-secondary);">Cupos Base Mensuales:</span>
+                <div class="flex items-center gap-2">
+                  <input v-model.number="cp.base_slots" type="number" min="0" max="999" class="input-field text-center w-16 py-1 px-2 text-[12px] focus:outline-none" />
+                  <button @click="saveCoupleSlots(cp.id, cp.base_slots)" class="btn-primary py-1 px-3 rounded text-[11px] font-bold active:scale-95 transition-transform">Guardar</button>
+                </div>
+              </div>
+            </div>
+            
+            <div v-if="filteredAdminCouples.length === 0" class="text-center py-6 text-[13px] text-[var(--text-muted)]">
+              No se encontraron parejas registradas.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Floating Slots Tooltip (Positioned globally with high z-index to escape shadow DOM clipping and overlay under bitacora) -->
     <div v-if="showSlotsTooltip" 
          class="fixed z-[9999] w-48 p-3 rounded-2xl glass text-[11px] leading-snug font-semibold text-center flex items-center justify-center gap-1.5 border border-white/60 animate-tooltip-in" 
@@ -685,6 +761,58 @@ const showMatchCelebration = ref(false);
 const showSlotsTooltip = ref(false);
 const unpairState = ref('idle');
 const availableTags = ['Comida', 'Baile', 'Paseo', 'Cine', 'Naturaleza', 'Playa', 'Cafecito', 'En Casa'];
+
+// Admin Panel state & actions
+const showAdminModal = ref(false);
+const adminSearchQuery = ref('');
+const adminCouples = ref([]);
+
+const openAdminModal = async () => {
+  try {
+    const couples = await api.adminGetCouples();
+    adminCouples.value = couples || [];
+    showAdminModal.value = true;
+  } catch (error) {
+    console.error('Error loading admin couples:', error.message);
+    alert('Error al cargar panel de administración: ' + error.message);
+  }
+};
+
+const closeAdminModal = () => {
+  showAdminModal.value = false;
+};
+
+const filteredAdminCouples = computed(() => {
+  return adminCouples.value.filter(cp => {
+    if (cp.id.toString().includes(adminSearchQuery.value)) {
+      return true;
+    }
+    return cp.members?.some(member => {
+      const q = adminSearchQuery.value.toLowerCase();
+      return member.name?.toLowerCase().includes(q) || member.email?.toLowerCase().includes(q);
+    });
+  });
+});
+
+const saveCoupleSlots = async (coupleId, slots) => {
+  try {
+    const res = await api.adminUpdateSlots(coupleId, slots);
+    if (res.success) {
+      showPopup('Cupos base actualizados con éxito.');
+      if (userCoupleId.value === coupleId) {
+        maxSlots.value = res.couple.slots;
+      }
+      const couples = await api.adminGetCouples();
+      adminCouples.value = couples || [];
+    }
+  } catch (error) {
+    alert('Error al guardar cupos: ' + error.message);
+  }
+};
+
+const quickSetSlots = async (coupleId, slots) => {
+  await saveCoupleSlots(coupleId, slots);
+};
 
 const currentUser = ref(null);
 const partnerName = ref('Pareja');

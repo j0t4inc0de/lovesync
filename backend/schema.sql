@@ -14,11 +14,16 @@ CREATE TABLE IF NOT EXISTS users (
     invite_code VARCHAR(20) UNIQUE NOT NULL,
     couple_id INT REFERENCES couples(id) ON DELETE SET NULL,
     last_trivia_date DATE,
+    is_admin BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Migration for existing users table
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_trivia_date DATE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
+
+-- Ensure the first registered user is an admin for testing/management
+UPDATE users SET is_admin = TRUE WHERE id = 1;
 
 -- Create Dates Table
 CREATE TABLE IF NOT EXISTS dates (

@@ -116,6 +116,19 @@ export const api = {
     });
   },
   
+  adminGetCouples: async () => {
+    return request('/api/admin/couples', {
+      method: 'GET'
+    });
+  },
+  
+  adminUpdateSlots: async (coupleId, slots) => {
+    return request(`/api/admin/couples/${coupleId}/slots`, {
+      method: 'PUT',
+      body: JSON.stringify({ slots })
+    });
+  },
+  
   logout: () => {
     removeToken();
   }

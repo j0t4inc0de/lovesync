@@ -155,7 +155,7 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/profile', authenticateToken, async (req, res) => {
   try {
     const userRes = await pool.query(
-      'SELECT id, name, email, couple_id, invite_code, last_trivia_date FROM users WHERE id = $1',
+      'SELECT id, name, email, couple_id, invite_code, last_trivia_date, is_admin FROM users WHERE id = $1',
       [req.user.id]
     );
     if (userRes.rows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado.' });
@@ -364,6 +364,69 @@ app.post('/api/trivia/play', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al procesar la trivia.' });
+  }
+});
+
+// Admin Verification Middleware
+const requireAdmin = async (req, res, next) => {
+  try {
+    const adminCheck = await pool.query('SELECT is_admin FROM users WHERE id = $1', [req.user.id]);
+    if (adminCheck.rows.length === 0 || !adminCheck.rows[0].is_admin) {
+      return res.status(403).json({ error: 'Acceso denegado. Se requiere rol de Administrador.' });
+    }
+    next();
+  } catch (error) {
+    res.status(500).json({ error: 'Error al verificar permisos de administrador.' });
+  }
+};
+
+// Admin: Get all couples and members
+app.get('/api/admin/couples', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const couplesRes = await pool.query(
+      `SELECT 
+         c.id, 
+         c.slots AS base_slots, 
+         c.created_at,
+         COALESCE(
+           JSON_AGG(
+             JSON_BUILD_OBJECT('id', u.id, 'name', u.name, 'email', u.email)
+           ) FILTER (WHERE u.id IS NOT NULL), '[]'::json
+         ) AS members
+       FROM couples c
+       LEFT JOIN users u ON u.couple_id = c.id
+       GROUP BY c.id
+       ORDER BY c.created_at DESC`
+    );
+    res.json(couplesRes.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al listar parejas.' });
+  }
+});
+
+// Admin: Update base slots of a couple
+app.put('/api/admin/couples/:id/slots', authenticateToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { slots } = req.body;
+  const newSlots = parseInt(slots);
+  
+  if (isNaN(newSlots) || newSlots < 0) {
+    return res.status(400).json({ error: 'La cantidad de cupos debe ser un número positivo.' });
+  }
+  
+  try {
+    const updateRes = await pool.query(
+      'UPDATE couples SET slots = $1 WHERE id = $2 RETURNING *',
+      [newSlots, id]
+    );
+    if (updateRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Pareja no encontrada.' });
+    }
+    res.json({ success: true, message: 'Cupos base actualizados con éxito.', couple: updateRes.rows[0] });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar cupos base.' });
   }
 });
 
