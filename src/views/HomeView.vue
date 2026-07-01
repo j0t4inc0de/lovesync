@@ -170,6 +170,15 @@
             <p class="text-[13.5px] leading-relaxed px-3 mb-0" style="color: var(--text-secondary);">Deben registrar al menos <strong>3 citas</strong> en su Bitácora para poder jugar la Trivia sobre sus recuerdos de pareja.</p>
           </div>
 
+          <!-- Locked State if already played today -->
+          <div v-else-if="hasPlayedTriviaToday" class="glass rounded-2xl p-6 text-center border border-white/50" style="background: rgba(255,255,255,0.65); backdrop-filter: blur(20px);">
+            <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center border bg-amber-50 border-amber-100 text-amber-500">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <h3 class="text-[17px] font-bold mb-1.5" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Trivia Completada</h3>
+            <p class="text-[13.5px] leading-relaxed px-3 mb-0" style="color: var(--text-secondary);">Ya has jugado la trivia de hoy. ¡Vuelve mañana para ganar más cupos!</p>
+          </div>
+
           <!-- Active Game States -->
           <div v-else>
             <div v-if="triviaState === 'active'" class="glass rounded-2xl p-5 relative overflow-hidden">
@@ -344,8 +353,8 @@
             <div class="absolute -right-6 -bottom-6 w-32 h-32 rounded-full" style="background: radial-gradient(circle, var(--accent-glow), transparent); opacity: 0.8;"></div>
             <p class="text-[0.65rem] font-bold uppercase tracking-widest mb-3 text-white/40">Premium</p>
             <h3 class="text-[17px] font-bold mb-1" style="font-family: 'Comfortaa', sans-serif;">¿Más espacio?</h3>
-            <p class="text-[13px] mb-4 leading-relaxed text-white/60">5 citas adicionales por un pago único.</p>
-            <button @click="buySlots" class="btn-primary w-full text-[15px]">$5.000 CLP · 5 cupos</button>
+            <p class="text-[13px] mb-4 leading-relaxed text-white/60">5 citas adicionales válidas para el mes actual.</p>
+            <button @click="buySlots" class="btn-primary w-full text-[15px]">$4.990 CLP · +5 cupos</button>
           </div>
 
           <!-- Cerrar Sesión -->
@@ -647,7 +656,15 @@ const closeDateModal = () => {
   }
 };
 const currentTab = ref('timeline');
-const dateSlots = ref(0);
+const dateSlots = computed(() => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  return datesList.value.filter(date => {
+    const d = new Date(date.created_at || date.date_time);
+    return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+  }).length;
+});
 const maxSlots = ref(10);
 const doubleLockState = ref('idle');
 const showDateModal = ref(false);
@@ -677,6 +694,13 @@ const userCoupleId = ref(null);
 const isUser1 = computed(() => {
   if (!currentUser.value || !partnerId.value) return true;
   return currentUser.value.id < partnerId.value;
+});
+
+const hasPlayedTriviaToday = computed(() => {
+  if (!currentUser.value || !currentUser.value.last_trivia_date) return false;
+  const lastDate = new Date(currentUser.value.last_trivia_date);
+  const today = new Date();
+  return lastDate.toLocaleDateString('sv-SE') === today.toLocaleDateString('sv-SE');
 });
 
 const datesList = ref([]);
@@ -849,7 +873,6 @@ const loadDates = async () => {
   try {
     const dates = await api.getDates();
     datesList.value = dates || [];
-    dateSlots.value = datesList.value.length;
   } catch (error) {
     console.error('Error cargando citas:', error.message);
   }
@@ -1046,7 +1069,22 @@ const handlePhotoUpload = async (event, mode) => {
   }
 };
 
-const buySlots = () => { showPopup('Próximamente ♡'); };
+const buySlots = async () => {
+  const confirmPurchase = confirm('¿Deseas simular la compra de +5 cupos mensuales por $4.990 CLP?');
+  if (!confirmPurchase) return;
+
+  try {
+    const res = await api.addSlots(5);
+    if (res.success && res.newMaxSlots) {
+      maxSlots.value = res.newMaxSlots;
+      showPopup('¡Compra completada con éxito! +5 cupos mensuales añadidos.');
+    }
+  } catch (error) {
+    console.warn('Backend buySlots failed, using local fallback:', error.message);
+    maxSlots.value += 5;
+    showPopup('Simulación exitosa: +5 cupos mensuales añadidos.');
+  }
+};
 const buyPDF = () => { showPopup('Próximamente ♡'); };
 
 const handleUnpairRequest = async () => {
@@ -1154,14 +1192,58 @@ const startTrivia = () => {
   triviaState.value = 'active';
   document.addEventListener('visibilitychange', handleVisibilityChange);
   if (timerInterval) clearInterval(timerInterval);
-  timerInterval = setInterval(() => { if (timerSeconds.value > 0) timerSeconds.value -= 1; else { clearInterval(timerInterval); triviaState.value = 'wrong'; document.removeEventListener('visibilitychange', handleVisibilityChange); } }, 1000);
+  timerInterval = setInterval(async () => { 
+    if (timerSeconds.value > 0) {
+      timerSeconds.value -= 1; 
+    } else { 
+      clearInterval(timerInterval); 
+      triviaState.value = 'wrong'; 
+      document.removeEventListener('visibilitychange', handleVisibilityChange); 
+      try {
+        await api.playTrivia(false);
+      } catch (e) {
+        console.warn('Trivia play fail report failed:', e.message);
+      }
+      currentUser.value.last_trivia_date = new Date().toLocaleDateString('sv-SE');
+    } 
+  }, 1000);
 };
-const triggerCheatAnnullment = () => { if (timerInterval) clearInterval(timerInterval); triviaState.value = 'cheated'; document.removeEventListener('visibilitychange', handleVisibilityChange); };
-const selectOption = (idx) => {
+
+const triggerCheatAnnullment = async () => { 
+  if (timerInterval) clearInterval(timerInterval); 
+  triviaState.value = 'cheated'; 
+  document.removeEventListener('visibilitychange', handleVisibilityChange); 
+  try {
+    await api.playTrivia(false);
+  } catch (e) {
+    console.warn('Trivia play fail report failed:', e.message);
+  }
+  currentUser.value.last_trivia_date = new Date().toLocaleDateString('sv-SE');
+};
+
+const selectOption = async (idx) => {
   if (timerInterval) clearInterval(timerInterval);
   document.removeEventListener('visibilitychange', handleVisibilityChange);
-  triviaState.value = idx === currentQuestion.value.answerIdx ? 'success' : 'wrong';
+  const isCorrect = idx === currentQuestion.value.answerIdx;
+  triviaState.value = isCorrect ? 'success' : 'wrong';
+
+  try {
+    const res = await api.playTrivia(isCorrect);
+    if (res.success) {
+      currentUser.value.last_trivia_date = new Date().toLocaleDateString('sv-SE');
+      if (res.newMaxSlots) {
+        maxSlots.value = res.newMaxSlots;
+      }
+    }
+  } catch (error) {
+    console.warn('Backend trivia failed, using local fallback:', error.message);
+    currentUser.value.last_trivia_date = new Date().toLocaleDateString('sv-SE');
+    if (isCorrect) {
+      maxSlots.value += 1;
+    }
+  }
 };
+
 const restartTrivia = () => { triviaState.value = 'idle'; };
 
 onMounted(async () => {

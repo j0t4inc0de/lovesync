@@ -102,6 +102,20 @@ export const api = {
     });
   },
   
+  addSlots: async (amount) => {
+    return request('/api/profile/slots', {
+      method: 'POST',
+      body: JSON.stringify({ amount })
+    });
+  },
+  
+  playTrivia: async (correct) => {
+    return request('/api/trivia/play', {
+      method: 'POST',
+      body: JSON.stringify({ correct })
+    });
+  },
+  
   logout: () => {
     removeToken();
   }

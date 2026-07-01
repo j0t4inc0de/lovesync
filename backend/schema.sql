@@ -13,8 +13,12 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     invite_code VARCHAR(20) UNIQUE NOT NULL,
     couple_id INT REFERENCES couples(id) ON DELETE SET NULL,
+    last_trivia_date DATE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Migration for existing users table
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_trivia_date DATE;
 
 -- Create Dates Table
 CREATE TABLE IF NOT EXISTS dates (
@@ -38,4 +42,14 @@ CREATE TABLE IF NOT EXISTS date_likes (
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT unique_date_user_like UNIQUE(date_id, user_id)
+);
+
+-- Create Couple Extra Slots Table
+CREATE TABLE IF NOT EXISTS couple_extra_slots (
+    id SERIAL PRIMARY KEY,
+    couple_id INT NOT NULL REFERENCES couples(id) ON DELETE CASCADE,
+    amount INT NOT NULL,
+    year INT NOT NULL,
+    month INT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

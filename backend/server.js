@@ -155,7 +155,7 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/profile', authenticateToken, async (req, res) => {
   try {
     const userRes = await pool.query(
-      'SELECT id, name, email, couple_id, invite_code FROM users WHERE id = $1',
+      'SELECT id, name, email, couple_id, invite_code, last_trivia_date FROM users WHERE id = $1',
       [req.user.id]
     );
     if (userRes.rows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado.' });
@@ -176,10 +176,22 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
         partnerId = partnerRes.rows[0].id;
       }
 
-      // Get couple slots
-      const coupleRes = await pool.query('SELECT slots FROM couples WHERE id = $1', [user.couple_id]);
+      // Get couple slots (base_slots + sum of extra_slots for the current month)
+      const coupleRes = await pool.query(
+        `SELECT 
+           c.slots AS base_slots,
+           COALESCE(
+             (SELECT SUM(amount) FROM couple_extra_slots 
+              WHERE couple_id = c.id 
+                AND year = EXTRACT(YEAR FROM CURRENT_DATE)::int
+                AND month = EXTRACT(MONTH FROM CURRENT_DATE)::int
+             ), 0
+           )::int AS extra_slots
+         FROM couples c WHERE c.id = $1`,
+        [user.couple_id]
+      );
       if (coupleRes.rows.length > 0) {
-        maxSlots = coupleRes.rows[0].slots;
+        maxSlots = coupleRes.rows[0].base_slots + coupleRes.rows[0].extra_slots;
       }
     }
 
@@ -252,6 +264,106 @@ app.post('/api/profile/unpair', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al desvincular.' });
+  }
+});
+
+// Add monthly extra slots to couple (expires at the end of the calendar month)
+app.post('/api/profile/slots', authenticateToken, async (req, res) => {
+  const { amount } = req.body;
+  const addAmount = parseInt(amount) || 1;
+  
+  try {
+    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    const user = userRes.rows[0];
+    if (!user.couple_id) {
+      return res.status(400).json({ error: 'No estás vinculado a una pareja.' });
+    }
+    
+    await pool.query(
+      `INSERT INTO couple_extra_slots (couple_id, amount, year, month) 
+       VALUES ($1, $2, EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int)`,
+      [user.couple_id, addAmount]
+    );
+    
+    const coupleRes = await pool.query(
+      `SELECT 
+         c.slots AS base_slots,
+         COALESCE(
+           (SELECT SUM(amount) FROM couple_extra_slots 
+            WHERE couple_id = c.id 
+              AND year = EXTRACT(YEAR FROM CURRENT_DATE)::int
+              AND month = EXTRACT(MONTH FROM CURRENT_DATE)::int
+           ), 0
+         )::int AS extra_slots
+       FROM couples c WHERE c.id = $1`,
+      [user.couple_id]
+    );
+    
+    const newMaxSlots = coupleRes.rows[0].base_slots + coupleRes.rows[0].extra_slots;
+    res.json({ success: true, newMaxSlots });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar cupos.' });
+  }
+});
+
+// Play daily trivia (enforces once per day per user, awards +1 expiring slot)
+app.post('/api/trivia/play', authenticateToken, async (req, res) => {
+  const { correct } = req.body;
+  
+  try {
+    const userRes = await pool.query(
+      'SELECT couple_id, last_trivia_date FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    const user = userRes.rows[0];
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado.' });
+    
+    if (user.last_trivia_date) {
+      const lastDate = new Date(user.last_trivia_date);
+      const today = new Date();
+      // Format as YYYY-MM-DD in local time
+      const lastDateStr = lastDate.toLocaleDateString('sv-SE'); // Swedish format returns YYYY-MM-DD
+      const todayStr = today.toLocaleDateString('sv-SE');
+      
+      if (lastDateStr === todayStr) {
+        return res.status(400).json({ error: 'Ya has jugado la trivia de hoy. ¡Vuelve mañana!' });
+      }
+    }
+    
+    await pool.query(
+      'UPDATE users SET last_trivia_date = CURRENT_DATE WHERE id = $1',
+      [req.user.id]
+    );
+    
+    let newMaxSlots = null;
+    if (correct && user.couple_id) {
+      await pool.query(
+        `INSERT INTO couple_extra_slots (couple_id, amount, year, month) 
+         VALUES ($1, 1, EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int)`,
+        [user.couple_id]
+      );
+      
+      const coupleRes = await pool.query(
+        `SELECT 
+           c.slots AS base_slots,
+           COALESCE(
+             (SELECT SUM(amount) FROM couple_extra_slots 
+              WHERE couple_id = c.id 
+                AND year = EXTRACT(YEAR FROM CURRENT_DATE)::int
+                AND month = EXTRACT(MONTH FROM CURRENT_DATE)::int
+             ), 0
+           )::int AS extra_slots
+         FROM couples c WHERE c.id = $1`,
+        [user.couple_id]
+      );
+      newMaxSlots = coupleRes.rows[0].base_slots + coupleRes.rows[0].extra_slots;
+    }
+    
+    res.json({ success: true, won: !!correct, newMaxSlots });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al procesar la trivia.' });
   }
 });
 
@@ -342,6 +454,37 @@ app.post('/api/dates', authenticateToken, async (req, res) => {
     const user = userRes.rows[0];
     if (!user.couple_id) {
       return res.status(400).json({ error: 'Debes estar vinculado a una pareja para crear citas.' });
+    }
+
+    // Check monthly slots limit: base_slots + current month extra slots
+    const limitRes = await pool.query(
+      `SELECT 
+         c.slots AS base_slots,
+         COALESCE(
+           (SELECT SUM(amount) FROM couple_extra_slots 
+            WHERE couple_id = c.id 
+              AND year = EXTRACT(YEAR FROM CURRENT_DATE)::int
+              AND month = EXTRACT(MONTH FROM CURRENT_DATE)::int
+           ), 0
+         )::int AS extra_slots,
+         (SELECT COUNT(id) FROM dates 
+          WHERE couple_id = c.id 
+            AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
+            AND created_at < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
+         )::int AS dates_this_month
+       FROM couples c
+       WHERE c.id = $1`,
+      [user.couple_id]
+    );
+
+    if (limitRes.rows.length > 0) {
+      const { base_slots, extra_slots, dates_this_month } = limitRes.rows[0];
+      const maxSlots = base_slots + extra_slots;
+      if (dates_this_month >= maxSlots) {
+        return res.status(400).json({
+          error: `Límite de citas alcanzado. Has registrado ${dates_this_month}/${maxSlots} citas este mes. Juega la Trivia o adquiere más cupos para continuar.`
+        });
+      }
     }
 
     const result = await pool.query(
