@@ -162,16 +162,18 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
     
     const user = userRes.rows[0];
     let partnerName = null;
+    let partnerId = null;
     let maxSlots = 10;
 
     if (user.couple_id) {
       // Get partner info
       const partnerRes = await pool.query(
-        'SELECT name FROM users WHERE couple_id = $1 AND id != $2 LIMIT 1',
+        'SELECT id, name FROM users WHERE couple_id = $1 AND id != $2 LIMIT 1',
         [user.couple_id, user.id]
       );
       if (partnerRes.rows.length > 0) {
         partnerName = partnerRes.rows[0].name;
+        partnerId = partnerRes.rows[0].id;
       }
 
       // Get couple slots
@@ -184,6 +186,7 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
     res.json({
       user,
       partnerName,
+      partnerId,
       maxSlots
     });
   } catch (error) {

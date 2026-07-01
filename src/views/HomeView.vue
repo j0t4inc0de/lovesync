@@ -130,10 +130,10 @@
 
                 <div class="flex items-center justify-between mt-3 pt-3" style="border-top: 1px solid var(--border-subtle);">
                   <div class="flex items-center gap-1 text-[12px] font-medium" style="color: var(--text-secondary);">
-                    <span>Tú {{ date.rating_user_1 }}</span>
+                    <span>Tú {{ isUser1 ? date.rating_user_1 : date.rating_user_2 }}</span>
                     <svg class="w-3 h-3 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                     <span class="mx-1 opacity-30">·</span>
-                    <span>{{ partnerName }} {{ date.rating_user_2 }}</span>
+                    <span>{{ partnerName }} {{ isUser1 ? date.rating_user_2 : date.rating_user_1 }}</span>
                     <svg class="w-3 h-3 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                   </div>
                   <div v-if="getEditTimeLeft(date.created_at)" @click="openEditModal(date)" class="flex items-center gap-1 text-[11px] font-bold cursor-pointer select-none px-2 py-0.5 rounded-lg border border-[var(--accent)]/15 active:scale-95 transition-transform" style="background: var(--accent-soft); color: var(--accent);">
@@ -551,7 +551,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonPage, IonHeader, IonToolbar, IonContent } from '@ionic/vue';
 import { api, getApiUrl } from '../services/api';
@@ -583,8 +583,8 @@ const submitNewDate = async () => {
       city: newDate.value.city,
       date_time: new Date(newDate.value.date + 'T12:00:00Z').toISOString(),
       description: newDate.value.description,
-      rating_user_1: newDate.value.rating1,
-      rating_user_2: newDate.value.rating2,
+      rating_user_1: isUser1.value ? newDate.value.rating1 : newDate.value.rating2,
+      rating_user_2: isUser1.value ? newDate.value.rating2 : newDate.value.rating1,
       tags: newDate.value.tags,
       photo_url: newDate.value.photo_url || 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80'
     };
@@ -644,7 +644,13 @@ const availableTags = ['Comida', 'Baile', 'Paseo', 'Cine', 'Naturaleza', 'Playa'
 
 const currentUser = ref(null);
 const partnerName = ref('Pareja');
+const partnerId = ref(null);
 const userCoupleId = ref(null);
+
+const isUser1 = computed(() => {
+  if (!currentUser.value || !partnerId.value) return true;
+  return currentUser.value.id < partnerId.value;
+});
 
 const datesList = ref([]);
 
@@ -794,8 +800,8 @@ const openEditModal = (date) => {
       return `${y}-${m}-${d}`;
     })(),
     description: date.description || '',
-    rating1: parseFloat(date.rating_user_1) || 5.0,
-    rating2: parseFloat(date.rating_user_2) || 5.0,
+    rating1: isUser1.value ? (parseFloat(date.rating_user_1) || 5.0) : (parseFloat(date.rating_user_2) || 5.0),
+    rating2: isUser1.value ? (parseFloat(date.rating_user_2) || 5.0) : (parseFloat(date.rating_user_1) || 5.0),
     tags: [...(date.tags || [])],
     photo_url: date.photo_url || ''
   };
@@ -833,8 +839,8 @@ const submitEditDate = async () => {
       city: editingDate.value.city,
       date_time: new Date(editingDate.value.date + 'T12:00:00').toISOString(),
       description: editingDate.value.description,
-      rating_user_1: editingDate.value.rating1,
-      rating_user_2: editingDate.value.rating2,
+      rating_user_1: isUser1.value ? editingDate.value.rating1 : editingDate.value.rating2,
+      rating_user_2: isUser1.value ? editingDate.value.rating2 : editingDate.value.rating1,
       tags: editingDate.value.tags,
       photo_url: editingDate.value.photo_url
     };
@@ -998,7 +1004,9 @@ const generateDynamicTrivia = () => {
 
   // Pregunta 2: Nota de la pareja
   const dateForRating = datesList.value[Math.floor(Math.random() * datesList.value.length)];
-  const partnerRatingNum = parseFloat(dateForRating.rating_user_2 || 5.0);
+  const partnerRatingNum = isUser1.value
+    ? parseFloat(dateForRating.rating_user_2 || 5.0)
+    : parseFloat(dateForRating.rating_user_1 || 5.0);
   const correctRating = `${partnerRatingNum.toFixed(1)}★`;
   const ratingPool = ['3.0★', '3.5★', '4.0★', '4.5★', '5.0★'].filter(r => r !== correctRating);
   const optionsRating = [correctRating, ...ratingPool.slice(0, 3)];
@@ -1062,6 +1070,7 @@ onMounted(async () => {
     userCoupleId.value = profile.user.couple_id;
     maxSlots.value = profile.maxSlots;
     partnerName.value = profile.partnerName || 'Pareja';
+    partnerId.value = profile.partnerId || null;
 
     // Load actual dates list from Database
     await loadDates();
