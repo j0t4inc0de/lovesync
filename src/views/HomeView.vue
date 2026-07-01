@@ -363,7 +363,7 @@
             <p class="text-[0.65rem] font-bold uppercase tracking-widest mb-3 text-white/40">Administrador</p>
             <h3 class="text-[17px] font-bold mb-1" style="font-family: 'Comfortaa', sans-serif;">Panel de Control</h3>
             <p class="text-[13px] mb-4 leading-relaxed text-white/60">Gestiona parejas, asigna planes de prueba o actualiza cupos mensuales.</p>
-            <button @click="openAdminModal" class="w-full py-2.5 rounded-xl text-[15px] font-bold bg-[#1a1a2e] text-white hover:bg-black transition-all duration-200 active:scale-95 shadow-lg shadow-black/30">Abrir Panel Admin</button>
+            <button @click="openAdminModal" class="w-full h-12 rounded-2xl text-[15px] font-bold transition-all duration-300 active:scale-95 flex items-center justify-center bg-[#1a1a2e] text-white hover:bg-black shadow-lg shadow-black/25">Abrir Panel Admin</button>
           </div>
 
           <!-- Cerrar Sesión -->
@@ -601,9 +601,15 @@
           <div class="space-y-3">
             <div v-for="cp in filteredAdminCouples" :key="cp.id" class="glass rounded-xl p-4 border border-black/5 space-y-3">
               <div class="flex justify-between items-start">
-                <div>
-                  <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Pareja ID: {{ cp.id }}</span>
-                  <p class="text-[11px] text-[var(--text-muted)] mt-1">Registrada: {{ formatDate(cp.created_at) }}</p>
+                <div class="flex items-start gap-1.5">
+                  <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Pareja ID: {{ cp.id }}</span>
+                    <p class="text-[11px] text-[var(--text-muted)] mt-1">Registrada: {{ formatDate(cp.created_at) }}</p>
+                  </div>
+                  <!-- Delete Couple Button -->
+                  <button @click="deleteCouple(cp.id)" class="p-1 rounded-lg text-red-500 hover:bg-red-50 active:scale-90 transition-all" title="Eliminar Pareja">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
                 </div>
                 <!-- Action: Set 999 slots or 20 slots -->
                 <div class="flex gap-1.5">
@@ -619,13 +625,19 @@
                     <span class="text-[9px] font-bold bg-black/5 text-[var(--text-muted)] px-1 rounded">ID: {{ member.id }}</span>
                     <span class="font-semibold" style="color: var(--text-primary);">{{ member.name }}</span>
                   </div>
-                  <span class="font-mono text-[var(--text-muted)]">{{ member.email }}</span>
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-mono text-[var(--text-muted)]">{{ member.email }}</span>
+                    <!-- Delete User Button -->
+                    <button @click="deleteUser(member.id)" class="p-1 rounded text-red-400 hover:bg-red-50 active:scale-90 transition-all" title="Eliminar Usuario">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  </div>
                 </div>
                 <div v-if="!cp.members || cp.members.length === 0" class="text-[12px] italic text-[var(--text-muted)]">Sin integrantes vinculados.</div>
               </div>
 
               <!-- Edit Cupos Base -->
-              <div class="flex items-center justify-between pt-2">
+              <div class="flex items-center justify-between pt-2" style="border-top: 1px dashed var(--border-subtle);">
                 <span class="text-[12px] font-medium" style="color: var(--text-secondary);">Cupos Base Mensuales:</span>
                 <div class="flex items-center gap-2">
                   <input v-model.number="cp.base_slots" type="number" min="0" max="999" class="input-field text-center w-16 py-1 px-2 text-[12px] focus:outline-none" />
@@ -815,6 +827,44 @@ const saveCoupleSlots = async (coupleId, slots) => {
 
 const quickSetSlots = async (coupleId, slots) => {
   await saveCoupleSlots(coupleId, slots);
+};
+
+const deleteCouple = async (coupleId) => {
+  const confirmDelete = confirm(`¿Estás seguro de que quieres eliminar la pareja ID ${coupleId}? Esto borrará todas sus citas y desvinculará a sus miembros.`);
+  if (!confirmDelete) return;
+
+  try {
+    const res = await api.adminDeleteCouple(coupleId);
+    if (res.success) {
+      showPopup('Pareja eliminada con éxito.');
+      const couples = await api.adminGetCouples();
+      adminCouples.value = couples || [];
+      if (userCoupleId.value === coupleId) {
+        window.location.reload();
+      }
+    }
+  } catch (error) {
+    alert('Error al eliminar pareja: ' + error.message);
+  }
+};
+
+const deleteUser = async (userId) => {
+  const confirmDelete = confirm(`¿Estás seguro de que quieres eliminar permanentemente al usuario ID ${userId}?`);
+  if (!confirmDelete) return;
+
+  try {
+    const res = await api.adminDeleteUser(userId);
+    if (res.success) {
+      showPopup('Usuario eliminado con éxito.');
+      const couples = await api.adminGetCouples();
+      adminCouples.value = couples || [];
+      if (currentUser.value && currentUser.value.id === userId) {
+        window.location.reload();
+      }
+    }
+  } catch (error) {
+    alert('Error al eliminar usuario: ' + error.message);
+  }
 };
 
 const currentUser = ref(null);

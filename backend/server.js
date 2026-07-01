@@ -430,6 +430,36 @@ app.put('/api/admin/couples/:id/slots', authenticateToken, requireAdmin, async (
   }
 });
 
+// Admin: Delete a couple (also decouple users and delete their dates)
+app.delete('/api/admin/couples/:id', authenticateToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deleteRes = await pool.query('DELETE FROM couples WHERE id = $1 RETURNING *', [id]);
+    if (deleteRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Pareja no encontrada.' });
+    }
+    res.json({ success: true, message: 'Pareja eliminada con éxito.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al eliminar la pareja.' });
+  }
+});
+
+// Admin: Delete a user
+app.delete('/api/admin/users/:id', authenticateToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deleteRes = await pool.query('DELETE FROM users WHERE id = $1 RETURNING *', [id]);
+    if (deleteRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+    res.json({ success: true, message: 'Usuario eliminado con éxito.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al eliminar el usuario.' });
+  }
+});
+
 // ── Dates (Bitácora) Endpoints ──
 
 // Fetch all dates for exploration (anonymous display with likes)

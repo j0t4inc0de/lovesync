@@ -129,6 +129,18 @@ export const api = {
     });
   },
   
+  adminDeleteCouple: async (coupleId) => {
+    return request(`/api/admin/couples/${coupleId}`, {
+      method: 'DELETE'
+    });
+  },
+  
+  adminDeleteUser: async (userId) => {
+    return request(`/api/admin/users/${userId}`, {
+      method: 'DELETE'
+    });
+  },
+  
   logout: () => {
     removeToken();
   }
