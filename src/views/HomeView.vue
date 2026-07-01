@@ -403,7 +403,7 @@
         </div>
         <div class="p-5 overflow-y-auto flex-1 space-y-4">
           <div>
-            <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 block" style="color: var(--text-muted);">Lugar</label>
+            <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 block" style="color: var(--text-muted);">Título</label>
             <input v-model="newDate.location" type="text" placeholder="Cafetería, Cine, Playa..." class="input-field w-full px-4 py-3.5 text-[15px] focus:outline-none" />
           </div>
           <div class="grid grid-cols-2 gap-3">
