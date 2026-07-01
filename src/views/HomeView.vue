@@ -363,7 +363,7 @@
             <p class="text-[0.65rem] font-bold uppercase tracking-widest mb-3 text-white/40">Administrador</p>
             <h3 class="text-[17px] font-bold mb-1" style="font-family: 'Comfortaa', sans-serif;">Panel de Control</h3>
             <p class="text-[13px] mb-4 leading-relaxed text-white/60">Gestiona parejas, asigna planes de prueba o actualiza cupos mensuales.</p>
-            <button @click="openAdminModal" class="w-full h-12 rounded-2xl text-[15px] font-bold transition-all duration-300 active:scale-95 flex items-center justify-center bg-[#1a1a2e] text-white hover:bg-black shadow-lg shadow-black/25">Abrir Panel Admin</button>
+            <button @click="openAdminModal" class="btn w-full text-[15px] font-bold" style="background: #1a1a2e; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.25);">Abrir Panel Admin</button>
           </div>
 
           <!-- Cerrar Sesión -->
@@ -581,9 +581,8 @@
 
         <div class="px-5 pb-3 flex justify-between items-center" style="border-bottom: 1px solid var(--border-subtle);">
           <button @click="closeAdminModal" class="text-[15px] font-medium transition-all active:scale-95" style="color: var(--text-secondary);">Cerrar</button>
-          <h3 class="text-[16px] font-bold m-0 flex items-center gap-1.5" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">
+          <h3 class="text-[16px] font-bold m-0" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">
             Control de Parejas
-            <svg class="w-4 h-4 text-amber-500 fill-current" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 6h2v2h-2V7zm0 4h2v6h-2v-6z"/></svg>
           </h3>
           <div class="w-12"></div> <!-- spacer -->
         </div>
