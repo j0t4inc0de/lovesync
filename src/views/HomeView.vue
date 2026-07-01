@@ -796,7 +796,8 @@ const openEditModal = (date) => {
     description: date.description || '',
     rating1: parseFloat(date.rating_user_1) || 5.0,
     rating2: parseFloat(date.rating_user_2) || 5.0,
-    tags: [...(date.tags || [])]
+    tags: [...(date.tags || [])],
+    photo_url: date.photo_url || ''
   };
   showEditModal.value = true;
 };
@@ -834,7 +835,8 @@ const submitEditDate = async () => {
       description: editingDate.value.description,
       rating_user_1: editingDate.value.rating1,
       rating_user_2: editingDate.value.rating2,
-      tags: editingDate.value.tags
+      tags: editingDate.value.tags,
+      photo_url: editingDate.value.photo_url
     };
 
     await api.updateDate(editingDate.value.id, updatedObj);
