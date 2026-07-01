@@ -242,21 +242,30 @@
             <p class="text-[13px] font-medium" style="color: var(--text-secondary);">Ideas de citas cerca de ti</p>
           </div>
 
-          <div class="flex gap-2.5 overflow-x-auto pb-4 scrollbar-none">
-            <button class="btn-primary btn-sm flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              Villa Alemana
-            </button>
-            <button class="btn-ghost btn-sm">Viña del Mar</button>
-            <button class="btn-ghost btn-sm">Santiago</button>
-            <button class="btn-ghost btn-sm">Valparaíso</button>
+          <!-- Buscador de Ideas (Glassmorphism design matching system input-field) -->
+          <div class="relative mb-4">
+            <input v-model="searchQuery" type="text" placeholder="Buscar ideas (lugar, descripción, tags)..." class="input-field w-full pl-10 pr-4 py-2.5 text-[14px] focus:outline-none" />
+            <div class="absolute left-3.5 top-3 flex items-center">
+              <svg class="w-4 h-4" style="color: var(--text-muted);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
           </div>
 
+          <!-- Filtro de Ciudades dinámico -->
+          <div class="flex gap-2.5 overflow-x-auto pb-4 scrollbar-none mb-2">
+            <button v-for="city in nearbyCities" :key="city" 
+                    @click="selectedCity = city"
+                    :class="['btn-sm transition-all active:scale-90 flex items-center gap-1.5 shrink-0', selectedCity === city ? 'btn-primary' : 'btn-ghost']">
+              <svg v-if="city !== 'Todas' && selectedCity === city" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              {{ city }}
+            </button>
+          </div>
+
+          <!-- Tarjetas de Exploración filtradas -->
           <div class="space-y-3">
-            <div v-for="exp in exploreList" :key="exp.id" class="glass rounded-2xl p-4">
+            <div v-for="exp in filteredExploreList" :key="exp.id" class="glass rounded-2xl p-4">
               <div class="flex items-center justify-between mb-2.5">
                 <span class="px-2.5 py-1 rounded-lg text-[11px] font-medium" style="background: var(--fill); color: var(--text-secondary);">{{ exp.tag }}</span>
-                <span class="text-[12px] font-medium" style="color: var(--text-muted);">{{ formatRelativeTime(exp.created_at) }}</span>
+                <span class="text-[12px] font-medium" style="color: var(--text-muted);">{{ exp.created_at ? formatRelativeTime(exp.created_at) : 'Hace un momento' }}</span>
               </div>
               <h4 class="text-[15px] font-bold mb-0.5" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">{{ exp.location }}</h4>
               <p class="text-[12px] font-medium flex items-center gap-1 mb-3" style="color: var(--text-secondary);">
@@ -266,9 +275,27 @@
               <p class="text-[13px] italic leading-relaxed py-3 px-3.5 rounded-xl" style="background: var(--fill); color: var(--text-secondary);">"{{ exp.description }}"</p>
               <div class="flex justify-between items-center mt-3 pt-3" style="border-top: 1px solid var(--border-subtle);">
                 <span class="text-[12px] font-medium" style="color: var(--text-muted);">Pareja Anónima</span>
-                <div class="flex items-center gap-1 text-[12px] font-bold text-amber-500">
-                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                  {{ exp.avgStars }}
+                
+                <div class="flex items-center gap-3">
+                  <!-- Botón de Dar/Quitar Like con corazón interactivo -->
+                  <button @click="toggleLike(exp.id)" class="flex items-center gap-1 hover:bg-[var(--accent-soft)] transition-colors active:scale-75 cursor-pointer py-1 px-1.5 rounded-xl">
+                    <svg class="w-[18px] h-[18px] transition-all duration-300" 
+                         :class="[isLiked(exp.id) ? 'text-[var(--accent)] fill-current scale-110' : 'text-[#9fa6b1] fill-none']" 
+                         stroke="currentColor" 
+                         stroke-width="2" 
+                         viewBox="0 0 24 24">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                    <span v-if="exp.likes_count > 1" class="text-[12px] font-bold" :class="[isLiked(exp.id) ? 'text-[var(--accent)]' : 'text-[#9fa6b1]']">
+                      {{ exp.likes_count }}
+                    </span>
+                  </button>
+
+                  <!-- Nota promedio -->
+                  <div class="flex items-center gap-1 text-[12px] font-bold text-amber-500">
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    {{ exp.avgStars }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -655,10 +682,88 @@ const isUser1 = computed(() => {
 const datesList = ref([]);
 
 const exploreList = ref([
-  { id: 1, location: 'Café Color', city: 'Villa Alemana', tag: 'Cafecito', avgStars: 4.8, description: 'El ambiente es genial para conversar y jugar juegos de mesa mientras tomas té de frutos rojos.' },
-  { id: 2, location: 'Jardín Botánico', city: 'Viña del Mar', tag: 'Naturaleza', avgStars: 4.9, description: 'Hicimos un picnic abajo de los árboles. Muy tranquilo para desconectarse el fin de semana.' },
-  { id: 3, location: 'La Flor de Chile', city: 'Valparaíso', tag: 'Comida', avgStars: 4.5, description: 'Las mejores chorrillanas de la región. Ideal para ir con hambre.' }
+  { id: 1, location: 'Café Color', city: 'Villa Alemana', tag: 'Cafecito', avgStars: 4.8, description: 'El ambiente es genial para conversar y jugar juegos de mesa mientras tomas té de frutos rojos.', likes_count: 5, user_liked: false },
+  { id: 2, location: 'Jardín Botánico', city: 'Viña del Mar', tag: 'Naturaleza', avgStars: 4.9, description: 'Hicimos un picnic abajo de los árboles. Muy tranquilo para desconectarse el fin de semana.', likes_count: 12, user_liked: false },
+  { id: 3, location: 'La Flor de Chile', city: 'Valparaíso', tag: 'Comida', avgStars: 4.5, description: 'Las mejores chorrillanas de la región. Ideal para ir con hambre.', likes_count: 8, user_liked: false }
 ]);
+
+const searchQuery = ref('');
+const selectedCity = ref('Todas');
+const nearbyCities = ref(['Todas', 'Villa Alemana', 'Quilpué', 'Viña del Mar', 'Valparaíso', 'Santiago']);
+
+const localLikes = ref([]);
+
+const toggleLike = async (id) => {
+  const item = exploreList.value.find(exp => exp.id === id);
+  if (!item) return;
+
+  try {
+    const res = await api.likeDate(id);
+    item.user_liked = res.liked;
+    item.likes_count = res.likes_count !== undefined ? res.likes_count : (res.liked ? ((item.likes_count || 0) + 1) : Math.max(0, (item.likes_count || 0) - 1));
+  } catch (error) {
+    console.warn('Backend like failed, using local fallback:', error.message);
+    const idx = localLikes.value.indexOf(id);
+    if (idx > -1) {
+      localLikes.value.splice(idx, 1);
+      item.user_liked = false;
+      item.likes_count = Math.max(0, (item.likes_count || 0) - 1);
+    } else {
+      localLikes.value.push(id);
+      item.user_liked = true;
+      item.likes_count = (item.likes_count || 0) + 1;
+    }
+  }
+};
+
+const isLiked = (id) => {
+  const item = exploreList.value.find(exp => exp.id === id);
+  if (item && item.user_liked !== undefined) {
+    return !!item.user_liked;
+  }
+  return localLikes.value.includes(id);
+};
+
+const detectLocation = async () => {
+  try {
+    const res = await fetch('https://ipapi.co/json/');
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.city) {
+        const city = data.city;
+        const region = data.region || '';
+        if (['villa alemana', 'viña del mar', 'valparaíso', 'valparaiso', 'quilpué', 'concon', 'concón'].some(c => city.toLowerCase().includes(c) || region.toLowerCase().includes('valparaiso'))) {
+          nearbyCities.value = ['Todas', 'Villa Alemana', 'Quilpué', 'Viña del Mar', 'Valparaíso'];
+        } else if (city.toLowerCase().includes('santiago') || region.toLowerCase().includes('santiago') || region.toLowerCase().includes('metropolitana')) {
+          nearbyCities.value = ['Todas', 'Santiago', 'Providencia', 'Las Condes', 'Ñuñoa'];
+        } else if (['concepcion', 'concepción', 'talcahuano', 'biobio', 'bio-bio', 'bío-bío', 'bío bío'].some(c => city.toLowerCase().includes(c) || region.toLowerCase().includes('bio') || region.toLowerCase().includes('bío'))) {
+          nearbyCities.value = ['Todas', 'Concepción', 'Talcahuano', 'San Pedro de la Paz', 'Chillán', 'Los Ángeles'];
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Geolocation detection failed:', e);
+  }
+};
+
+const filteredExploreList = computed(() => {
+  return exploreList.value.filter(item => {
+    if (selectedCity.value !== 'Todas') {
+      if (item.city.toLowerCase() !== selectedCity.value.toLowerCase()) {
+        return false;
+      }
+    }
+    if (searchQuery.value) {
+      const query = searchQuery.value.toLowerCase();
+      const matchesLocation = item.location?.toLowerCase().includes(query);
+      const matchesDescription = item.description?.toLowerCase().includes(query);
+      const matchesTag = item.tag?.toLowerCase().includes(query);
+      const matchesCity = item.city?.toLowerCase().includes(query);
+      return matchesLocation || matchesDescription || matchesTag || matchesCity;
+    }
+    return true;
+  });
+});
 
 const newDate = ref({ location: '', city: 'Villa Alemana', date: new Date().toISOString().split('T')[0], tags: [], rating1: 5.0, rating2: 5.0, description: '', photo_url: '' });
 
@@ -761,7 +866,9 @@ const loadExploreDates = async () => {
         tag: date.tags && date.tags.length > 0 ? date.tags[0] : 'Cita',
         avgStars: getAvgStars(date.rating_user_1, date.rating_user_2),
         description: date.description || 'Sin descripción...',
-        created_at: date.created_at
+        created_at: date.created_at,
+        likes_count: date.likes_count || 0,
+        user_liked: !!date.user_liked
       }));
     }
   } catch (error) {
@@ -1075,6 +1182,7 @@ onMounted(async () => {
     // Load actual dates list from Database
     await loadDates();
     await loadExploreDates();
+    detectLocation();
 
     // Subscribe to couple WebSocket channel for real-time clicks
     socket = io(getApiUrl());

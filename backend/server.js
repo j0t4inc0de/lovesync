@@ -257,16 +257,55 @@ app.post('/api/profile/unpair', authenticateToken, async (req, res) => {
 
 // ── Dates (Bitácora) Endpoints ──
 
-// Fetch all dates for exploration (anonymous display)
+// Fetch all dates for exploration (anonymous display with likes)
 app.get('/api/dates/explore', authenticateToken, async (req, res) => {
   try {
     const datesRes = await pool.query(
-      'SELECT id, location, city, date_time, description, rating_user_1, rating_user_2, photo_url, tags, created_at FROM dates ORDER BY created_at DESC'
+      `SELECT 
+         d.id, d.location, d.city, d.date_time, d.description, 
+         d.rating_user_1, d.rating_user_2, d.photo_url, d.tags, d.created_at,
+         COUNT(l.id)::int AS likes_count,
+         EXISTS(SELECT 1 FROM date_likes WHERE date_id = d.id AND user_id = $1) AS user_liked
+       FROM dates d
+       LEFT JOIN date_likes l ON l.date_id = d.id
+       GROUP BY d.id
+       ORDER BY d.created_at DESC`,
+      [req.user.id]
     );
     res.json(datesRes.rows);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al cargar exploración.' });
+  }
+});
+
+// Toggle Like on a date
+app.post('/api/dates/:id/like', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const checkRes = await pool.query(
+      'SELECT id FROM date_likes WHERE date_id = $1 AND user_id = $2',
+      [id, userId]
+    );
+
+    if (checkRes.rows.length > 0) {
+      await pool.query(
+        'DELETE FROM date_likes WHERE date_id = $1 AND user_id = $2',
+        [id, userId]
+      );
+      res.json({ liked: false });
+    } else {
+      await pool.query(
+        'INSERT INTO date_likes (date_id, user_id) VALUES ($1, $2)',
+        [id, userId]
+      );
+      res.json({ liked: true });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al procesar el like.' });
   }
 });
 

@@ -30,3 +30,12 @@ CREATE TABLE IF NOT EXISTS dates (
     tags TEXT[],
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Create Date Likes Table
+CREATE TABLE IF NOT EXISTS date_likes (
+    id SERIAL PRIMARY KEY,
+    date_id INT NOT NULL REFERENCES dates(id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_date_user_like UNIQUE(date_id, user_id)
+);

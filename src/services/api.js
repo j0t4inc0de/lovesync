@@ -96,6 +96,12 @@ export const api = {
     });
   },
   
+  likeDate: async (id) => {
+    return request(`/api/dates/${id}/like`, {
+      method: 'POST'
+    });
+  },
+  
   logout: () => {
     removeToken();
   }
