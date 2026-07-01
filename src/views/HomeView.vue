@@ -357,13 +357,13 @@
             <button @click="buySlots" class="btn-primary w-full text-[15px]">$4.990 CLP · +5 cupos</button>
           </div>
 
-          <!-- Panel de Control Administrador (Secret Card only for Admins) -->
-          <div v-if="currentUser?.is_admin" class="rounded-2xl p-5 mb-4 relative overflow-hidden text-white border border-amber-500/20" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.25) 100%); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);">
-            <div class="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-amber-500/10 blur-xl"></div>
-            <p class="text-[0.65rem] font-bold uppercase tracking-widest mb-3 text-amber-400">Administrador</p>
+          <!-- Panel de Control Administrador (Red themed Premium style card) -->
+          <div v-if="currentUser?.is_admin" class="rounded-2xl p-5 mb-4 relative overflow-hidden text-white border border-white/10" style="background: linear-gradient(135deg, rgba(185, 28, 28, 0.85) 0%, rgba(127, 29, 29, 0.98) 100%); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);">
+            <div class="absolute -right-6 -bottom-6 w-32 h-32 rounded-full" style="background: radial-gradient(circle, rgba(239, 68, 68, 0.4), transparent); opacity: 0.8;"></div>
+            <p class="text-[0.65rem] font-bold uppercase tracking-widest mb-3 text-white/40">Administrador</p>
             <h3 class="text-[17px] font-bold mb-1" style="font-family: 'Comfortaa', sans-serif;">Panel de Control</h3>
-            <p class="text-[13px] mb-4 leading-relaxed text-amber-200/80">Gestiona parejas, asigna planes de prueba o actualiza cupos mensuales.</p>
-            <button @click="openAdminModal" class="btn w-full text-[15px] bg-amber-500 text-white font-semibold shadow-lg shadow-amber-500/20 hover:bg-amber-600 transition-colors active:scale-95">Abrir Panel Admin</button>
+            <p class="text-[13px] mb-4 leading-relaxed text-white/60">Gestiona parejas, asigna planes de prueba o actualiza cupos mensuales.</p>
+            <button @click="openAdminModal" class="w-full py-2.5 rounded-xl text-[15px] font-bold bg-[#1a1a2e] text-white hover:bg-black transition-all duration-200 active:scale-95 shadow-lg shadow-black/30">Abrir Panel Admin</button>
           </div>
 
           <!-- Cerrar Sesión -->
@@ -615,7 +615,10 @@
               <!-- Members -->
               <div class="space-y-1.5 pt-1.5" style="border-top: 1px dashed var(--border-subtle);">
                 <div v-for="member in cp.members" :key="member.id" class="text-[12px] flex items-center justify-between">
-                  <span class="font-semibold" style="color: var(--text-primary);">{{ member.name }}</span>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[9px] font-bold bg-black/5 text-[var(--text-muted)] px-1 rounded">ID: {{ member.id }}</span>
+                    <span class="font-semibold" style="color: var(--text-primary);">{{ member.name }}</span>
+                  </div>
                   <span class="font-mono text-[var(--text-muted)]">{{ member.email }}</span>
                 </div>
                 <div v-if="!cp.members || cp.members.length === 0" class="text-[12px] italic text-[var(--text-muted)]">Sin integrantes vinculados.</div>
