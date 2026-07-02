@@ -111,6 +111,12 @@
               <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
               {{ doubleLockState === 'idle' ? 'Añadir Cita' : doubleLockState === 'waiting' ? 'Esperando a ' + partnerName + '...' : doubleLockState === 'waiting_partner' ? '¡' + partnerName + ' te espera! Presiona' : '¡Ambos Listos!' }}
             </button>
+            
+            <button v-if="doubleLockState === 'waiting' || doubleLockState === 'waiting_partner'" 
+                    @click="cancelLock" 
+                    class="btn-soft w-full mt-2 text-[14px]">
+              Cancelar
+            </button>
           </div>
 
           <!-- Memory Cards -->
@@ -1042,6 +1048,13 @@ const handleFirstLock = () => {
   }
 };
 
+const cancelLock = () => {
+  doubleLockState.value = 'idle';
+  if (socket) {
+    socket.emit('clear_lock', userCoupleId.value);
+  }
+};
+
 const simulatePartnerClick = () => {
   // Local fallback simulation
   if (doubleLockState.value === 'waiting') {
@@ -1475,9 +1488,12 @@ onMounted(async () => {
 
     // Subscribe to couple WebSocket channel for real-time clicks
     socket = io(getApiUrl());
-    socket.emit('join_couple', userCoupleId.value);
     
     socket.on('partner_lock_event', (payload) => {
+      if (!payload || payload.userId === null) {
+        doubleLockState.value = 'idle';
+        return;
+      }
       if (payload.userId !== currentUser.value.id) {
         if (doubleLockState.value === 'waiting') {
           // Both clicked! Match!
@@ -1499,6 +1515,8 @@ onMounted(async () => {
       loadDates();
       loadExploreDates();
     });
+
+    socket.emit('join_couple', { coupleId: userCoupleId.value, userId: currentUser.value.id });
 
     socket.on('date_updated', () => {
       loadDates();

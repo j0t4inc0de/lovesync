@@ -693,9 +693,16 @@ app.delete('/api/dates/:id', authenticateToken, async (req, res) => {
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
-  socket.on('join_couple', (coupleId) => {
+  socket.on('join_couple', (data) => {
+    const coupleId = typeof data === 'object' ? data.coupleId : data;
+    const userId = typeof data === 'object' ? data.userId : null;
+    
+    socket.coupleId = coupleId;
+    if (userId) socket.userId = userId;
+    
     socket.join(`couple_${coupleId}`);
     console.log(`Socket ${socket.id} joined room couple_${coupleId}`);
+    
     const waitingUser = pendingLocks.get(coupleId);
     if (waitingUser) {
       socket.emit('partner_lock_event', { userId: waitingUser });
@@ -705,6 +712,8 @@ io.on('connection', (socket) => {
   socket.on('partner_lock', (data) => {
     const { coupleId, userId } = data;
     if (coupleId) {
+      socket.coupleId = coupleId;
+      socket.userId = userId;
       // Set the pending lock state in the Map
       pendingLocks.set(coupleId, userId);
       // Broadcast partner click to other users in the couple room
@@ -712,6 +721,7 @@ io.on('connection', (socket) => {
       setTimeout(() => {
         if (pendingLocks.get(coupleId) === userId) {
           pendingLocks.delete(coupleId);
+          socket.to(`couple_${coupleId}`).emit('partner_lock_event', { userId: null });
         }
       }, 600000);
     }
@@ -719,10 +729,18 @@ io.on('connection', (socket) => {
 
   socket.on('clear_lock', (coupleId) => {
     pendingLocks.delete(coupleId);
+    socket.to(`couple_${coupleId}`).emit('partner_lock_event', { userId: null });
   });
 
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
+    if (socket.coupleId && socket.userId) {
+      const waitingUser = pendingLocks.get(socket.coupleId);
+      if (waitingUser === socket.userId) {
+        pendingLocks.delete(socket.coupleId);
+        socket.to(`couple_${socket.coupleId}`).emit('partner_lock_event', { userId: null });
+      }
+    }
   });
 });
 
