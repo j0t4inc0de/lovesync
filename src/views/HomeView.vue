@@ -230,7 +230,7 @@
               </div>
               <h3 class="text-[17px] font-bold mb-1" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Intento Anulado</h3>
               <p class="text-[13px] mb-5" style="color: var(--text-secondary);">Cambiaste de pestaña o saliste de la app.</p>
-              <button @click="restartTrivia" class="btn text-[15px] mx-auto block text-white font-semibold shadow-lg shadow-red-500/20" style="background: #ff3b30;">Nueva Pregunta</button>
+              <button @click="restartTrivia" class="btn text-[15px] mx-auto block text-white font-semibold shadow-lg shadow-red-500/20" style="background: #ff3b30;">Aceptar</button>
             </div>
 
             <div v-else-if="triviaState === 'success'" class="glass rounded-2xl p-6 text-center">
@@ -238,9 +238,11 @@
                 <svg class="w-7 h-7 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
               </div>
               <h3 class="text-[17px] font-bold mb-1" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">¡Correcto!</h3>
-              <p class="text-[13px] mb-2" style="color: var(--text-secondary);">Ambos respondieron bien.</p>
-              <div class="inline-block px-3 py-1 rounded-full text-[12px] font-bold mb-5 border" style="background: rgba(52, 199, 89, 0.06); border-color: rgba(52, 199, 89, 0.12); color: #34c759;">+1 Cupo Ganado</div>
-              <button @click="restartTrivia" class="btn text-[15px] mx-auto block text-white font-semibold shadow-lg shadow-emerald-500/20" style="background: #34c759;">Volver a jugar</button>
+              <p class="text-[13.5px] mb-4 leading-relaxed" style="color: var(--text-secondary);">
+                {{ matchedDailySlots ? '¡Ambos respondieron bien!' : 'Respondiste correctamente. Esperando que tu pareja también responda hoy ♡' }}
+              </p>
+              <div v-if="matchedDailySlots" class="inline-block px-3 py-1 rounded-full text-[12px] font-bold mb-5 border" style="background: rgba(52, 199, 89, 0.06); border-color: rgba(52, 199, 89, 0.12); color: #34c759;">+1 Cupo Ganado</div>
+              <button @click="restartTrivia" class="btn text-[15px] mx-auto block text-white font-semibold shadow-lg shadow-emerald-500/20" style="background: #34c759;">Aceptar</button>
             </div>
 
             <div v-else-if="triviaState === 'wrong'" class="glass rounded-2xl p-6 text-center">
@@ -249,7 +251,7 @@
               </div>
               <h3 class="text-[17px] font-bold mb-1" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Incorrecto</h3>
               <p class="text-[13px] mb-5" style="color: var(--text-secondary);">La correcta era: <strong>{{ currentQuestion?.options[currentQuestion?.answerIdx] }}</strong></p>
-              <button @click="restartTrivia" class="btn-ghost text-[15px] mx-auto block">Otra pregunta</button>
+              <button @click="restartTrivia" class="btn text-[15px] mx-auto block text-white font-semibold bg-zinc-500 hover:bg-zinc-600 shadow-md">Aceptar</button>
             </div>
 
             <div v-else class="glass rounded-2xl p-6 text-center">
@@ -900,9 +902,10 @@ const isUser1 = computed(() => {
 
 const hasPlayedTriviaToday = computed(() => {
   if (!currentUser.value || !currentUser.value.last_trivia_date) return false;
-  const lastDate = new Date(currentUser.value.last_trivia_date);
-  const today = new Date();
-  return lastDate.toLocaleDateString('sv-SE') === today.toLocaleDateString('sv-SE');
+  const dateStr = currentUser.value.last_trivia_date;
+  const dbDateOnly = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+  const todayStr = new Date().toLocaleDateString('sv-SE');
+  return dbDateOnly === todayStr;
 });
 
 const datesList = ref([]);
@@ -1329,6 +1332,7 @@ const logOut = () => {
 };
 
 const triviaState = ref('idle');
+const matchedDailySlots = ref(false);
 const timerSeconds = ref(15);
 const currentQuestion = ref(null);
 let timerInterval = null;
@@ -1404,6 +1408,7 @@ const generateDynamicTrivia = () => {
 const handleVisibilityChange = () => { if (document.hidden && triviaState.value === 'active') triggerCheatAnnullment(); };
 
 const startTrivia = () => {
+  matchedDailySlots.value = false;
   const dynamicQuestions = generateDynamicTrivia();
   if (dynamicQuestions.length === 0) return;
 
@@ -1451,6 +1456,7 @@ const selectOption = async (idx) => {
     const res = await api.playTrivia(isCorrect);
     if (res.success) {
       currentUser.value.last_trivia_date = new Date().toLocaleDateString('sv-SE');
+      matchedDailySlots.value = res.matchedDailySlots || false;
       if (res.newMaxSlots) {
         maxSlots.value = res.newMaxSlots;
       }
@@ -1464,7 +1470,10 @@ const selectOption = async (idx) => {
   }
 };
 
-const restartTrivia = () => { triviaState.value = 'idle'; };
+const restartTrivia = () => { 
+  triviaState.value = 'idle'; 
+  matchedDailySlots.value = false;
+};
 
 onMounted(async () => {
   // Auth state verification

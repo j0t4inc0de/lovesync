@@ -307,37 +307,55 @@ app.post('/api/profile/slots', authenticateToken, async (req, res) => {
   }
 });
 
-// Play daily trivia (enforces once per day per user, awards +1 expiring slot)
+// Play daily trivia (enforces once per day per user, awards +1 expiring slot if both answer correctly)
 app.post('/api/trivia/play', authenticateToken, async (req, res) => {
   const { correct } = req.body;
   
   try {
     const userRes = await pool.query(
-      'SELECT couple_id, last_trivia_date FROM users WHERE id = $1',
+      'SELECT couple_id FROM users WHERE id = $1',
       [req.user.id]
     );
     const user = userRes.rows[0];
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado.' });
+    if (!user.couple_id) return res.status(400).json({ error: 'Debes estar en una pareja para jugar.' });
     
-    if (user.last_trivia_date) {
-      const lastDate = new Date(user.last_trivia_date);
-      const today = new Date();
-      // Format as YYYY-MM-DD in local time
-      const lastDateStr = lastDate.toLocaleDateString('sv-SE'); // Swedish format returns YYYY-MM-DD
-      const todayStr = today.toLocaleDateString('sv-SE');
-      
-      if (lastDateStr === todayStr) {
-        return res.status(400).json({ error: 'Ya has jugado la trivia de hoy. ¡Vuelve mañana!' });
-      }
+    // Check if the user already played today using the new daily_trivia_answers table
+    const alreadyPlayedRes = await pool.query(
+      'SELECT id FROM daily_trivia_answers WHERE user_id = $1 AND date = CURRENT_DATE',
+      [req.user.id]
+    );
+    
+    if (alreadyPlayedRes.rows.length > 0) {
+      return res.status(400).json({ error: 'Ya has jugado la trivia de hoy. ¡Vuelve mañana!' });
     }
     
+    // Insert response into daily_trivia_answers
+    await pool.query(
+      'INSERT INTO daily_trivia_answers (user_id, couple_id, date, correct) VALUES ($1, $2, CURRENT_DATE, $3)',
+      [req.user.id, user.couple_id, !!correct]
+    );
+    
+    // Also update users.last_trivia_date for backward compatibility
     await pool.query(
       'UPDATE users SET last_trivia_date = CURRENT_DATE WHERE id = $1',
       [req.user.id]
     );
     
     let newMaxSlots = null;
-    if (correct && user.couple_id) {
+    
+    // Check if both partners have answered correctly today
+    const answersRes = await pool.query(
+      'SELECT user_id, correct FROM daily_trivia_answers WHERE couple_id = $1 AND date = CURRENT_DATE',
+      [user.couple_id]
+    );
+    
+    const answers = answersRes.rows;
+    const allAnswered = answers.length === 2;
+    const allCorrect = allAnswered && answers.every(a => a.correct);
+    
+    if (allCorrect) {
+      // Award +1 slot to the couple
       await pool.query(
         `INSERT INTO couple_extra_slots (couple_id, amount, year, month) 
          VALUES ($1, 1, EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int)`,
@@ -360,7 +378,13 @@ app.post('/api/trivia/play', authenticateToken, async (req, res) => {
       newMaxSlots = coupleRes.rows[0].base_slots + coupleRes.rows[0].extra_slots;
     }
     
-    res.json({ success: true, won: !!correct, newMaxSlots });
+    res.json({ 
+      success: true, 
+      played: true, 
+      correct: !!correct, 
+      matchedDailySlots: allCorrect,
+      newMaxSlots 
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al procesar la trivia.' });

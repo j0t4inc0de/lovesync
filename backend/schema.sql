@@ -58,3 +58,14 @@ CREATE TABLE IF NOT EXISTS couple_extra_slots (
     month INT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Create Daily Trivia Answers Table
+CREATE TABLE IF NOT EXISTS daily_trivia_answers (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    couple_id INT NOT NULL REFERENCES couples(id) ON DELETE CASCADE,
+    date DATE NOT NULL DEFAULT CURRENT_DATE,
+    correct BOOLEAN NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_user_daily_trivia UNIQUE(user_id, date)
+);
