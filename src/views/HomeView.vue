@@ -88,7 +88,7 @@
                  class="absolute z-30 w-52 p-3 rounded-2xl glass text-[11px] leading-snug font-semibold text-center flex items-center justify-center border border-white/60 animate-tooltip-in" 
                  style="top: -65px; right: 10px; background: rgba(255,255,255,0.95); backdrop-filter: blur(25px); color: var(--text-primary); pointer-events: none; box-shadow: 0 8px 25px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.02);">
               <div class="absolute -bottom-[5px] right-4 w-2.5 h-2.5 bg-white border-b border-r border-white/60 rotate-45" style="background: rgba(255,255,255,0.95);"></div>
-              <span>Asegúrense de abrir la app a la vez para usar "Añadir Cita" ❤️</span>
+              <span>Presionen ambos al mismo tiempo para registrar su día juntos! ❤️</span>
             </div>
 
             <h3 class="text-[15px] font-semibold mb-1 flex items-center justify-between" style="color: var(--text-primary);">
