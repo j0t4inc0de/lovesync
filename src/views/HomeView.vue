@@ -189,7 +189,7 @@
                  class="absolute z-30 w-52 p-3 rounded-2xl glass text-[11px] leading-snug font-semibold text-center flex items-center justify-center border border-white/60 animate-tooltip-in" 
                  style="top: 40px; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(25px); color: var(--text-primary); pointer-events: none; box-shadow: 0 8px 25px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.02);">
               <div class="absolute -top-[5px] right-2 w-2.5 h-2.5 bg-white border-t border-l border-white/60 rotate-45" style="background: rgba(255,255,255,0.95);"></div>
-              <span>Ambos deben responder correctamente hoy para ganar +1 cupo de cita ♡</span>
+              <span>Ambos deben responder correctamente hoy para ganar +1 cupo de cita ❤️</span>
             </div>
           </div>
 
