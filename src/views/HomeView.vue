@@ -82,10 +82,18 @@
           </div>
 
           <!-- Quick Action -->
-          <div class="glass rounded-2xl p-5 mb-5">
+          <div class="glass rounded-2xl p-5 mb-5 relative">
+            <!-- Tooltip for Quick Action Info -->
+            <div v-if="showQuickActionTooltip" 
+                 class="absolute z-30 w-52 p-3 rounded-2xl glass text-[11px] leading-snug font-semibold text-center flex items-center justify-center border border-white/60 animate-tooltip-in" 
+                 style="top: -65px; right: 10px; background: rgba(255,255,255,0.95); backdrop-filter: blur(25px); color: var(--text-primary); pointer-events: none; box-shadow: 0 8px 25px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.02);">
+              <div class="absolute -bottom-[5px] right-4 w-2.5 h-2.5 bg-white border-b border-r border-white/60 rotate-45" style="background: rgba(255,255,255,0.95);"></div>
+              <span>Asegúrense de abrir la app a la vez para usar "Añadir Cita" ❤️</span>
+            </div>
+
             <h3 class="text-[15px] font-semibold mb-1 flex items-center justify-between" style="color: var(--text-primary);">
               <span>¿Tuvieron una cita hoy?</span>
-              <a href="#" @click.prevent="toggleSlotsTooltip">
+              <a href="#" @click.prevent="toggleQuickActionTooltip">
                 <svg class="w-4 h-4" style="color: #a2a8b3;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3m0 4h.01"/></svg>
               </a>
             </h3>
@@ -780,6 +788,7 @@ const editingDate = ref({
 const showHeartOverlay = ref(false);
 const showMatchCelebration = ref(false);
 const showSlotsTooltip = ref(false);
+const showQuickActionTooltip = ref(false);
 const unpairState = ref('idle');
 const availableTags = ['Comida', 'Baile', 'Paseo', 'Cine', 'Naturaleza', 'Playa', 'Cafecito', 'En Casa'];
 
@@ -1052,6 +1061,17 @@ const toggleSlotsTooltip = () => {
   if (showSlotsTooltip.value) {
     tooltipTimeout = setTimeout(() => {
       showSlotsTooltip.value = false;
+    }, 3500);
+  }
+};
+
+let qaTooltipTimeout = null;
+const toggleQuickActionTooltip = () => {
+  showQuickActionTooltip.value = !showQuickActionTooltip.value;
+  if (qaTooltipTimeout) clearTimeout(qaTooltipTimeout);
+  if (showQuickActionTooltip.value) {
+    qaTooltipTimeout = setTimeout(() => {
+      showQuickActionTooltip.value = false;
     }, 3500);
   }
 };
