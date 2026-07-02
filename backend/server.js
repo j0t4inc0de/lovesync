@@ -694,8 +694,11 @@ io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
   socket.on('join_couple', (data) => {
-    const coupleId = typeof data === 'object' ? data.coupleId : data;
+    const rawCoupleId = typeof data === 'object' ? data.coupleId : data;
     const userId = typeof data === 'object' ? data.userId : null;
+    
+    if (!rawCoupleId) return;
+    const coupleId = Number(rawCoupleId);
     
     socket.coupleId = coupleId;
     if (userId) socket.userId = userId;
@@ -710,8 +713,9 @@ io.on('connection', (socket) => {
   });
 
   socket.on('partner_lock', (data) => {
-    const { coupleId, userId } = data;
-    if (coupleId) {
+    const { coupleId: rawCoupleId, userId } = data;
+    if (rawCoupleId) {
+      const coupleId = Number(rawCoupleId);
       socket.coupleId = coupleId;
       socket.userId = userId;
       // Set the pending lock state in the Map
@@ -727,18 +731,22 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('clear_lock', (coupleId) => {
-    pendingLocks.delete(coupleId);
-    socket.to(`couple_${coupleId}`).emit('partner_lock_event', { userId: null });
+  socket.on('clear_lock', (rawCoupleId) => {
+    if (rawCoupleId) {
+      const coupleId = Number(rawCoupleId);
+      pendingLocks.delete(coupleId);
+      socket.to(`couple_${coupleId}`).emit('partner_lock_event', { userId: null });
+    }
   });
 
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
     if (socket.coupleId && socket.userId) {
-      const waitingUser = pendingLocks.get(socket.coupleId);
+      const coupleId = Number(socket.coupleId);
+      const waitingUser = pendingLocks.get(coupleId);
       if (waitingUser === socket.userId) {
-        pendingLocks.delete(socket.coupleId);
-        socket.to(`couple_${socket.coupleId}`).emit('partner_lock_event', { userId: null });
+        pendingLocks.delete(coupleId);
+        socket.to(`couple_${coupleId}`).emit('partner_lock_event', { userId: null });
       }
     }
   });
