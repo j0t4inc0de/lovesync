@@ -1044,7 +1044,6 @@ const handleFirstLock = () => {
     setTimeout(() => {
       showMatchCelebration.value = false;
       doubleLockState.value = 'idle'; // Reset Persona 2 (matcher) to idle
-      showDateModal.value = true; // Open the modal for the matching partner too
     }, 1800);
   }
 };

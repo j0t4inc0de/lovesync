@@ -718,16 +718,23 @@ io.on('connection', (socket) => {
       const coupleId = Number(rawCoupleId);
       socket.coupleId = coupleId;
       socket.userId = userId;
-      // Set the pending lock state in the Map
-      pendingLocks.set(coupleId, userId);
-      // Broadcast partner click to other users in the couple room
-      socket.to(`couple_${coupleId}`).emit('partner_lock_event', { userId });
-      setTimeout(() => {
-        if (pendingLocks.get(coupleId) === userId) {
-          pendingLocks.delete(coupleId);
-          socket.to(`couple_${coupleId}`).emit('partner_lock_event', { userId: null });
-        }
-      }, 600000);
+      
+      const existingLock = pendingLocks.get(coupleId);
+      if (existingLock && existingLock !== userId) {
+        // Both clicked (Match). Clear lock immediately
+        pendingLocks.delete(coupleId);
+        socket.to(`couple_${coupleId}`).emit('partner_lock_event', { userId });
+      } else {
+        // First lock
+        pendingLocks.set(coupleId, userId);
+        socket.to(`couple_${coupleId}`).emit('partner_lock_event', { userId });
+        setTimeout(() => {
+          if (pendingLocks.get(coupleId) === userId) {
+            pendingLocks.delete(coupleId);
+            socket.to(`couple_${coupleId}`).emit('partner_lock_event', { userId: null });
+          }
+        }, 600000);
+      }
     }
   });
 
