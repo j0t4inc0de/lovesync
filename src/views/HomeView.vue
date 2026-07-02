@@ -175,9 +175,22 @@
 
         <!-- ═══ TRIVIA ═══ -->
         <div v-if="currentTab === 'trivia'">
-          <div class="mb-5">
-            <h2 class="text-[22px] font-bold tracking-tight" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Trivia</h2>
+          <div class="mb-5 relative">
+            <h2 class="text-[22px] font-bold tracking-tight flex items-center justify-between" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">
+              <span>Trivia</span>
+              <a href="#" @click.prevent="toggleTriviaTooltip">
+                <svg class="w-4 h-4" style="color: #a2a8b3;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3m0 4h.01"/></svg>
+              </a>
+            </h2>
             <p class="text-[13px] font-medium" style="color: var(--text-secondary);">Responde correctamente para ganar +1 cupo</p>
+
+            <!-- Tooltip for Trivia Info -->
+            <div v-if="showTriviaTooltip" 
+                 class="absolute z-30 w-52 p-3 rounded-2xl glass text-[11px] leading-snug font-semibold text-center flex items-center justify-center border border-white/60 animate-tooltip-in" 
+                 style="top: 40px; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(25px); color: var(--text-primary); pointer-events: none; box-shadow: 0 8px 25px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.02);">
+              <div class="absolute -top-[5px] right-2 w-2.5 h-2.5 bg-white border-t border-l border-white/60 rotate-45" style="background: rgba(255,255,255,0.95);"></div>
+              <span>Ambos deben responder correctamente hoy para ganar +1 cupo de cita ♡</span>
+            </div>
           </div>
 
           <!-- Locked State if less than 3 dates -->
@@ -797,6 +810,7 @@ const showHeartOverlay = ref(false);
 const showMatchCelebration = ref(false);
 const showSlotsTooltip = ref(false);
 const showQuickActionTooltip = ref(false);
+const showTriviaTooltip = ref(false);
 const unpairState = ref('idle');
 const availableTags = ['Comida', 'Baile', 'Paseo', 'Cine', 'Naturaleza', 'Playa', 'Cafecito', 'En Casa'];
 
@@ -1088,6 +1102,17 @@ const toggleQuickActionTooltip = () => {
   if (showQuickActionTooltip.value) {
     qaTooltipTimeout = setTimeout(() => {
       showQuickActionTooltip.value = false;
+    }, 3500);
+  }
+};
+
+let triviaTooltipTimeout = null;
+const toggleTriviaTooltip = () => {
+  showTriviaTooltip.value = !showTriviaTooltip.value;
+  if (triviaTooltipTimeout) clearTimeout(triviaTooltipTimeout);
+  if (showTriviaTooltip.value) {
+    triviaTooltipTimeout = setTimeout(() => {
+      showTriviaTooltip.value = false;
     }, 3500);
   }
 };
