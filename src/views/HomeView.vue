@@ -1043,7 +1043,8 @@ const handleFirstLock = () => {
 
     setTimeout(() => {
       showMatchCelebration.value = false;
-      doubleLockState.value = 'idle'; // Reset Persona 2 (matcher) to idle; Persona 1 (initiator) will open the modal
+      doubleLockState.value = 'idle'; // Reset Persona 2 (matcher) to idle
+      showDateModal.value = true; // Open the modal for the matching partner too
     }, 1800);
   }
 };
@@ -1514,6 +1515,7 @@ onMounted(async () => {
     socket.on('date_created', () => {
       loadDates();
       loadExploreDates();
+      showDateModal.value = false; // Close the modal if it was open
     });
 
     socket.emit('join_couple', { coupleId: userCoupleId.value, userId: currentUser.value.id });
