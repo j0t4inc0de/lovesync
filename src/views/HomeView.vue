@@ -83,7 +83,10 @@
 
           <!-- Quick Action -->
           <div class="glass rounded-2xl p-5 mb-5">
-            <h3 class="text-[15px] font-semibold mb-1" style="color: var(--text-primary);">¿Tuvieron una cita hoy?</h3>
+            <h3 class="text-[15px] font-semibold mb-1 flex items-center gap-1.5" style="color: var(--text-primary);">
+              ¿Tuvieron una cita hoy?
+              <svg class="w-4 h-4" style="color: #a2a8b3;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3m0 4h.01"/></svg>
+            </h3>
             <p class="text-[13px] mb-4" style="color: var(--text-secondary);">Ambos deben presionar para registrar el recuerdo.</p>
 
             <button @click="handleFirstLock"
