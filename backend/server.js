@@ -478,7 +478,22 @@ app.get('/api/debug/user-trivia', async (req, res) => {
     const answers = await pool.query(
       'SELECT id, user_id, date, correct, created_at FROM daily_trivia_answers ORDER BY id DESC LIMIT 50'
     );
-    res.json({ users: users.rows, answers: answers.rows });
+    
+    let couplesError = null;
+    let couplesCols = null;
+    try {
+      const couplesRes = await pool.query('SELECT * FROM couples LIMIT 1');
+      couplesCols = Object.keys(couplesRes.rows[0] || {});
+    } catch (err) {
+      couplesError = err.message;
+    }
+
+    res.json({ 
+      users: users.rows, 
+      answers: answers.rows,
+      couplesCols,
+      couplesError
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
