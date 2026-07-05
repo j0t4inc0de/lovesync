@@ -155,7 +155,7 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/profile', authenticateToken, async (req, res) => {
   try {
     const userRes = await pool.query(
-      'SELECT id, name, email, couple_id, invite_code, last_trivia_date, is_admin FROM users WHERE id = $1',
+      'SELECT id, name, email, couple_id, invite_code, last_trivia_date::text AS last_trivia_date, is_admin FROM users WHERE id = $1',
       [req.user.id]
     );
     if (userRes.rows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado.' });
@@ -402,7 +402,7 @@ app.post('/api/trivia/play', authenticateToken, async (req, res) => {
 app.get('/api/debug/user-trivia', async (req, res) => {
   try {
     const users = await pool.query(
-      'SELECT id, name, email, last_trivia_date, CURRENT_DATE as server_current_date, NOW() as server_now FROM users ORDER BY id ASC'
+      'SELECT id, name, email, last_trivia_date::text AS last_trivia_date, CURRENT_DATE::text as server_current_date, NOW() as server_now FROM users ORDER BY id ASC'
     );
     const answers = await pool.query(
       'SELECT id, user_id, date, correct, created_at FROM daily_trivia_answers ORDER BY id DESC LIMIT 50'
