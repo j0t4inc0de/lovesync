@@ -393,10 +393,13 @@ app.post('/api/trivia/play', authenticateToken, async (req, res) => {
 
 app.get('/api/debug/user-trivia', async (req, res) => {
   try {
-    const result = await pool.query(
+    const users = await pool.query(
       'SELECT id, name, email, last_trivia_date, CURRENT_DATE as server_current_date, NOW() as server_now FROM users ORDER BY id ASC'
     );
-    res.json(result.rows);
+    const answers = await pool.query(
+      'SELECT id, user_id, date, correct, created_at FROM daily_trivia_answers ORDER BY id DESC LIMIT 50'
+    );
+    res.json({ users: users.rows, answers: answers.rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
