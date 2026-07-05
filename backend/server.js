@@ -180,6 +180,8 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
       const coupleRes = await pool.query(
         `SELECT 
            c.slots AS base_slots,
+           c.unpair_requested_at,
+           c.unpair_requested_by,
            COALESCE(
              (SELECT SUM(amount) FROM couple_extra_slots 
               WHERE couple_id = c.id 
@@ -191,7 +193,25 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
         [user.couple_id]
       );
       if (coupleRes.rows.length > 0) {
-        maxSlots = coupleRes.rows[0].base_slots + coupleRes.rows[0].extra_slots;
+        const couple = coupleRes.rows[0];
+        maxSlots = couple.base_slots + couple.extra_slots;
+
+        if (couple.unpair_requested_at) {
+          const requestedDate = new Date(couple.unpair_requested_at);
+          const diffTime = (new Date()) - requestedDate;
+          const diffDays = diffTime / (1000 * 60 * 60 * 24);
+          if (diffDays < 5) {
+            unpairState = 'pending';
+            unpairRequestedBy = couple.unpair_requested_by;
+            unpairDaysLeft = Math.max(0, Math.ceil(5 - diffDays));
+          } else {
+            // Expired! We silently reset it
+            await pool.query(
+              'UPDATE couples SET unpair_requested_at = NULL, unpair_requested_by = NULL WHERE id = $1',
+              [user.couple_id]
+            );
+          }
+        }
       }
     }
 
@@ -199,7 +219,10 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
       user,
       partnerName,
       partnerId,
-      maxSlots
+      maxSlots,
+      unpairState,
+      unpairRequestedBy,
+      unpairDaysLeft
     });
   } catch (error) {
     console.error(error);
@@ -250,20 +273,67 @@ app.post('/api/profile/pair', authenticateToken, async (req, res) => {
   }
 });
 
-// Unpair / Desvincularse (Decouples both partners but keeps the dates in DB)
+// Unpair / Desvincularse (Request, Cancel, and Confirm)
+
+// Initiate unpairing request
 app.post('/api/profile/unpair', authenticateToken, async (req, res) => {
   try {
     const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
     const coupleId = userRes.rows[0]?.couple_id;
+    if (!coupleId) return res.status(400).json({ error: 'No estás en una pareja.' });
     
-    if (coupleId) {
-      await pool.query('UPDATE users SET couple_id = NULL WHERE couple_id = $1', [coupleId]);
-    }
+    // Set unpair request to NOW and requested_by to current user
+    await pool.query(
+      'UPDATE couples SET unpair_requested_at = NOW(), unpair_requested_by = $1 WHERE id = $2',
+      [req.user.id, coupleId]
+    );
     
-    res.json({ message: 'Te has desvinculado con éxito.' });
+    res.json({ success: true, message: 'Solicitud de desvinculación creada. Tu pareja tiene 5 días para aceptar.' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Error al desvincular.' });
+    res.status(500).json({ error: 'Error al solicitar desvinculación.' });
+  }
+});
+
+// Cancel pending unpairing request
+app.post('/api/profile/unpair/cancel', authenticateToken, async (req, res) => {
+  try {
+    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    const coupleId = userRes.rows[0]?.couple_id;
+    if (!coupleId) return res.status(400).json({ error: 'No estás en una pareja.' });
+    
+    await pool.query(
+      'UPDATE couples SET unpair_requested_at = NULL, unpair_requested_by = NULL WHERE id = $1',
+      [coupleId]
+    );
+    
+    res.json({ success: true, message: 'Solicitud cancelada con éxito.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al cancelar solicitud.' });
+  }
+});
+
+// Confirm/Accept pending unpairing request
+app.post('/api/profile/unpair/confirm', authenticateToken, async (req, res) => {
+  try {
+    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    const coupleId = userRes.rows[0]?.couple_id;
+    if (!coupleId) return res.status(400).json({ error: 'No estás en una pareja.' });
+    
+    // Decouple both users
+    await pool.query('UPDATE users SET couple_id = NULL WHERE couple_id = $1', [coupleId]);
+    
+    // Reset the couple columns
+    await pool.query(
+      'UPDATE couples SET unpair_requested_at = NULL, unpair_requested_by = NULL WHERE id = $1',
+      [coupleId]
+    );
+    
+    res.json({ success: true, message: 'Te has desvinculado con éxito.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al confirmar desvinculación.' });
   }
 });
 

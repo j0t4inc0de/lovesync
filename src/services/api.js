@@ -71,6 +71,18 @@ export const api = {
     });
   },
   
+  cancelUnpair: async () => {
+    return request('/api/profile/unpair/cancel', {
+      method: 'POST'
+    });
+  },
+  
+  confirmUnpair: async () => {
+    return request('/api/profile/unpair/confirm', {
+      method: 'POST'
+    });
+  },
+  
   getDates: async () => {
     return request('/api/dates');
   },

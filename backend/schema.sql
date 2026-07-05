@@ -69,3 +69,7 @@ CREATE TABLE IF NOT EXISTS daily_trivia_answers (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT unique_user_daily_trivia UNIQUE(user_id, date)
 );
+
+-- Migration for existing couples table (unpair request system)
+ALTER TABLE couples ADD COLUMN IF NOT EXISTS unpair_requested_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;
+ALTER TABLE couples ADD COLUMN IF NOT EXISTS unpair_requested_by INT REFERENCES users(id) ON DELETE SET NULL DEFAULT NULL;

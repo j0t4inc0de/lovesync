@@ -422,15 +422,48 @@
           <!-- Danger Zone: Unpair option pushed to the bottom -->
           <div class="glass rounded-2xl p-5 mb-4">
             <p class="text-[0.65rem] font-bold uppercase tracking-wider mb-2" style="color: var(--text-muted);">Desvincularse</p>
-            <p class="text-[13px] mb-4 leading-relaxed" style="color: var(--text-secondary);">Ambos deben estar de acuerdo. Tu pareja tiene 5 días para aceptar.</p>
-            <button @click="handleUnpairRequest"
-              :class="[
-                'w-full text-[13px] font-semibold transition-all active:scale-95 btn',
-                unpairState === 'idle' ? '' : 'bg-amber-500 text-white animate-pulse'
-              ]"
-              :style="unpairState === 'idle' ? 'background: rgba(255,59,48,0.08); color: #ff3b30;' : ''">
-              {{ unpairState === 'idle' ? 'Solicitar Desvinculación' : 'Solicitud Enviada (5 días)' }}
-            </button>
+            
+            <div v-if="unpairState === 'idle'">
+              <p class="text-[13px] mb-4 leading-relaxed" style="color: var(--text-secondary);">Ambos deben estar de acuerdo. Tu pareja tiene 5 días para aceptar.</p>
+              <button @click="handleUnpairRequest"
+                class="w-full text-[13px] font-semibold transition-all active:scale-95 btn"
+                style="background: rgba(255,59,48,0.08); color: #ff3b30;">
+                Solicitar Desvinculación
+              </button>
+            </div>
+
+            <div v-else-if="unpairState === 'pending'">
+              <!-- If initiated by current user -->
+              <div v-if="unpairRequestedBy === currentUser.id">
+                <p class="text-[13px] mb-4 leading-relaxed font-medium text-amber-600 animate-pulse">
+                  Solicitud enviada. Tu pareja tiene hasta {{ unpairDaysLeft }} días para aceptar.
+                </p>
+                <button @click="handleCancelUnpair"
+                  class="w-full text-[13px] font-semibold transition-all active:scale-95 btn"
+                  style="background: rgba(0,0,0,0.05); color: var(--text-primary);">
+                  Cancelar Solicitud
+                </button>
+              </div>
+              
+              <!-- If initiated by partner -->
+              <div v-else>
+                <p class="text-[13px] mb-4 leading-relaxed font-semibold text-red-500">
+                  Tu pareja ha solicitado desvincularse. Te quedan {{ unpairDaysLeft }} días para responder.
+                </p>
+                <div class="flex gap-2">
+                  <button @click="handleConfirmUnpair"
+                    class="flex-1 text-[13px] font-semibold transition-all active:scale-95 btn text-white"
+                    style="background: var(--accent);">
+                    Aceptar
+                  </button>
+                  <button @click="handleCancelUnpair"
+                    class="flex-1 text-[13px] font-semibold transition-all active:scale-95 btn"
+                    style="background: rgba(0,0,0,0.05); color: var(--text-primary);">
+                    Rechazar
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -812,6 +845,8 @@ const showSlotsTooltip = ref(false);
 const showQuickActionTooltip = ref(false);
 const showTriviaTooltip = ref(false);
 const unpairState = ref('idle');
+const unpairRequestedBy = ref(null);
+const unpairDaysLeft = ref(0);
 const availableTags = ['Comida', 'Baile', 'Paseo', 'Cine', 'Naturaleza', 'Playa', 'Cafecito', 'En Casa'];
 
 // Admin Panel state & actions
@@ -1337,17 +1372,42 @@ const buyPDF = () => { showPopup('Próximamente ♡'); };
 
 const handleUnpairRequest = async () => {
   if (!userCoupleId.value) return;
-  if (unpairState.value === 'idle') {
-    const confirmUnpair = confirm('¿Estás seguro de que quieres desvincularte de tu pareja? Esto afectará los datos de ambos.');
-    if (!confirmUnpair) return;
+  const confirmUnpair = confirm('¿Estás seguro de que quieres solicitar la desvinculación de tu pareja? Tu pareja tendrá 5 días para aceptar.');
+  if (!confirmUnpair) return;
 
-    try {
-      await api.unpair();
-      alert('Te has desvinculado con éxito. Redireccionando...');
-      router.push('/pair');
-    } catch (error) {
-      alert('Error al desvincular: ' + error.message);
-    }
+  try {
+    const res = await api.unpair();
+    unpairState.value = 'pending';
+    unpairRequestedBy.value = currentUser.value.id;
+    unpairDaysLeft.value = 5;
+    alert(res.message || 'Solicitud de desvinculación enviada.');
+  } catch (error) {
+    alert('Error al solicitar desvinculación: ' + error.message);
+  }
+};
+
+const handleCancelUnpair = async () => {
+  try {
+    const res = await api.cancelUnpair();
+    unpairState.value = 'idle';
+    unpairRequestedBy.value = null;
+    unpairDaysLeft.value = 0;
+    alert(res.message || 'Solicitud cancelada con éxito.');
+  } catch (error) {
+    alert('Error al cancelar solicitud: ' + error.message);
+  }
+};
+
+const handleConfirmUnpair = async () => {
+  const confirmAction = confirm('¿Estás seguro de que quieres confirmar la desvinculación? Esta acción es definitiva.');
+  if (!confirmAction) return;
+
+  try {
+    const res = await api.confirmUnpair();
+    alert(res.message || 'Te has desvinculado con éxito.');
+    router.push('/pair');
+  } catch (error) {
+    alert('Error al confirmar desvinculación: ' + error.message);
   }
 };
 
@@ -1514,6 +1574,9 @@ onMounted(async () => {
     maxSlots.value = profile.maxSlots;
     partnerName.value = profile.partnerName || 'Pareja';
     partnerId.value = profile.partnerId || null;
+    unpairState.value = profile.unpairState || 'idle';
+    unpairRequestedBy.value = profile.unpairRequestedBy || null;
+    unpairDaysLeft.value = profile.unpairDaysLeft || 0;
 
     // Load actual dates list from Database
     await loadDates();
