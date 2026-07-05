@@ -488,11 +488,43 @@ app.get('/api/debug/user-trivia', async (req, res) => {
       couplesError = err.message;
     }
 
+    let profileError = null;
+    try {
+      const uRes = await pool.query(
+        'SELECT id, name, email, couple_id, invite_code, last_trivia_date::text AS last_trivia_date, is_admin FROM users WHERE id = 1'
+      );
+      const user = uRes.rows[0];
+      if (user && user.couple_id) {
+        const partnerRes = await pool.query(
+          'SELECT id, name FROM users WHERE couple_id = $1 AND id != $2 LIMIT 1',
+          [user.couple_id, user.id]
+        );
+        const coupleRes = await pool.query(
+          `SELECT 
+             c.slots AS base_slots,
+             c.unpair_requested_at,
+             c.unpair_requested_by,
+             COALESCE(
+               (SELECT SUM(amount) FROM couple_extra_slots 
+                WHERE couple_id = c.id 
+                  AND year = EXTRACT(YEAR FROM CURRENT_DATE)::int
+                  AND month = EXTRACT(MONTH FROM CURRENT_DATE)::int
+               ), 0
+             )::int AS extra_slots
+           FROM couples c WHERE c.id = $1`,
+          [user.couple_id]
+        );
+      }
+    } catch (err) {
+      profileError = err.message + '\nStack: ' + err.stack;
+    }
+
     res.json({ 
       users: users.rows, 
       answers: answers.rows,
       couplesCols,
-      couplesError
+      couplesError,
+      profileError
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
