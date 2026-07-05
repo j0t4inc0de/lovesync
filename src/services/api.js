@@ -113,9 +113,10 @@ export const api = {
   },
   
   playTrivia: async (correct) => {
+    const localDate = new Date().toLocaleDateString('sv-SE');
     return request('/api/trivia/play', {
       method: 'POST',
-      body: JSON.stringify({ correct })
+      body: JSON.stringify({ correct, localDate })
     });
   },
   

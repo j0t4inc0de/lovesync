@@ -309,7 +309,15 @@ app.post('/api/profile/slots', authenticateToken, async (req, res) => {
 
 // Play daily trivia (enforces once per day per user, awards +1 expiring slot if both answer correctly)
 app.post('/api/trivia/play', authenticateToken, async (req, res) => {
-  const { correct } = req.body;
+  const { correct, localDate } = req.body;
+  
+  // Validate localDate matches YYYY-MM-DD
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  const validatedLocalDate = (localDate && dateRegex.test(localDate)) 
+    ? localDate 
+    : new Date().toLocaleDateString('sv-SE');
+
+  const [year, month] = validatedLocalDate.split('-').map(Number);
   
   try {
     const userRes = await pool.query(
@@ -322,8 +330,8 @@ app.post('/api/trivia/play', authenticateToken, async (req, res) => {
     
     // Check if the user already played today using the new daily_trivia_answers table
     const alreadyPlayedRes = await pool.query(
-      'SELECT id FROM daily_trivia_answers WHERE user_id = $1 AND date = CURRENT_DATE',
-      [req.user.id]
+      'SELECT id FROM daily_trivia_answers WHERE user_id = $1 AND date = $2',
+      [req.user.id, validatedLocalDate]
     );
     
     if (alreadyPlayedRes.rows.length > 0) {
@@ -332,22 +340,22 @@ app.post('/api/trivia/play', authenticateToken, async (req, res) => {
     
     // Insert response into daily_trivia_answers
     await pool.query(
-      'INSERT INTO daily_trivia_answers (user_id, couple_id, date, correct) VALUES ($1, $2, CURRENT_DATE, $3)',
-      [req.user.id, user.couple_id, !!correct]
+      'INSERT INTO daily_trivia_answers (user_id, couple_id, date, correct) VALUES ($1, $2, $3, $4)',
+      [req.user.id, user.couple_id, validatedLocalDate, !!correct]
     );
     
     // Also update users.last_trivia_date for backward compatibility
     await pool.query(
-      'UPDATE users SET last_trivia_date = CURRENT_DATE WHERE id = $1',
-      [req.user.id]
+      'UPDATE users SET last_trivia_date = $1 WHERE id = $2',
+      [validatedLocalDate, req.user.id]
     );
     
     let newMaxSlots = null;
     
     // Check if both partners have answered correctly today
     const answersRes = await pool.query(
-      'SELECT user_id, correct FROM daily_trivia_answers WHERE couple_id = $1 AND date = CURRENT_DATE',
-      [user.couple_id]
+      'SELECT user_id, correct FROM daily_trivia_answers WHERE couple_id = $1 AND date = $2',
+      [user.couple_id, validatedLocalDate]
     );
     
     const answers = answersRes.rows;
@@ -355,11 +363,11 @@ app.post('/api/trivia/play', authenticateToken, async (req, res) => {
     const allCorrect = allAnswered && answers.every(a => a.correct);
     
     if (allCorrect) {
-      // Award +1 slot to the couple
+      // Award +1 slot to the couple for the local month and year
       await pool.query(
         `INSERT INTO couple_extra_slots (couple_id, amount, year, month) 
-         VALUES ($1, 1, EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int)`,
-        [user.couple_id]
+         VALUES ($1, 1, $2, $3)`,
+        [user.couple_id, year, month]
       );
       
       const coupleRes = await pool.query(
@@ -368,12 +376,12 @@ app.post('/api/trivia/play', authenticateToken, async (req, res) => {
            COALESCE(
              (SELECT SUM(amount) FROM couple_extra_slots 
               WHERE couple_id = c.id 
-                AND year = EXTRACT(YEAR FROM CURRENT_DATE)::int
-                AND month = EXTRACT(MONTH FROM CURRENT_DATE)::int
+                AND year = $2
+                AND month = $3
              ), 0
            )::int AS extra_slots
          FROM couples c WHERE c.id = $1`,
-        [user.couple_id]
+        [user.couple_id, year, month]
       );
       newMaxSlots = coupleRes.rows[0].base_slots + coupleRes.rows[0].extra_slots;
     }
