@@ -8,6 +8,7 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import PDFDocument from 'pdfkit';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -637,6 +638,162 @@ app.post('/api/dates/:id/like', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al procesar el like.' });
+  }
+});
+
+// Generate PDF Scrapbook of all dates for the couple
+app.get('/api/dates/pdf', authenticateToken, async (req, res) => {
+  try {
+    // 1. Get user profile and couple_id
+    const userRes = await pool.query(
+      'SELECT couple_id, name FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    const user = userRes.rows[0];
+    if (!user || !user.couple_id) {
+      return res.status(400).json({ error: 'No estás vinculado a una pareja.' });
+    }
+
+    // Get partner name
+    const partnerRes = await pool.query(
+      'SELECT name FROM users WHERE couple_id = $1 AND id != $2 LIMIT 1',
+      [user.couple_id, req.user.id]
+    );
+    const partnerName = partnerRes.rows[0]?.name || 'Pareja';
+
+    // 2. Fetch all dates for the couple ordered by date_time
+    const datesRes = await pool.query(
+      'SELECT location, city, date_time, description, rating_user_1, rating_user_2, photo_url, tags FROM dates WHERE couple_id = $1 ORDER BY date_time ASC',
+      [user.couple_id]
+    );
+    const dates = datesRes.rows;
+
+    // 3. Initialize PDFKit document
+    const doc = new PDFDocument({
+      size: 'LETTER',
+      margins: { top: 50, bottom: 50, left: 50, right: 50 }
+    });
+
+    // Stream PDF to HTTP response
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="our_story_scrapbook.pdf"`);
+    doc.pipe(res);
+
+    // --- Cover Page ---
+    doc.rect(0, 0, doc.page.width, doc.page.height).fill('#fffafb'); // Cozy light pink background
+    doc.fillColor('#ff375f');
+    
+    // Draw decorative hearts
+    doc.fontSize(60).text('♡', { align: 'center', dy: 100 });
+    doc.moveDown(1);
+    
+    doc.fillColor('#2c3e50')
+       .fontSize(36)
+       .font('Helvetica-Bold')
+       .text('Our Story', { align: 'center' });
+       
+    doc.fontSize(16)
+       .font('Helvetica')
+       .fillColor('#7f8c8d')
+       .text('Nuestro Álbum de Recuerdos', { align: 'center' })
+       .moveDown(2);
+       
+    doc.fontSize(22)
+       .font('Helvetica-Bold')
+       .fillColor('#ff375f')
+       .text(`${user.name} & ${partnerName}`, { align: 'center' })
+       .moveDown(3);
+       
+    doc.fontSize(12)
+       .font('Helvetica-Oblique')
+       .fillColor('#95a5a6')
+       .text('Generado con amor ♡', { align: 'center' });
+
+    // --- Date Pages ---
+    for (let i = 0; i < dates.length; i++) {
+      const date = dates[i];
+      doc.addPage({ size: 'LETTER', margins: { top: 50, bottom: 50, left: 50, right: 50 } });
+      
+      // Page background
+      doc.rect(0, 0, doc.page.width, doc.page.height).fill('#ffffff');
+
+      // Top header band
+      doc.rect(50, 45, 512, 3).fill('#ff375f');
+
+      // Title/Location
+      doc.fillColor('#2c3e50')
+         .fontSize(20)
+         .font('Helvetica-Bold')
+         .text(date.location, 50, 65)
+         .fontSize(12)
+         .font('Helvetica')
+         .fillColor('#7f8c8d')
+         .text(`${date.city} • ${new Date(date.date_time).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}`)
+         .moveDown(1);
+
+      // Ratings
+      const avgRating = ((parseFloat(date.rating_user_1) + parseFloat(date.rating_user_2)) / 2).toFixed(1);
+      doc.fontSize(12)
+         .font('Helvetica-Bold')
+         .fillColor('#e67e22')
+         .text(`Valoración: ⭐ ${avgRating} / 5.0  (${user.name}: ${date.rating_user_1} • ${partnerName}: ${date.rating_user_2})`)
+         .moveDown(0.5);
+
+      // Tags
+      if (date.tags && date.tags.length > 0) {
+        doc.fontSize(10)
+           .font('Helvetica-Oblique')
+           .fillColor('#9b59b6')
+           .text(`Tags: ${date.tags.join(', ')}`)
+           .moveDown(1);
+      }
+
+      // Description / Recuerdo
+      if (date.description) {
+        doc.fillColor('#34495e')
+           .fontSize(12)
+           .font('Helvetica')
+           .text(date.description, { width: 512, align: 'justify' })
+           .moveDown(1.5);
+      }
+
+      // Photo
+      if (date.photo_url) {
+        try {
+          const photoStr = date.photo_url;
+          if (photoStr.includes('base64,')) {
+            const base64Data = photoStr.split('base64,')[1];
+            const imgBuffer = Buffer.from(base64Data, 'base64');
+            // Fit image beautifully
+            doc.image(imgBuffer, {
+              fit: [512, 280],
+              align: 'center',
+              valign: 'center'
+            });
+          }
+        } catch (imgError) {
+          console.error('Error drawing image in PDF:', imgError.message);
+          doc.fontSize(10)
+             .fillColor('#e74c3c')
+             .font('Helvetica-Oblique')
+             .text('[Error al cargar la foto de esta cita]');
+        }
+      }
+      
+      // Page number
+      doc.fontSize(9)
+         .fillColor('#bdc3c7')
+         .font('Helvetica')
+         .text(`Página ${i + 2}`, 50, doc.page.height - 35, { align: 'center' });
+    }
+
+    doc.end();
+
+  } catch (error) {
+    console.error(error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Error al generar el PDF.' });
+    }
   }
 });
 

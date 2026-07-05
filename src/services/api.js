@@ -83,6 +83,24 @@ export const api = {
     });
   },
   
+  downloadPDF: async () => {
+    const response = await fetch(`${API_URL}/api/dates/pdf`, {
+      headers: {
+        'Authorization': `Bearer ${getToken()}`
+      }
+    });
+    if (!response.ok) throw new Error('Error al generar PDF');
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'nuestro_album_de_recuerdos.pdf';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  },
+  
   getDates: async () => {
     return request('/api/dates');
   },

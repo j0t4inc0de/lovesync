@@ -1368,7 +1368,14 @@ const buySlots = async () => {
     showPopup('Simulación exitosa: +5 cupos mensuales añadidos.');
   }
 };
-const buyPDF = () => { showPopup('Próximamente ♡'); };
+const buyPDF = async () => {
+  try {
+    showPopup('Generando PDF... Se iniciará la descarga en breve ♡');
+    await api.downloadPDF();
+  } catch (error) {
+    showPopup('Error al generar PDF: ' + error.message);
+  }
+};
 
 const handleUnpairRequest = async () => {
   if (!userCoupleId.value) return;
