@@ -2,9 +2,12 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export const getApiUrl = () => API_URL;
 
-export const getToken = () => localStorage.getItem('lovesync_token');
-export const setToken = (token) => localStorage.setItem('lovesync_token', token);
-export const removeToken = () => localStorage.removeItem('lovesync_token');
+export const getToken = () => localStorage.getItem('ourstory_token') || localStorage.getItem('lovesync_token');
+export const setToken = (token) => localStorage.setItem('ourstory_token', token);
+export const removeToken = () => {
+  localStorage.removeItem('ourstory_token');
+  localStorage.removeItem('lovesync_token');
+};
 
 const request = async (endpoint, options = {}) => {
   const url = `${API_URL}${endpoint}`;
