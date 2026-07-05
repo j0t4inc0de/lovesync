@@ -413,6 +413,16 @@ app.get('/api/debug/user-trivia', async (req, res) => {
   }
 });
 
+app.get('/api/debug/reset-jota', async (req, res) => {
+  try {
+    await pool.query("UPDATE users SET last_trivia_date = '2026-07-04' WHERE id = 1");
+    await pool.query("UPDATE daily_trivia_answers SET date = '2026-07-04' WHERE user_id = 1 AND date = '2026-07-05'");
+    res.json({ success: true, message: 'Jota reset successfully to July 4th!' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Admin Verification Middleware
 const requireAdmin = async (req, res, next) => {
   try {
