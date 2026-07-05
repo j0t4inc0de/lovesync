@@ -391,6 +391,17 @@ app.post('/api/trivia/play', authenticateToken, async (req, res) => {
   }
 });
 
+app.get('/api/debug/user-trivia', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, name, email, last_trivia_date, CURRENT_DATE as server_current_date, NOW() as server_now FROM users ORDER BY id ASC'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Admin Verification Middleware
 const requireAdmin = async (req, res, next) => {
   try {
