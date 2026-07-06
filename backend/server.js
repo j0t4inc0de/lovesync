@@ -843,6 +843,10 @@ app.get('/api/dates/pdf', authenticateToken, async (req, res) => {
     for (let i = 0; i < range.count; i++) {
       doc.switchToPage(i);
       
+      // Temporarily disable auto page breaks by setting bottom margin to 0
+      const oldBottomMargin = doc.page.margins.bottom;
+      doc.page.margins.bottom = 0;
+      
       // Skip cover page
       if (i > 0) {
         doc.fontSize(9)
@@ -850,6 +854,9 @@ app.get('/api/dates/pdf', authenticateToken, async (req, res) => {
            .font('Helvetica')
            .text(`Página ${i + 1} de ${range.count}`, 50, doc.page.height - 35, { align: 'center' });
       }
+      
+      // Restore bottom margin
+      doc.page.margins.bottom = oldBottomMargin;
     }
 
     doc.end();
