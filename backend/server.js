@@ -718,9 +718,16 @@ app.get('/api/dates/pdf', authenticateToken, async (req, res) => {
     );
     const dates = datesRes.rows;
 
-    // 3. Initialize PDFKit document
+    // Helper to strip emojis and unsupported unicode symbols (keeps Spanish accents/ñ/Ñ/etc.)
+    const cleanText = (str) => {
+      if (!str) return '';
+      return str.replace(/[^\x00-\x7F\u00C0-\u017F]/g, '');
+    };
+
+    // 3. Initialize PDFKit document with buffered pages
     const doc = new PDFDocument({
       size: 'LETTER',
+      bufferPages: true,
       margins: { top: 50, bottom: 50, left: 50, right: 50 }
     });
 
@@ -731,11 +738,15 @@ app.get('/api/dates/pdf', authenticateToken, async (req, res) => {
 
     // --- Cover Page ---
     doc.rect(0, 0, doc.page.width, doc.page.height).fill('#fffafb'); // Cozy light pink background
-    doc.fillColor('#ff375f');
     
-    // Draw decorative hearts
-    doc.fontSize(60).text('♡', { align: 'center', dy: 100 });
-    doc.moveDown(1);
+    // Draw a vector heart on cover page
+    doc.save()
+       .translate(doc.page.width / 2 - 25, 120)
+       .path('M25,12 C25,12 18,3 8,3 C-2,3 -4,15 8,24 C16,30 25,38 25,38 C25,38 34,30 42,24 C54,15 52,3 42,3 C32,3 25,12 25,12 Z')
+       .fill('#ff375f')
+       .restore();
+    
+    doc.moveDown(8);
     
     doc.fillColor('#2c3e50')
        .fontSize(36)
@@ -751,13 +762,13 @@ app.get('/api/dates/pdf', authenticateToken, async (req, res) => {
     doc.fontSize(22)
        .font('Helvetica-Bold')
        .fillColor('#ff375f')
-       .text(`${user.name} & ${partnerName}`, { align: 'center' })
+       .text(`${cleanText(user.name)} & ${cleanText(partnerName)}`, { align: 'center' })
        .moveDown(3);
        
     doc.fontSize(12)
        .font('Helvetica-Oblique')
        .fillColor('#95a5a6')
-       .text('Generado con amor ♡', { align: 'center' });
+       .text('Generado con amor', { align: 'center' });
 
     // --- Date Pages ---
     for (let i = 0; i < dates.length; i++) {
@@ -774,11 +785,11 @@ app.get('/api/dates/pdf', authenticateToken, async (req, res) => {
       doc.fillColor('#2c3e50')
          .fontSize(20)
          .font('Helvetica-Bold')
-         .text(date.location, 50, 65)
+         .text(cleanText(date.location), 50, 65)
          .fontSize(12)
          .font('Helvetica')
          .fillColor('#7f8c8d')
-         .text(`${date.city} • ${new Date(date.date_time).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}`)
+         .text(`${cleanText(date.city)} • ${new Date(date.date_time).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}`)
          .moveDown(1);
 
       // Ratings
@@ -786,7 +797,7 @@ app.get('/api/dates/pdf', authenticateToken, async (req, res) => {
       doc.fontSize(12)
          .font('Helvetica-Bold')
          .fillColor('#e67e22')
-         .text(`Valoración: ⭐ ${avgRating} / 5.0  (${user.name}: ${date.rating_user_1} • ${partnerName}: ${date.rating_user_2})`)
+         .text(`Valoración Promedio: ${avgRating} / 5.0  (${cleanText(user.name)}: ${date.rating_user_1} • ${cleanText(partnerName)}: ${date.rating_user_2})`)
          .moveDown(0.5);
 
       // Tags
@@ -794,7 +805,7 @@ app.get('/api/dates/pdf', authenticateToken, async (req, res) => {
         doc.fontSize(10)
            .font('Helvetica-Oblique')
            .fillColor('#9b59b6')
-           .text(`Tags: ${date.tags.join(', ')}`)
+           .text(`Tags: ${cleanText(date.tags.join(', '))}`)
            .moveDown(1);
       }
 
@@ -803,7 +814,7 @@ app.get('/api/dates/pdf', authenticateToken, async (req, res) => {
         doc.fillColor('#34495e')
            .fontSize(12)
            .font('Helvetica')
-           .text(date.description, { width: 512, align: 'justify' })
+           .text(cleanText(date.description), { width: 512, align: 'justify' })
            .moveDown(1.5);
       }
 
@@ -814,27 +825,31 @@ app.get('/api/dates/pdf', authenticateToken, async (req, res) => {
           if (photoStr.includes('base64,')) {
             const base64Data = photoStr.split('base64,')[1];
             const imgBuffer = Buffer.from(base64Data, 'base64');
-            // Fit image beautifully
+            // Fit image beautifully with a max height of 200 to prevent unnecessary page overflows
             doc.image(imgBuffer, {
-              fit: [512, 280],
+              fit: [512, 200],
               align: 'center',
               valign: 'center'
             });
           }
         } catch (imgError) {
           console.error('Error drawing image in PDF:', imgError.message);
-          doc.fontSize(10)
-             .fillColor('#e74c3c')
-             .font('Helvetica-Oblique')
-             .text('[Error al cargar la foto de esta cita]');
         }
       }
+    }
+
+    // --- Dynamic Page Numbering ---
+    const range = doc.bufferedPageRange();
+    for (let i = 0; i < range.count; i++) {
+      doc.switchToPage(i);
       
-      // Page number
-      doc.fontSize(9)
-         .fillColor('#bdc3c7')
-         .font('Helvetica')
-         .text(`Página ${i + 2}`, 50, doc.page.height - 35, { align: 'center' });
+      // Skip cover page
+      if (i > 0) {
+        doc.fontSize(9)
+           .fillColor('#bdc3c7')
+           .font('Helvetica')
+           .text(`Página ${i + 1} de ${range.count}`, 50, doc.page.height - 35, { align: 'center' });
+      }
     }
 
     doc.end();
