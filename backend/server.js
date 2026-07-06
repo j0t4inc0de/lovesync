@@ -165,6 +165,9 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
     let partnerName = null;
     let partnerId = null;
     let maxSlots = 10;
+    let unpairState = 'idle';
+    let unpairRequestedBy = null;
+    let unpairDaysLeft = 0;
 
     if (user.couple_id) {
       // Get partner info
