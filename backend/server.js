@@ -227,7 +227,7 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Error del servidor al obtener perfil.' });
+    res.status(500).json({ error: 'Error del servidor al obtener perfil.', details: error.message, stack: error.stack });
   }
 });
 
