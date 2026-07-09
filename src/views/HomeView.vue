@@ -1419,7 +1419,7 @@ const handlePhotoUpload = async (event, mode) => {
 const buySlots = async (packageOrEvent = 'slots_5') => {
   if (loadingPayment.value) return;
   loadingPayment.value = true;
-  showPopup('⏳ Conectando de forma segura con MercadoPago...');
+  showPopup('Conectando de forma segura con MercadoPago...');
 
   const packageId = typeof packageOrEvent === 'string' ? packageOrEvent : 'slots_5';
 
@@ -1668,14 +1668,14 @@ onMounted(async () => {
 
     if (paymentStatus === 'success') {
       const slots = urlParams.get('slots') || '';
-      showPopup(`🎉 ¡Pago aprobado! Se han sumado ${slots ? '+' + slots : ''} nuevos cupos a tu bitácora de OurStory.`);
+      showPopup(`¡Pago aprobado! Se han sumado ${slots ? '+' + slots : ''} nuevos cupos a tu bitácora de OurStory.`);
       window.history.replaceState({}, document.title, window.location.pathname);
       await fetchProfile();
     } else if (paymentStatus === 'pending') {
-      showPopup('⏳ Tu pago está en proceso de verificación por MercadoPago. En cuanto sea confirmado, tus cupos se acreditarán automáticamente.');
+      showPopup('Tu pago está en proceso de verificación por MercadoPago. En cuanto sea confirmado, tus cupos se acreditarán automáticamente.');
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (paymentStatus === 'failure') {
-      showPopup('❌ El pago no se completó o fue cancelado. No se ha realizado ningún cobro en tu cuenta.');
+      showPopup('El pago no se completó o fue cancelado. No se ha realizado ningún cobro en tu cuenta.');
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
