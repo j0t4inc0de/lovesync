@@ -470,12 +470,12 @@ app.post('/api/payments/create-preference', authenticateToken, async (req, res) 
       return res.status(400).json({ error: 'Debes estar vinculado a una pareja para comprar cupos extras.' });
     }
 
-    let title = 'LoveSync - Bolsa Estrella (+10 Cupos · 50% DCTO)';
+    let title = 'OurStory - Bolsa Estrella (+10 Citas · 50% DCTO)';
     let unit_price = 4990;
     let slotsAmount = 10;
 
     if (packageId === 'slots_2') {
-      title = 'LoveSync - Bolsa de Apuro (+2 Cupos)';
+      title = 'OurStory - Bolsa de Apuro (+2 Citas)';
       unit_price = 1990;
       slotsAmount = 2;
     }
@@ -498,8 +498,8 @@ app.post('/api/payments/create-preference', authenticateToken, async (req, res) 
           }
         ],
         payer: {
-          name: user.name || 'Usuario LoveSync',
-          email: user.email || 'usuario@lovesync.app'
+          name: user.name || 'Usuario OurStory',
+          email: user.email || 'wearesamod@gmail.com'
         },
         external_reference: JSON.stringify({
           userId: user.id,
@@ -508,9 +508,9 @@ app.post('/api/payments/create-preference', authenticateToken, async (req, res) 
           timestamp: Date.now()
         }),
         back_urls: {
-          success: `https://ourstory.wearesamod.com/settings?payment=success&slots=${slotsAmount}`,
-          failure: `https://ourstory.wearesamod.com/settings?payment=failure`,
-          pending: `https://ourstory.wearesamod.com/settings?payment=pending`
+          success: 'https://ourstory.wearesamod.com/home?payment=success&tab=settings&slots=' + slotsAmount,
+          failure: 'https://ourstory.wearesamod.com/home?payment=failure&tab=settings',
+          pending: 'https://ourstory.wearesamod.com/home?payment=pending&tab=settings'
         },
         auto_return: 'approved'
       }

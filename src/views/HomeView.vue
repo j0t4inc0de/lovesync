@@ -394,9 +394,14 @@
             <h3 class="text-[18px] font-extrabold mb-1" style="font-family: 'Comfortaa', sans-serif;">¿Necesitas más espacio?</h3>
             <p class="text-[13px] mb-4 leading-relaxed text-white/90 font-medium">Guarda todas sus citas en la bitácora sin preocuparte por el límite mensual.</p>
             
+            <div v-if="loadingPayment" class="bg-black/30 rounded-xl p-3 mb-3 text-center flex items-center justify-center gap-2.5 text-white font-bold text-[13px] border border-white/30 animate-pulse">
+              <svg class="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              <span>Conectando de forma segura con MercadoPago...</span>
+            </div>
+
             <div class="flex flex-col gap-3">
               <!-- Opción Estrella (Señuelo irresistible · 50% DCTO) -->
-              <div @click="buySlots('slots_10')" class="cursor-pointer group relative rounded-xl p-3.5 border-2 border-white bg-black/20 hover:bg-black/30 transition-all shadow-lg active:scale-[0.99]">
+              <div @click="buySlots('slots_10')" :class="{'opacity-60 pointer-events-none': loadingPayment}" class="cursor-pointer group relative rounded-xl p-3.5 border-2 border-white bg-black/20 hover:bg-black/30 transition-all shadow-lg active:scale-[0.99]">
                 <div class="absolute -top-2.5 right-3 bg-white text-[#ff4c70] text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1">
                   <svg class="w-3 h-3 text-[#ff4c70]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" /></svg>
                   <span>MÁS VENDIDO · AHORRAS 50%</span>
@@ -416,7 +421,7 @@
               </div>
 
               <!-- Opción Apuro (Señuelo alto costo unitario) -->
-              <div @click="buySlots('slots_2')" class="cursor-pointer group rounded-xl p-3 border border-white/30 bg-black/10 hover:bg-black/20 transition-all active:scale-[0.99]">
+              <div @click="buySlots('slots_2')" :class="{'opacity-60 pointer-events-none': loadingPayment}" class="cursor-pointer group rounded-xl p-3 border border-white/30 bg-black/10 hover:bg-black/20 transition-all active:scale-[0.99]">
                 <div class="flex items-center justify-between">
                   <div>
                     <div class="text-[13px] font-bold text-white">Bolsa de Apuro (+2 Citas)</div>
@@ -884,6 +889,7 @@ const dateSlots = computed(() => {
 });
 const maxSlots = ref(10);
 const doubleLockState = ref('idle');
+const loadingPayment = ref(false);
 const showDateModal = ref(false);
 const showEditModal = ref(false);
 const editingDate = ref({
@@ -1411,6 +1417,10 @@ const handlePhotoUpload = async (event, mode) => {
 };
 
 const buySlots = async (packageOrEvent = 'slots_5') => {
+  if (loadingPayment.value) return;
+  loadingPayment.value = true;
+  showPopup('⏳ Conectando de forma segura con MercadoPago...');
+
   const packageId = typeof packageOrEvent === 'string' ? packageOrEvent : 'slots_5';
 
   try {
@@ -1418,9 +1428,11 @@ const buySlots = async (packageOrEvent = 'slots_5') => {
     if (res && res.init_point) {
       window.location.href = res.init_point;
     } else {
+      loadingPayment.value = false;
       showPopup(res?.error || 'Error al iniciar pago');
     }
   } catch (error) {
+    loadingPayment.value = false;
     showPopup(error.message || 'Error al iniciar pago');
   }
 };
@@ -1648,10 +1660,23 @@ onMounted(async () => {
 
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment');
+    const targetTab = urlParams.get('tab');
+
+    if (targetTab === 'settings' || paymentStatus) {
+      currentTab.value = 'settings';
+    }
+
     if (paymentStatus === 'success') {
-      showPopup('🎉 ¡Pago aprobado! Tienes nuevos cupos disponibles en tu bitácora.');
+      const slots = urlParams.get('slots') || '';
+      showPopup(`🎉 ¡Pago aprobado! Se han sumado ${slots ? '+' + slots : ''} nuevos cupos a tu bitácora de OurStory.`);
       window.history.replaceState({}, document.title, window.location.pathname);
       await fetchProfile();
+    } else if (paymentStatus === 'pending') {
+      showPopup('⏳ Tu pago está en proceso de verificación por MercadoPago. En cuanto sea confirmado, tus cupos se acreditarán automáticamente.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (paymentStatus === 'failure') {
+      showPopup('❌ El pago no se completó o fue cancelado. No se ha realizado ningún cobro en tu cuenta.');
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
 
     // Load actual dates list from Database
