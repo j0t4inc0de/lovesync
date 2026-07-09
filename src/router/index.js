@@ -34,6 +34,22 @@ const routes = [
     path: '/privacy',
     name: 'Privacy',
     component: PrivacyView
+  },
+  // --- RUTAS SALVAVIDAS PONYTAIL (Rescate de links viejos de MercadoPago y páginas no encontradas) ---
+  {
+    path: '/settings',
+    redirect: (to) => {
+      return { path: '/home', query: { tab: 'settings', ...to.query } };
+    }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: (to) => {
+      if (to.query.payment || to.query.preference_id || to.query.collection_id) {
+        return { path: '/home', query: { tab: 'settings', ...to.query } };
+      }
+      return { path: '/home' };
+    }
   }
 ]
 

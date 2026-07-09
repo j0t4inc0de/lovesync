@@ -749,7 +749,7 @@
       <div class="p-2 rounded-xl bg-amber-50 border border-amber-200/60 flex items-center gap-2">
         <span class="text-amber-600 font-extrabold text-[12px]">✨</span>
         <span class="text-[10px] text-amber-800 font-bold leading-tight">
-          ¡Al completar cada 7 días continuos se premia +1 cupo de cita en silencio!
+          ¡Cada 7 días de racha se premia con un cupo de cita!
         </span>
       </div>
       <div v-if="isStreakAtRisk" class="pt-2 border-t border-black/5 space-y-1.5">
