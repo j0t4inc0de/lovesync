@@ -79,3 +79,8 @@ CREATE TABLE IF NOT EXISTS processed_payments (
     payment_id VARCHAR(255) PRIMARY KEY,
     processed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Migrations for existing couples table (Love Streaks system)
+ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0;
+ALTER TABLE couples ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL;
+ALTER TABLE couples ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0;

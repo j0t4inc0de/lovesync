@@ -142,7 +142,7 @@ export const api = {
     });
   },
   
-  createPaymentPreference: (packageId) => request('/api/payments/create-preference', { method: 'POST', body: JSON.stringify({ packageId }) }),
+  createPaymentPreference: (packageId, streakRescue = false) => request('/api/payments/create-preference', { method: 'POST', body: JSON.stringify({ packageId, streakRescue }) }),
   
   playTrivia: async (correct) => {
     const localDate = new Date().toLocaleDateString('sv-SE');

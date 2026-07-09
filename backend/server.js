@@ -263,6 +263,9 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
            c.slots AS base_slots,
            c.unpair_requested_at,
            c.unpair_requested_by,
+           c.streak_count,
+           c.last_streak_date::text AS last_streak_date,
+           c.previous_streak,
            COALESCE(
              (SELECT SUM(amount) FROM couple_extra_slots 
               WHERE couple_id = c.id 
@@ -296,6 +299,15 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
       }
     }
 
+    let streakCount = 0;
+    let lastStreakDate = null;
+    let previousStreak = 0;
+    if (user.couple_id && coupleRes && coupleRes.rows.length > 0) {
+      streakCount = coupleRes.rows[0].streak_count || 0;
+      lastStreakDate = coupleRes.rows[0].last_streak_date || null;
+      previousStreak = coupleRes.rows[0].previous_streak || 0;
+    }
+
     res.json({
       user,
       partnerName,
@@ -303,7 +315,10 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
       maxSlots,
       unpairState,
       unpairRequestedBy,
-      unpairDaysLeft
+      unpairDaysLeft,
+      streakCount,
+      lastStreakDate,
+      previousStreak
     });
   } catch (error) {
     console.error(error);
@@ -505,10 +520,11 @@ app.post('/api/payments/create-preference', authenticateToken, async (req, res) 
           userId: user.id,
           coupleId: user.couple_id,
           slotsAmount: slotsAmount,
+          streakRescue: !!req.body.streakRescue,
           timestamp: Date.now()
         }),
         back_urls: {
-          success: 'https://ourstory.wearesamod.com/home?payment=success&tab=settings&slots=' + slotsAmount,
+          success: 'https://ourstory.wearesamod.com/home?payment=success&tab=settings&slots=' + slotsAmount + (req.body.streakRescue ? '&rescued=true' : ''),
           failure: 'https://ourstory.wearesamod.com/home?payment=failure&tab=settings',
           pending: 'https://ourstory.wearesamod.com/home?payment=pending&tab=settings'
         },
@@ -559,6 +575,19 @@ app.post('/api/payments/webhook', async (req, res) => {
                   [coupleId, slotsAmount]
                 );
                 console.log(`✅ [MercadoPago Éxito] +${slotsAmount} cupos acreditados a pareja ID ${coupleId} (Ref: ${paymentId})`);
+
+                if (refData.streakRescue) {
+                  const todayStr = new Date().toLocaleDateString('sv-SE');
+                  await pool.query(
+                    `UPDATE couples SET 
+                       streak_count = COALESCE(NULLIF(previous_streak, 0), streak_count, 0) + 1,
+                       last_streak_date = $1,
+                       previous_streak = 0
+                     WHERE id = $2`,
+                    [todayStr, coupleId]
+                  );
+                  console.log(`🚑🔥 [Rescate Racha] Racha restaurada para pareja ID ${coupleId}`);
+                }
               }
             } else {
               console.log(`ℹ️ [MercadoPago Webhook] El pago ID ${paymentId} ya fue procesado anteriormente. Omitiendo duplicado.`);
@@ -575,6 +604,71 @@ app.post('/api/payments/webhook', async (req, res) => {
     res.status(500).send('Error procesando webhook');
   }
 });
+
+// Helper to update couple's love streak (called on daily trivia answers or adding a date)
+const updateCoupleStreak = async (coupleId, localDateStr) => {
+  if (!coupleId || !localDateStr) return;
+  try {
+    const coupleRes = await pool.query(
+      'SELECT streak_count, last_streak_date::text AS last_streak_date, previous_streak FROM couples WHERE id = $1',
+      [coupleId]
+    );
+    if (coupleRes.rows.length === 0) return;
+    const couple = coupleRes.rows[0];
+    const currentStreak = couple.streak_count || 0;
+    const lastStreakDate = couple.last_streak_date;
+
+    if (lastStreakDate === localDateStr) {
+      // Already incremented streak today!
+      return;
+    }
+
+    let newStreak = 1;
+    let newPreviousStreak = couple.previous_streak || 0;
+
+    if (lastStreakDate) {
+      const today = new Date(localDateStr);
+      const lastDate = new Date(lastStreakDate);
+      const diffTime = today - lastDate;
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        // Consecutive day!
+        newStreak = currentStreak + 1;
+      } else if (diffDays > 1) {
+        // Streak broken! Save previous if it was > 0
+        if (currentStreak > 0) {
+          newPreviousStreak = currentStreak;
+        }
+        newStreak = 1;
+      } else if (diffDays < 0) {
+        // Out of order or old date, don't update streak
+        return;
+      }
+    } else {
+      // First time ever
+      newStreak = 1;
+    }
+
+    await pool.query(
+      'UPDATE couples SET streak_count = $1, last_streak_date = $2, previous_streak = $3 WHERE id = $4',
+      [newStreak, localDateStr, newPreviousStreak, coupleId]
+    );
+
+    // Silent reward: Every 7 days completed, silently grant +1 extra slot
+    if (newStreak > 0 && newStreak % 7 === 0) {
+      const year = new Date(localDateStr).getFullYear();
+      const month = new Date(localDateStr).getMonth() + 1;
+      await pool.query(
+        `INSERT INTO couple_extra_slots (couple_id, amount, year, month) VALUES ($1, 1, $2, $3)`,
+        [coupleId, year, month]
+      );
+      console.log(`🔥 [Racha 7 días] Premio silencioso +1 cupo asignado a pareja ID ${coupleId} (Racha: ${newStreak})`);
+    }
+  } catch (err) {
+    console.error('Error actualizando racha de la pareja:', err.message);
+  }
+};
 
 // Play daily trivia (enforces once per day per user, awards +1 expiring slot if both answer correctly)
 app.post('/api/trivia/play', authenticateToken, async (req, res) => {
@@ -618,6 +712,9 @@ app.post('/api/trivia/play', authenticateToken, async (req, res) => {
       'UPDATE users SET last_trivia_date = $1 WHERE id = $2',
       [validatedLocalDate, req.user.id]
     );
+    
+    // Update love streak on trivia participation
+    await updateCoupleStreak(user.couple_id, validatedLocalDate);
     
     let newMaxSlots = null;
     
@@ -1205,6 +1302,10 @@ app.post('/api/dates', authenticateToken, async (req, res) => {
 
     // Broadcast new date creation to the couple room via socket
     io.to(`couple_${user.couple_id}`).emit('date_created', result.rows[0]);
+
+    // Update love streak when creating a date
+    const localDateStr = new Date().toLocaleDateString('sv-SE');
+    await updateCoupleStreak(user.couple_id, localDateStr);
 
     res.status(201).json(result.rows[0]);
   } catch (error) {

@@ -12,8 +12,16 @@
               <p class="text-[12px] font-medium m-0" style="color: var(--text-secondary);">Vinculado con {{ partnerName }}</p>
             </div>
           </div>
-          <div @click="toggleSlotsTooltip" class="px-3 py-1 rounded-full text-[12px] font-bold border cursor-pointer select-none active:scale-95 transition-transform" style="background: rgba(255, 55, 95, 0.06); border-color: rgba(255, 55, 95, 0.12); color: var(--accent);">
-            {{ datesList.length }}/{{ maxSlots }} citas
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <!-- Streak pill -->
+            <div @click="toggleStreakTooltip" class="px-2.5 py-1 rounded-full text-[12px] font-bold border cursor-pointer select-none active:scale-95 transition-transform flex items-center gap-1 shadow-sm" style="background: rgba(255, 149, 0, 0.08); border-color: rgba(255, 149, 0, 0.22); color: #ff9500;">
+              <span>{{ loveStreak }}</span>
+              <svg class="w-3.5 h-3.5 text-[#ff9500] fill-current animate-bounce" viewBox="0 0 24 24"><path d="M17.55 11.2c-.23-.3-.5-.56-.8-.77-.45-.33-1-.54-1.55-.66-.45-.1-.9-.13-1.35-.1-.45.03-.9.13-1.33.28-.43.15-.83.37-1.2.65-.73.55-1.35 1.25-1.8 2.05-.18-.28-.38-.55-.6-.8-.43-.5-.94-.94-1.52-1.3-.57-.36-1.18-.63-1.82-.8-.64-.17-1.3-.23-1.96-.18-.66.05-1.3.2-1.92.45-.62.25-1.2.6-1.7 1.03C1.65 13.06 3.03 16.5 5.14 18.6 7.25 20.7 10.7 22.08 14.15 21c3.45-1.08 6.03-4.08 6.85-7.53.2-1.02.14-2.07-.15-3.07-.3-1-.8-1.92-1.48-2.72z"/></svg>
+            </div>
+            <!-- Slots pill -->
+            <div @click="toggleSlotsTooltip" class="px-3 py-1 rounded-full text-[12px] font-bold border cursor-pointer select-none active:scale-95 transition-transform" style="background: rgba(255, 55, 95, 0.06); border-color: rgba(255, 55, 95, 0.12); color: var(--accent);">
+              {{ datesList.length }}/{{ maxSlots }} citas
+            </div>
           </div>
         </div>
       </ion-toolbar>
@@ -721,6 +729,37 @@
       <svg class="w-3.5 h-3.5 text-red-500 fill-current animate-pulse shrink-0" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
     </div>
 
+    <!-- Floating Streak Tooltip -->
+    <div v-if="showStreakTooltip" 
+         class="fixed z-[9999] w-64 p-4 rounded-2xl glass text-[11px] leading-relaxed font-medium text-left space-y-2.5 border border-white/60 animate-tooltip-in" 
+         style="top: 75px; right: 80px; background: rgba(255,255,255,0.95); backdrop-filter: blur(25px); color: var(--text-primary); box-shadow: 0 8px 25px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.02);">
+      <!-- Tiny upward triangle pointer -->
+      <div class="absolute -top-[5px] right-8 w-2.5 h-2.5 bg-white border-t border-l border-white/60 rotate-45" style="background: rgba(255,255,255,0.95);"></div>
+      
+      <div class="flex items-center justify-between">
+        <span class="font-bold text-[13px] text-[#ff9500] flex items-center gap-1.5" style="font-family: 'Comfortaa', sans-serif;">
+          <svg class="w-4 h-4 fill-current animate-bounce" viewBox="0 0 24 24"><path d="M17.55 11.2c-.23-.3-.5-.56-.8-.77-.45-.33-1-.54-1.55-.66-.45-.1-.9-.13-1.35-.1-.45.03-.9.13-1.33.28-.43.15-.83.37-1.2.65-.73.55-1.35 1.25-1.8 2.05-.18-.28-.38-.55-.6-.8-.43-.5-.94-.94-1.52-1.3-.57-.36-1.18-.63-1.82-.8-.64-.17-1.3-.23-1.96-.18-.66.05-1.3.2-1.92.45-.62.25-1.2.6-1.7 1.03C1.65 13.06 3.03 16.5 5.14 18.6 7.25 20.7 10.7 22.08 14.15 21c3.45-1.08 6.03-4.08 6.85-7.53.2-1.02.14-2.07-.15-3.07-.3-1-.8-1.92-1.48-2.72z"/></svg>
+          Racha de Amor: {{ loveStreak }} días
+        </span>
+        <button @click="showStreakTooltip = false" class="text-[var(--text-muted)] hover:text-black font-bold p-1">✕</button>
+      </div>
+      <p style="color: var(--text-secondary); margin: 0;">
+        Tu racha suma <b>+1 día</b> al contestar la trivia o añadir una cita diaria juntos.
+      </p>
+      <div class="p-2 rounded-xl bg-amber-50 border border-amber-200/60 flex items-center gap-2">
+        <span class="text-amber-600 font-extrabold text-[12px]">✨</span>
+        <span class="text-[10px] text-amber-800 font-bold leading-tight">
+          ¡Al completar cada 7 días continuos se premia +1 cupo de cita en silencio!
+        </span>
+      </div>
+      <div v-if="isStreakAtRisk" class="pt-2 border-t border-black/5 space-y-1.5">
+        <p class="text-[10px] text-red-500 font-bold leading-tight m-0">💔 ¡Tu racha anterior de {{ previousStreak }} días está congelada!</p>
+        <button @click="rescueStreak" class="w-full py-2 px-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-[#ff4c70] text-white font-extrabold text-[11px] shadow-md active:scale-95 transition-transform flex items-center justify-center gap-1.5">
+          <span>Salvar Racha + 2 Citas ($1.990)</span>
+        </button>
+      </div>
+    </div>
+
     <!-- Floating Liquid Glass Tab Bar -->
     <div class="fixed bottom-6 left-4 right-4 z-30 max-w-md mx-auto py-2 px-3 flex items-center justify-around rounded-3xl border" style="background: rgba(255,255,255,0.72); backdrop-filter: blur(35px) saturate(200%); -webkit-backdrop-filter: blur(35px) saturate(200%); border-color: rgba(255,255,255,0.55); box-shadow: 0 12px 35px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.02);">
       <button v-for="tab in tabs" :key="tab.id" @click="currentTab = tab.id"
@@ -817,6 +856,10 @@ const dateSlots = computed(() => {
   }).length;
 });
 const maxSlots = ref(10);
+const loveStreak = ref(0);
+const previousStreak = ref(0);
+const lastStreakDate = ref(null);
+const showStreakTooltip = ref(false);
 const doubleLockState = ref('idle');
 const loadingPayment = ref(false);
 const showDateModal = ref(false);
@@ -992,17 +1035,36 @@ const toggleTag = (tag) => {
 // WebSocket connection
 let socket = null;
 
+// Haptics Heartbeat trigger (lub-dub tactile heartbeat on sync)
+const triggerHeartbeatHaptics = () => {
+  try {
+    if (window.navigator && window.navigator.vibrate) {
+      window.navigator.vibrate([100, 50, 100]);
+    }
+    if (window.Capacitor?.Plugins?.Haptics?.impact) {
+      window.Capacitor.Plugins.Haptics.impact({ style: 'heavy' });
+      setTimeout(() => {
+        window.Capacitor.Plugins.Haptics?.impact({ style: 'heavy' });
+      }, 150);
+    }
+  } catch (e) {
+    // Ignored on desktop browsers without vibration support
+  }
+};
+
 const handleFirstLock = () => {
   if (!userCoupleId.value) return;
 
   if (doubleLockState.value === 'idle') {
     doubleLockState.value = 'waiting';
+    triggerHeartbeatHaptics();
     // Send click to partner via WebSocket
     socket.emit('partner_lock', { coupleId: userCoupleId.value, userId: currentUser.value.id });
   } else if (doubleLockState.value === 'waiting_partner') {
     // Partner was already waiting, so it's a match!
     doubleLockState.value = 'matched';
     showMatchCelebration.value = true;
+    triggerHeartbeatHaptics();
     
     // Broadcast the match back to the partner
     socket.emit('partner_lock', { coupleId: userCoupleId.value, userId: currentUser.value.id });
@@ -1036,11 +1098,48 @@ const simulatePartnerClick = () => {
 let tooltipTimeout = null;
 const toggleSlotsTooltip = () => {
   showSlotsTooltip.value = !showSlotsTooltip.value;
+  if (showSlotsTooltip.value) {
+    showStreakTooltip.value = false;
+  }
   if (tooltipTimeout) clearTimeout(tooltipTimeout);
   if (showSlotsTooltip.value) {
     tooltipTimeout = setTimeout(() => {
       showSlotsTooltip.value = false;
     }, 3500);
+  }
+};
+
+const toggleStreakTooltip = () => {
+  showStreakTooltip.value = !showStreakTooltip.value;
+  if (showStreakTooltip.value) {
+    showSlotsTooltip.value = false;
+  }
+};
+
+const isStreakAtRisk = computed(() => {
+  if (previousStreak.value <= 0) return false;
+  if (!lastStreakDate.value) return true;
+  const today = new Date();
+  const lastDate = new Date(lastStreakDate.value);
+  const diffDays = Math.round((today - lastDate) / (1000 * 60 * 60 * 24));
+  return diffDays >= 2;
+});
+
+const rescueStreak = async () => {
+  if (loadingPayment.value) return;
+  try {
+    loadingPayment.value = true;
+    showPopup('Conectando con MercadoPago para salvar tu racha...');
+    const res = await api.createPaymentPreference('slots_2', true);
+    if (res && res.init_point) {
+      window.location.href = res.init_point;
+    } else {
+      showPopup('No se obtuvo el link de pago.');
+      loadingPayment.value = false;
+    }
+  } catch (err) {
+    loadingPayment.value = false;
+    showPopup(err.message || 'Error al iniciar pago.');
   }
 };
 
@@ -1469,7 +1568,11 @@ const selectOption = async (idx) => {
       matchedDailySlots.value = res.matchedDailySlots || false;
       if (res.newMaxSlots) {
         maxSlots.value = res.newMaxSlots;
+      } else {
+        maxSlots.value += 1;
       }
+      // Refresh profile to pull new streak state
+      await fetchProfile();
     }
   } catch (error) {
     console.warn('Backend trivia failed, using local fallback:', error.message);
@@ -1493,7 +1596,12 @@ const fetchProfile = async () => {
   }
   currentUser.value = profile.user;
   userCoupleId.value = profile.user.couple_id;
-  maxSlots.value = profile.maxSlots;
+  if (profile) {
+    maxSlots.value = profile.maxSlots;
+    if (profile.streakCount !== undefined) loveStreak.value = profile.streakCount || 0;
+    if (profile.previousStreak !== undefined) previousStreak.value = profile.previousStreak || 0;
+    if (profile.lastStreakDate !== undefined) lastStreakDate.value = profile.lastStreakDate || null;
+  }
   partnerName.value = profile.partnerName || 'Pareja';
   partnerId.value = profile.partnerId || null;
   unpairState.value = profile.unpairState || 'idle';
@@ -1547,6 +1655,7 @@ onMounted(async () => {
           // Both clicked! Match!
           doubleLockState.value = 'matched';
           showMatchCelebration.value = true;
+          triggerHeartbeatHaptics();
           setTimeout(() => {
             showMatchCelebration.value = false;
             showDateModal.value = true;
@@ -1554,6 +1663,7 @@ onMounted(async () => {
         } else {
           // Partner is waiting for us
           doubleLockState.value = 'waiting_partner';
+          triggerHeartbeatHaptics();
         }
       }
     });
