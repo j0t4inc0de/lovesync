@@ -46,7 +46,11 @@ const getS3Client = () => {
 // ponytail: Helper to transparently upload Base64 images to Cloudflare R2 if configured
 const uploadToR2IfBase64 = async (photoStr, coupleId) => {
   const client = getS3Client();
-  if (!photoStr || !photoStr.startsWith('data:image/') || !client || !process.env.R2_BUCKET_NAME) {
+  if (!photoStr || !photoStr.startsWith('data:image/')) {
+    return photoStr;
+  }
+  if (!client || !process.env.R2_BUCKET_NAME) {
+    console.warn('⚠️ [R2 Upload Skipped] S3Client or R2_BUCKET_NAME missing in process.env. Using Base64 fallback. AccountID present:', !!process.env.R2_ACCOUNT_ID);
     return photoStr;
   }
   try {
@@ -56,6 +60,7 @@ const uploadToR2IfBase64 = async (photoStr, coupleId) => {
       const buffer = Buffer.from(matches[2], 'base64');
       const fileName = `couples/${coupleId || 'shared'}/photo_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
       
+      console.log(`📤 [R2 Uploading] Sending ${fileName} (${buffer.length} bytes) to bucket "${process.env.R2_BUCKET_NAME}"...`);
       await client.send(new PutObjectCommand({
         Bucket: process.env.R2_BUCKET_NAME,
         Key: fileName,
@@ -64,10 +69,12 @@ const uploadToR2IfBase64 = async (photoStr, coupleId) => {
       }));
       
       const publicRoot = (process.env.R2_PUBLIC_URL || '').replace(/\/$/, '');
-      return `${publicRoot}/${fileName}`;
+      const finalUrl = `${publicRoot}/${fileName}`;
+      console.log(`✅ [R2 Upload Success] URL: ${finalUrl}`);
+      return finalUrl;
     }
   } catch (err) {
-    console.error('Error uploading image to Cloudflare R2, keeping original:', err.message);
+    console.error('❌ [R2 Upload Error] Error uploading image to Cloudflare R2, keeping original Base64:', err.message, err);
   }
   return photoStr;
 };
@@ -601,6 +608,55 @@ app.get('/api/debug/reset-jota', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// ponytail: Debug endpoint to verify R2 connectivity and config in any environment
+app.get('/api/debug/r2-status', async (req, res) => {
+  const accountId = (process.env.R2_ACCOUNT_ID || '').trim();
+  const accessKey = (process.env.R2_ACCESS_KEY_ID || '').trim();
+  const secretKey = (process.env.R2_SECRET_ACCESS_KEY || '').trim();
+  const bucketName = (process.env.R2_BUCKET_NAME || '').trim();
+  const publicUrl = (process.env.R2_PUBLIC_URL || '').trim();
+
+  const client = getS3Client();
+
+  let testResult = 'Not attempted';
+  let errorDetails = null;
+
+  if (client && bucketName) {
+    try {
+      const testKey = `debug_test_${Date.now()}.txt`;
+      await client.send(new PutObjectCommand({
+        Bucket: bucketName,
+        Key: testKey,
+        Body: Buffer.from('lovesync r2 diagnostic test'),
+        ContentType: 'text/plain'
+      }));
+      testResult = `Success! Uploaded ${testKey} to ${bucketName}`;
+    } catch (err) {
+      testResult = 'Failed';
+      errorDetails = {
+        message: err.message,
+        code: err.code || err.name,
+        stack: err.stack
+      };
+    }
+  }
+
+  res.json({
+    status: (client && bucketName && testResult.startsWith('Success')) ? 'OK' : 'ERROR',
+    config: {
+      hasAccountId: !!accountId,
+      accountIdMasked: accountId ? `${accountId.substring(0, 4)}...` : null,
+      hasAccessKeyId: !!accessKey,
+      hasSecretAccessKey: !!secretKey,
+      bucketName: bucketName || null,
+      publicUrl: publicUrl || null,
+      s3ClientInitialized: !!client
+    },
+    testUpload: testResult,
+    error: errorDetails
+  });
 });
 
 // Admin Verification Middleware

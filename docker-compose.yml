@@ -16,6 +16,8 @@ services:
     build:
       context: ./backend
     container_name: lovesync-backend
+    env_file:
+      - ./backend/.env
     environment:
       DATABASE_URL: postgres://lovesync:lovesync_password_secure@lovesync-db:5432/lovesync
       JWT_SECRET: lovesync-jwt-token-secret-9999
