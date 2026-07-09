@@ -11,6 +11,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import PDFDocument from 'pdfkit';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -41,6 +42,16 @@ const getS3Client = () => {
     });
   }
   return _s3Client;
+};
+
+// ponytail: Lazy helper to initialize MercadoPago client using MP_ACCESS_TOKEN
+let _mpClient = null;
+const getMPClient = () => {
+  if (_mpClient) return _mpClient;
+  const token = (process.env.MP_ACCESS_TOKEN || '').trim();
+  if (!token) return null;
+  _mpClient = new MercadoPagoConfig({ accessToken: token });
+  return _mpClient;
 };
 
 // ponytail: Helper to transparently upload Base64 images to Cloudflare R2 if configured
@@ -444,6 +455,118 @@ app.post('/api/profile/slots', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al actualizar cupos.' });
+  }
+});
+
+// ── MercadoPago Payment Gateway Endpoints ──
+
+// Create preference to buy extra slots
+app.post('/api/payments/create-preference', authenticateToken, async (req, res) => {
+  try {
+    const { packageId } = req.body; // e.g. 'slots_5' or 'slots_15'
+    const userRes = await pool.query('SELECT id, name, email, couple_id FROM users WHERE id = $1', [req.user.id]);
+    const user = userRes.rows[0];
+    if (!user || !user.couple_id) {
+      return res.status(400).json({ error: 'Debes estar vinculado a una pareja para comprar cupos extras.' });
+    }
+
+    let title = 'LoveSync - Paquete 5 Cupos Extras';
+    let unit_price = 1990;
+    let slotsAmount = 5;
+
+    if (packageId === 'slots_15') {
+      title = 'LoveSync - Paquete 15 Cupos Extras';
+      unit_price = 4990;
+      slotsAmount = 15;
+    }
+
+    const client = getMPClient();
+    if (!client) {
+      return res.status(503).json({ error: 'La pasarela de pagos no está configurada aún en el servidor (falta MP_ACCESS_TOKEN).' });
+    }
+
+    const preference = new Preference(client);
+    const result = await preference.create({
+      body: {
+        items: [
+          {
+            id: packageId || 'slots_5',
+            title: title,
+            quantity: 1,
+            unit_price: Number(unit_price),
+            currency_id: 'CLP'
+          }
+        ],
+        payer: {
+          name: user.name || 'Usuario LoveSync',
+          email: user.email || 'usuario@lovesync.app'
+        },
+        external_reference: JSON.stringify({
+          userId: user.id,
+          coupleId: user.couple_id,
+          slotsAmount: slotsAmount,
+          timestamp: Date.now()
+        }),
+        back_urls: {
+          success: `https://ourstory.wearesamod.com/settings?payment=success&slots=${slotsAmount}`,
+          failure: `https://ourstory.wearesamod.com/settings?payment=failure`,
+          pending: `https://ourstory.wearesamod.com/settings?payment=pending`
+        },
+        auto_return: 'approved'
+      }
+    });
+
+    res.json({
+      id: result.id,
+      init_point: result.init_point,
+      sandbox_init_point: result.sandbox_init_point
+    });
+  } catch (error) {
+    console.error('❌ [MercadoPago Error] Error creando preferencia:', error);
+    res.status(500).json({ error: 'Error al iniciar sesión de pago con MercadoPago.' });
+  }
+});
+
+// MercadoPago Webhook handler for payment confirmation
+app.post('/api/payments/webhook', async (req, res) => {
+  try {
+    const { type, topic, data } = req.body;
+    const paymentId = data?.id || req.query?.id;
+    const notificationType = type || topic;
+
+    console.log(`🔔 [MercadoPago Webhook] Recibida notificación tipo: ${notificationType}, ID: ${paymentId}`);
+
+    if ((notificationType === 'payment' || notificationType === 'merchant_order') && paymentId) {
+      const client = getMPClient();
+      if (client) {
+        const payment = new Payment(client);
+        const paymentData = await payment.get({ id: paymentId });
+
+        console.log(`💵 [MercadoPago Pago] Estado: ${paymentData.status}, Ref: ${paymentData.external_reference}`);
+
+        if (paymentData.status === 'approved' && paymentData.external_reference) {
+          try {
+            const refData = JSON.parse(paymentData.external_reference);
+            const { coupleId, slotsAmount } = refData;
+
+            if (coupleId && slotsAmount) {
+              await pool.query(
+                `INSERT INTO couple_extra_slots (couple_id, amount, year, month) 
+                 VALUES ($1, $2, EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int)`,
+                [coupleId, slotsAmount]
+              );
+              console.log(`✅ [MercadoPago Éxito] +${slotsAmount} cupos acreditados a pareja ID ${coupleId}`);
+            }
+          } catch (parseErr) {
+            console.error('Error parseando external_reference de MercadoPago:', parseErr.message);
+          }
+        }
+      }
+    }
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('❌ [MercadoPago Webhook Error]:', error.message);
+    res.status(500).send('Error procesando webhook');
   }
 });
 
