@@ -1,170 +1,140 @@
 <template>
   <ion-page>
-    <ion-content class="liquid-dark-bg">
-      <!-- Background Glow Orbs -->
-      <div class="bg-orb w-[360px] h-[360px] bg-[#ff375f]/20 -top-20 -left-20 animate-pulse-glow"></div>
-      <div class="bg-orb w-[380px] h-[380px] bg-[#9b51e0]/20 bottom-10 -right-20 animate-pulse-glow" style="animation-delay: 1s;"></div>
-      <div class="bg-orb w-[280px] h-[280px] bg-[#ff80bf]/15 top-1/2 left-1/3 animate-pulse-glow" style="animation-delay: 2s;"></div>
-
-      <div class="min-h-screen py-10 px-4 sm:px-6 lg:px-8 relative z-10 max-w-4xl mx-auto">
-        <!-- Top Navigation Bar -->
-        <header class="flex items-center justify-between mb-8 animate-fade-in">
+    <ion-content class="liquid-bg">
+      <div class="min-h-screen py-10 px-4 sm:px-6 lg:px-8 relative z-10 max-w-4xl mx-auto text-white">
+        <!-- Top Navigation -->
+        <header class="flex items-center justify-between mb-8">
           <button 
             @click="goBack" 
-            class="btn btn-soft px-4 py-2.5 text-sm rounded-xl flex items-center gap-2.5 transition-all hover:scale-105 active:scale-95 shadow-md"
+            class="btn-soft px-4 py-2.5 text-sm rounded-xl flex items-center gap-2 transition-all active:scale-95 shadow-sm"
           >
-            <svg class="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
             <span>Volver Atrás</span>
           </button>
 
-          <div class="flex items-center gap-2">
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#ff375f]/15 text-[#ff375f] border border-[#ff375f]/30">
-              <svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-              Cumplimiento Legal y EULA
-            </span>
-          </div>
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-pink-500/15 text-pink-300 border border-pink-500/30">
+            💖 Compromiso y Armonía
+          </span>
         </header>
 
         <!-- Main Title Card -->
-        <section class="glass dark-glass-card p-8 sm:p-10 rounded-[2.5rem] mb-8 border border-white/15 shadow-2xl animate-slide-up">
+        <section class="glass p-8 sm:p-10 rounded-[2.5rem] mb-8 border border-white/15 shadow-2xl relative overflow-hidden" style="background: linear-gradient(135deg, rgba(26, 26, 46, 0.85) 0%, rgba(30, 20, 40, 0.92) 100%);">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6 mb-6">
             <div>
-              <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-[#ff375f] via-[#ff7095] to-[#c77dff] bg-clip-text text-transparent">
-                Términos y Condiciones de Uso
+              <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white" style="font-family: 'Comfortaa', sans-serif;">
+                Términos y Condiciones
               </h1>
-              <p class="mt-2 text-sm text-gray-300 font-medium">
-                Acuerdo de Licencia de Usuario Final (EULA) — Our Story / LoveSync
+              <p class="mt-2 text-sm text-pink-200/80 font-medium">
+                Pacto de Conexión, Convivencia y Tienda — Our Story / LoveSync
               </p>
             </div>
-            <div class="text-right sm:text-right text-xs text-gray-400 bg-white/5 py-2 px-3.5 rounded-xl border border-white/10 self-start sm:self-center">
-              <span class="block font-semibold text-gray-200">Última actualización</span>
+            <div class="text-right text-xs text-white/60 bg-white/5 py-2 px-3.5 rounded-xl border border-white/10 self-start sm:self-center">
+              <span class="block font-semibold text-white">Última actualización</span>
               9 de Julio, 2026
             </div>
           </div>
 
-          <!-- Quick Summary Banner -->
-          <div class="bg-gradient-to-r from-[#ff375f]/15 to-[#9b51e0]/15 border border-[#ff375f]/30 rounded-2xl p-5 mb-8 text-sm text-gray-200 leading-relaxed flex gap-4 items-start">
-            <div class="w-10 h-10 rounded-xl bg-[#ff375f]/20 flex items-center justify-center shrink-0 mt-0.5 text-[#ff375f] border border-[#ff375f]/40">
+          <div class="bg-pink-500/10 border border-pink-500/20 rounded-2xl p-5 mb-8 text-sm text-white/90 leading-relaxed flex gap-4 items-start">
+            <div class="w-10 h-10 rounded-xl bg-pink-500/20 flex items-center justify-center shrink-0 mt-0.5 text-pink-400">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
             </div>
             <div>
-              <h3 class="font-bold text-white text-base mb-1">Resumen del Escudo Legal y Compromiso de Seguridad</h3>
+              <h3 class="font-bold text-white text-base mb-1">Un Espacio Seguro para el Amor</h3>
               <p>
-                Al utilizar Our Story / LoveSync, aceptas nuestro pacto mutuo de respeto, las directrices obligatorias de seguridad de Apple y Google frente a contenido generado por usuarios (UGC), las normativas del SERNAC de Chile sobre bienes digitales, y el protocolo de desvinculación de parejas (`unpair`).
+                Our Story / LoveSync está diseñado para ser un refugio íntimo entre tú y tu pareja. Al utilizar nuestra bitácora y tienda, aceptas cuidar este espacio con respeto mutuo, cumpliendo con la legislación chilena (SERNAC / Ley N° 19.628) y las normas globales de Apple y Google.
               </p>
             </div>
           </div>
 
-          <!-- Section 1: Exención de Responsabilidad -->
-          <article class="legal-section mb-8">
-            <div class="flex items-center gap-3 mb-3.5">
-              <div class="w-8 h-8 rounded-lg bg-pink-500/20 text-pink-400 flex items-center justify-center font-bold text-sm border border-pink-500/30">1</div>
-              <h2 class="text-xl font-bold text-white tracking-wide">Aceptación y Exención de Responsabilidad</h2>
+          <!-- 1. Respeto y Cuidado de Contenidos (UGC) -->
+          <article class="mb-8">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-8 h-8 rounded-lg bg-pink-500 text-white flex items-center justify-center font-bold text-sm shadow-md">1</div>
+              <h2 class="text-xl font-bold text-white tracking-wide">Armonía en Nuestra Comunidad (Contenido de Usuario)</h2>
             </div>
-            <div class="pl-11 space-y-3 text-gray-300 text-sm sm:text-base leading-relaxed">
+            <div class="pl-11 space-y-3 text-white/80 text-sm sm:text-base leading-relaxed">
               <p>
-                La plataforma móvil y servicio web <strong>Our Story / LoveSync</strong> se licencia y proporciona "tal cual" (*as is*) y "según disponibilidad", con el objetivo exclusivo de facilitar la sincronización privada de recuerdos, notas emocionales e hitos entre dos dispositivos móviles emparejados bajo un identificador único (`couple_id`).
+                Aunque las bitácoras y fotos son privadas entre cada pareja (`couple_id`), para cumplir con los estándares internacionales de seguridad en aplicaciones móviles de Apple App Store y Google Play Store relativas a contenido subido a servidores en la nube (UGC), establecemos las siguientes reglas de convivencia:
               </p>
-              <p>
-                <strong class="text-white">Exención de garantías técnicas:</strong> No garantizamos que el servicio opere de manera ininterrumpida, libre de errores o exenta de latencias derivadas del estado de la red Wi-Fi/celular del usuario, fallos eléctricos de terceros o restricciones de ahorro de energía del sistema operativo. En la máxima medida autorizada por la ley aplicable —incluyendo la Ley N° 19.496 de Chile—, los titulares y desarrolladores de Our Story / LoveSync no asumirán responsabilidad civil o patrimonial por interrupciones temporales, pérdida accidental de borradores no sincronizados en la nube o fluctuaciones en la velocidad de emparejamiento.
-              </p>
-            </div>
-          </article>
-
-          <!-- Section 2: Reglas Estrictas UGC (Apple & Google Play) -->
-          <article class="legal-section mb-8 bg-[#ff375f]/10 p-6 rounded-2xl border border-[#ff375f]/30">
-            <div class="flex items-center gap-3 mb-3.5">
-              <div class="w-8 h-8 rounded-lg bg-[#ff375f] text-white flex items-center justify-center font-bold text-sm shadow-md shadow-pink-500/40">2</div>
-              <h2 class="text-xl font-bold text-white tracking-wide flex items-center gap-2">
-                <span>Normas Estrictas de Conducta (UGC)</span>
-                <span class="text-[11px] font-semibold bg-red-500 text-white px-2 py-0.5 rounded-full uppercase tracking-wider">Cero Tolerancia</span>
-              </h2>
-            </div>
-            <div class="pl-11 space-y-3.5 text-gray-200 text-sm sm:text-base leading-relaxed">
-              <p>
-                En cumplimiento imperativo de las directrices de seguridad de <strong>Apple App Store</strong> y <strong>Google Play Store</strong> aplicables a aplicaciones con Contenido Generado por el Usuario (UGC), Our Story / LoveSync impone reglas inflexibles para proteger la integridad y dignidad en la bitácora compartida:
-              </p>
-              <ul class="list-disc pl-5 space-y-2 text-gray-300">
-                <li><strong class="text-white">Prohibición de Acoso y Violencia Digital:</strong> Queda estrictamente prohibido utilizar notas, descripciones o imágenes para ejercer intimidación, acoso psicológico, hostigamiento, discursos de odio o amenazas contra la pareja (`couple_id`) o terceros.</li>
-                <li><strong class="text-white">Material Explícito e Inapropiado:</strong> Cero tolerancia a la carga de pornografía, desnudez no consensuada (*revenge porn*), material violento o promoción de autolesiones.</li>
-                <li><strong class="text-white">Suspensión Inmediata y Definitiva:</strong> Nos reservamos el derecho unilateral e irrenunciable de <strong>bloquear, suspender o cancelar de forma inmediata y sin previo aviso</strong> la cuenta y el acceso a la nube de cualquier usuario que infrinja estas normas de conducta.</li>
-                <li><strong class="text-white">Sin Derecho a Reembolso:</strong> La rescisión o expulsión de un usuario por incumplimiento de la política UGC no otorgará derecho alguno a devolución o compensación económica por suscripciones premium o compras integradas.</li>
+              <ul class="list-disc pl-5 space-y-2 text-white/75">
+                <li><strong class="text-white">Respeto Mutuo y No Acoso:</strong> Queda prohibido utilizar las descripciones o imágenes para hostigar, intimidar o agredir verbalmente a la pareja o a otros miembros en trivias comunitarias.</li>
+                <li><strong class="text-white">Contenido Adecuado y Legal:</strong> No está permitida la subida o distribución de material ilícito, violento o desnudez no consentida a nuestros servidores en la nube.</li>
+                <li><strong class="text-white">Protección del Ecosistema:</strong> Para mantener la seguridad y calidez del servicio, nos reservamos el derecho de suspender o remover cuentas que incurran en conductas abusivas flagrantes sin previo aviso ni reembolso.</li>
               </ul>
             </div>
           </article>
 
-          <!-- Section 3: Política de Bienes Digitales y No Reembolso (SERNAC) -->
-          <article class="legal-section mb-8">
-            <div class="flex items-center gap-3 mb-3.5">
-              <div class="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-sm border border-purple-500/30">3</div>
-              <h2 class="text-xl font-bold text-white tracking-wide">Bienes Digitales y Política de No Reembolso (SERNAC)</h2>
+          <!-- 2. Tienda de Recuerdos y Lógica de Cupos (Opción A) -->
+          <article class="mb-8">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-md">2</div>
+              <h2 class="text-xl font-bold text-white tracking-wide">Tienda de Recuerdos, Cupos y Vigencia Mensual</h2>
             </div>
-            <div class="pl-11 space-y-3 text-gray-300 text-sm sm:text-base leading-relaxed">
+            <div class="pl-11 space-y-3 text-white/80 text-sm sm:text-base leading-relaxed">
               <p>
-                De acuerdo con la legislación de protección de los derechos de los consumidores de Chile (<strong class="text-white">Ley N° 19.496, Artículo 3 bis, modificado por Ley N° 21.398</strong> y normativas aplicables al comercio de contenido digital):
+                En LoveSync cada pareja dispone de un límite base mensual de citas gratuitas para documentar su historia. Si desean subir más recuerdos en un mismo mes, ponemos a disposición paquetes de expansión en nuestra Tienda:
               </p>
+              <div class="bg-white/5 p-4 rounded-xl border border-white/10 my-3 text-sm">
+                <strong class="text-amber-300 block mb-1 font-bold">✨ Vigencia de Cupos Extras (Modelo Mensual - Opción A):</strong>
+                Los paquetes de cupos adquiridos (como la <em>Bolsa de Apuro</em> o la <em>Bolsa Estrella</em>) expanden la capacidad máxima de la bitácora <strong>para el mes calendario en curso en que se realiza la compra</strong>. El primer día del mes siguiente, el contador de citas se reinicia al límite base habitual (10 citas), incentivando a la pareja a disfrutar, tomar fotos y documentar sus citas activamente mes a mes. Los cupos extras no se traspasan ni acumulan para meses posteriores.
+              </div>
               <p>
-                El acceso a suscripciones premium, almacenamiento ampliado de bitácora o características de pago adicionales en Our Story / LoveSync califica como el suministro de <strong class="text-white">servicios digitales suministrados por medios electrónicos con ejecución inmediata</strong>. Al activar la compra o suscripción mediante confirmación expresa en la aplicación o tiendas oficiales, el usuario reconoce y consiente que la ejecución del servicio comienza en ese acto y que, por consiguiente, <strong class="text-white text-pink-400 font-semibold">pierde su derecho de retracto</strong>.
-              </p>
-              <p>
-                Salvo en casos de indisponibilidad técnica prolongada atribuible directamente a una falla crítica en los servidores centrales que impida por completo el uso de la funcionalidad premium —en cuyo caso aplicarán las garantías proporcionales de la ley chilena—, todas las compras de suscripciones de pago se consideran definitivas, no procediendo devoluciones ni reembolsos por periodos no utilizados tras la cancelación o por decisión unilateral del usuario.
+                <strong class="text-white">Bienes Digitales y Devoluciones (SERNAC - Ley N° 19.496 / N° 21.398):</strong> La compra de paquetes de cupos adicionales constituye la adquisición de un bien digital de consumo y acreditación electrónica instantánea. Una vez acreditados los cupos en la cuenta de la pareja en milisegundos tras el pago en MercadoPago o Tiendas oficiales, el usuario reconoce que se ha prestado el servicio y no proceden devoluciones o retractos, salvo fallas críticas de interrupción en nuestros servidores.
               </p>
             </div>
           </article>
 
-          <!-- Section 4: Normas y Efectos sobre Desvinculación (unpair) -->
-          <article class="legal-section mb-6">
-            <div class="flex items-center gap-3 mb-3.5">
-              <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm border border-indigo-500/30">4</div>
-              <h2 class="text-xl font-bold text-white tracking-wide">Desvinculación de Parejas (`unpair`) y Efectos</h2>
+          <!-- 3. Desvinculación de Parejas (`unpair`) -->
+          <article class="mb-8">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-8 h-8 rounded-lg bg-purple-500 text-white flex items-center justify-center font-bold text-sm shadow-md">3</div>
+              <h2 class="text-xl font-bold text-white tracking-wide">Desvinculación Autónoma (`unpair`)</h2>
             </div>
-            <div class="pl-11 space-y-3 text-gray-300 text-sm sm:text-base leading-relaxed">
+            <div class="pl-11 space-y-3 text-white/80 text-sm sm:text-base leading-relaxed">
               <p>
-                El emparejamiento entre dos dispositivos en Our Story / LoveSync se sustenta en el consentimiento mutuo. Cualquiera de las partes (`couple_id`) tiene el derecho y la libertad de ejercer la <strong class="text-white">Desvinculación Autónoma (`unpair`)</strong> desde la configuración de perfil en cualquier momento, produciendo los siguientes efectos inmediatos:
+                El enlace de pareja en LoveSync es voluntario. Cualquiera de los miembros puede desvincularse desde Ajustes en cualquier momento. Al desvincularse, la conexión en tiempo real cesa y cada usuario conserva el acceso a su cuenta individual. Si la pareja se vuelve a emparejar en el futuro, podrán retomar sus recuerdos según la configuración de base de datos activa.
               </p>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 text-xs sm:text-sm">
-                <div class="bg-white/5 p-4 rounded-xl border border-white/10">
-                  <h4 class="font-bold text-white mb-1.5 flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" /></svg>
-                    Ruptura Inmediata del Enlace
-                  </h4>
-                  <p class="text-gray-300">
-                    Se desasocia de inmediato el token de pareja (`couple_id`), cesando la sincronización cruzada en tiempo real de nuevas fotografías y notas entre ambos teléfonos.
-                  </p>
-                </div>
-                <div class="bg-white/5 p-4 rounded-xl border border-white/10">
-                  <h4 class="font-bold text-white mb-1.5 flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    Resguardo e Historial
-                  </h4>
-                  <p class="text-gray-300">
-                    El usuario desvinculado podrá gestionar o purgar su copia y datos compartidos según nuestra Política de Privacidad, resguardando la intimidad de ambos.
-                  </p>
-                </div>
-              </div>
+            </div>
+          </article>
+
+          <!-- 4. Exención General y Uso -->
+          <article class="mb-6">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-8 h-8 rounded-lg bg-blue-500 text-white flex items-center justify-center font-bold text-sm shadow-md">4</div>
+              <h2 class="text-xl font-bold text-white tracking-wide">Disponibilidad del Servicio</h2>
+            </div>
+            <div class="pl-11 space-y-3 text-white/80 text-sm sm:text-base leading-relaxed">
+              <p>
+                Trabajamos continuamente para que tu bitácora esté rápida y segura en Cloudflare R2 y servidores Docker. Sin embargo, el servicio se proporciona "tal cual" y no garantizamos que esté libre de interrupciones ocasionales por mantenimiento de redes o actualizaciones de sistema.
+              </p>
             </div>
           </article>
 
           <!-- Bottom Action Section -->
-          <div class="mt-10 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div class="text-xs text-gray-400 text-center sm:text-left">
+          <div class="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="text-xs text-white/60 text-center sm:text-left">
               ¿Tienes dudas o necesitas asistencia legal o técnica?<br />
               <span class="text-white font-medium">Soporte oficial:</span> soporte@ourstoryapp.cl
             </div>
             <div class="flex items-center gap-3 w-full sm:w-auto">
-              <router-link to="/privacy" class="btn btn-ghost px-5 py-3 text-sm rounded-xl font-semibold text-gray-200 border border-white/20 hover:bg-white/10 text-center flex-1 sm:flex-none">
+              <router-link to="/privacy" class="btn-soft px-5 py-3 text-sm rounded-xl font-semibold text-white/90 border border-white/20 hover:bg-white/10 text-center flex-1 sm:flex-none">
                 Ver Política de Privacidad
               </router-link>
-              <button @click="goBack" class="btn btn-soft px-6 py-3 text-sm rounded-xl font-bold active:scale-95 transition-transform flex-1 sm:flex-none text-center">
+              <button @click="goBack" class="btn-soft px-6 py-3 text-sm rounded-xl font-bold active:scale-95 transition-transform flex-1 sm:flex-none text-center bg-pink-500/30 text-white hover:bg-pink-500/40 border border-pink-500/50">
                 Aceptar y Volver
               </button>
             </div>
           </div>
         </section>
+
+        <!-- Footer -->
+        <footer class="text-center text-xs text-white/40 pb-6">
+          <p>© 2026 Our Story / LoveSync. Hecho con amor para conectar parejas.</p>
+        </footer>
       </div>
     </ion-content>
   </ion-page>
@@ -184,49 +154,3 @@ const goBack = () => {
   }
 };
 </script>
-
-<style scoped>
-/* Dark Liquid Glass Palette for TermsView */
-.liquid-dark-bg {
-  --background: #0f111a;
-  background-color: #0f111a;
-  color: #e5e7eb;
-}
-
-.dark-glass-card {
-  background: rgba(24, 26, 42, 0.78) !important;
-  backdrop-filter: blur(36px) saturate(190%) !important;
-  -webkit-backdrop-filter: blur(36px) saturate(190%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45),
-              0 2px 6px rgba(255, 55, 95, 0.08) !important;
-}
-
-.bg-orb {
-  position: absolute;
-  border-radius: 9999px;
-  pointer-events: none;
-  filter: blur(130px);
-  opacity: 0.6;
-}
-
-.btn-soft {
-  background: rgba(255, 55, 95, 0.15);
-  color: #ff375f;
-  border: 1px solid rgba(255, 55, 95, 0.35);
-}
-.btn-soft:hover {
-  background: rgba(255, 55, 95, 0.25);
-  border-color: rgba(255, 55, 95, 0.5);
-}
-
-.btn-ghost {
-  background: rgba(255, 255, 255, 0.06);
-  color: #f3f4f6;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-.btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.25);
-}
-</style>

@@ -496,6 +496,20 @@
               </div>
             </div>
           </div>
+
+          <!-- Escudo Legal y Cumplimiento (Términos / Privacidad) -->
+          <div class="glass rounded-2xl p-4 mb-6 text-center">
+            <p class="text-[11px] font-semibold mb-2" style="color: var(--text-muted);">Información y Acuerdos Legales</p>
+            <div class="flex items-center justify-center gap-3">
+              <router-link to="/terms" class="text-[12px] font-bold text-pink-400 hover:underline flex items-center gap-1">
+                <span>📄 Términos y Condiciones</span>
+              </router-link>
+              <span class="text-white/20">|</span>
+              <router-link to="/privacy" class="text-[12px] font-bold text-purple-400 hover:underline flex items-center gap-1">
+                <span>🔒 Política de Privacidad</span>
+              </router-link>
+            </div>
+          </div>
         </div>
       </div>
     </ion-content>
