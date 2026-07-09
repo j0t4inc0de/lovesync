@@ -49,7 +49,7 @@ async function testR2() {
       Body: testContent,
       ContentType: 'text/plain; charset=utf-8'
     }));
-
+    // test
     const publicUrl = `${(process.env.R2_PUBLIC_URL || '').replace(/\/$/, '')}/${testKey}`;
     console.log('✅ ¡Archivo subido con éxito!');
     console.log(`\n👉 Abre este enlace en tu navegador para ver si el archivo público carga:`);
