@@ -18,24 +18,35 @@ const __dirname = path.dirname(__filename);
 
 // ponytail: Ensure both backend/.env and root .env.local are loaded if present
 if (fs.existsSync(path.resolve(__dirname, '.env'))) {
-  dotenv.config({ path: path.resolve(__dirname, '.env') });
+  dotenv.config({ path: path.resolve(__dirname, '.env'), override: true });
 }
 if (fs.existsSync(path.resolve(__dirname, '../.env.local'))) {
-  dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
+  dotenv.config({ path: path.resolve(__dirname, '../.env.local'), override: true });
 }
 
-const s3Client = process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID ? new S3Client({
-  region: 'auto',
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY
+let _s3Client = null;
+const getS3Client = () => {
+  if (_s3Client) return _s3Client;
+  const accountId = (process.env.R2_ACCOUNT_ID || '').trim();
+  const accessKey = (process.env.R2_ACCESS_KEY_ID || '').trim();
+  const secretKey = (process.env.R2_SECRET_ACCESS_KEY || '').trim();
+  if (accountId && accessKey && secretKey) {
+    _s3Client = new S3Client({
+      region: 'auto',
+      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+      credentials: {
+        accessKeyId: accessKey,
+        secretAccessKey: secretKey
+      }
+    });
   }
-}) : null;
+  return _s3Client;
+};
 
 // ponytail: Helper to transparently upload Base64 images to Cloudflare R2 if configured
 const uploadToR2IfBase64 = async (photoStr, coupleId) => {
-  if (!photoStr || !photoStr.startsWith('data:image/') || !s3Client || !process.env.R2_BUCKET_NAME) {
+  const client = getS3Client();
+  if (!photoStr || !photoStr.startsWith('data:image/') || !client || !process.env.R2_BUCKET_NAME) {
     return photoStr;
   }
   try {
@@ -45,7 +56,7 @@ const uploadToR2IfBase64 = async (photoStr, coupleId) => {
       const buffer = Buffer.from(matches[2], 'base64');
       const fileName = `couples/${coupleId || 'shared'}/photo_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
       
-      await s3Client.send(new PutObjectCommand({
+      await client.send(new PutObjectCommand({
         Bucket: process.env.R2_BUCKET_NAME,
         Key: fileName,
         Body: buffer,
