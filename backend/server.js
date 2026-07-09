@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -9,9 +10,56 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import PDFDocument from 'pdfkit';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// ponytail: Ensure both backend/.env and root .env.local are loaded if present
+if (fs.existsSync(path.resolve(__dirname, '.env'))) {
+  dotenv.config({ path: path.resolve(__dirname, '.env') });
+}
+if (fs.existsSync(path.resolve(__dirname, '../.env.local'))) {
+  dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
+}
+
+const s3Client = process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID ? new S3Client({
+  region: 'auto',
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY
+  }
+}) : null;
+
+// ponytail: Helper to transparently upload Base64 images to Cloudflare R2 if configured
+const uploadToR2IfBase64 = async (photoStr, coupleId) => {
+  if (!photoStr || !photoStr.startsWith('data:image/') || !s3Client || !process.env.R2_BUCKET_NAME) {
+    return photoStr;
+  }
+  try {
+    const matches = photoStr.match(/^data:image\/([a-zA-Z0-9+_-]+);base64,(.+)$/);
+    if (matches) {
+      const ext = matches[1].replace('jpeg', 'jpg');
+      const buffer = Buffer.from(matches[2], 'base64');
+      const fileName = `couples/${coupleId || 'shared'}/photo_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
+      
+      await s3Client.send(new PutObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME,
+        Key: fileName,
+        Body: buffer,
+        ContentType: `image/${ext}`
+      }));
+      
+      const publicRoot = (process.env.R2_PUBLIC_URL || '').replace(/\/$/, '');
+      return `${publicRoot}/${fileName}`;
+    }
+  } catch (err) {
+    console.error('Error uploading image to Cloudflare R2, keeping original:', err.message);
+  }
+  return photoStr;
+};
 
 const app = express();
 const httpServer = createServer(app);
@@ -822,9 +870,18 @@ app.get('/api/dates/pdf', authenticateToken, async (req, res) => {
       if (date.photo_url) {
         try {
           const photoStr = date.photo_url;
+          let imgBuffer = null;
           if (photoStr.includes('base64,')) {
             const base64Data = photoStr.split('base64,')[1];
-            const imgBuffer = Buffer.from(base64Data, 'base64');
+            imgBuffer = Buffer.from(base64Data, 'base64');
+          } else if (photoStr.startsWith('http')) {
+            const imgRes = await fetch(photoStr);
+            if (imgRes.ok) {
+              const arrayBuffer = await imgRes.arrayBuffer();
+              imgBuffer = Buffer.from(arrayBuffer);
+            }
+          }
+          if (imgBuffer) {
             // Fit image beautifully with a max height of 200 to prevent unnecessary page overflows
             doc.image(imgBuffer, {
               fit: [512, 200],
@@ -935,6 +992,11 @@ app.post('/api/dates', authenticateToken, async (req, res) => {
       }
     }
 
+    const finalPhotoUrl = await uploadToR2IfBase64(
+      photo_url || 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80',
+      user.couple_id
+    );
+
     const result = await pool.query(
       'INSERT INTO dates (couple_id, location, city, date_time, description, rating_user_1, rating_user_2, tags, photo_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
       [
@@ -946,7 +1008,7 @@ app.post('/api/dates', authenticateToken, async (req, res) => {
         rating_user_1 || 5.0,
         rating_user_2 || 5.0,
         tags || [],
-        photo_url || 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80'
+        finalPhotoUrl
       ]
     );
 
@@ -992,9 +1054,11 @@ app.put('/api/dates/:id', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'El plazo de 5 días para editar esta cita ha vencido.' });
     }
     
+    const finalPhotoUrl = await uploadToR2IfBase64(photo_url, user.couple_id);
+
     const updateRes = await pool.query(
       'UPDATE dates SET location = $1, city = $2, date_time = $3, description = $4, rating_user_1 = $5, rating_user_2 = $6, tags = $7, photo_url = $8 WHERE id = $9 RETURNING *',
-      [location, city, date_time, description, rating_user_1, rating_user_2, tags || [], photo_url, id]
+      [location, city, date_time, description, rating_user_1, rating_user_2, tags || [], finalPhotoUrl, id]
     );
     
     io.to(`couple_${user.couple_id}`).emit('date_updated', updateRes.rows[0]);
