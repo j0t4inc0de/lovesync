@@ -31,10 +31,10 @@ La seguridad financiera de nuestros usuarios está totalmente separada y blindad
 
 ## 4. Tu Derecho al Olvido y Eliminación de Datos (Ley N° 19.628 de Chile)
 Reconocemos y garantizamos tu control absoluto sobre tu información e historia personal. Conforme a las normativas de Apple App Store, Google Play Store y el artículo 12 de la Ley N° 19.628 de Chile:
-* **Eliminación Autonomous desde la App:** Puedes solicitar y ejecutar el borrado definitivo de tu cuenta y registros directamente desde la sección de Ajustes dentro de la aplicación en cualquier momento.
+* **Eliminación Autónoma desde la App:** Puedes solicitar y ejecutar el borrado definitivo de tu cuenta y registros directamente desde la sección de Ajustes dentro de la aplicación en cualquier momento.
 * **Destrucción Permanente en Cloudflare R2:** Al confirmar la eliminación de tu cuenta, tu perfil se borra de nuestra base de datos relacional y se activa un proceso automatizado que elimina permanentemente las fotografías físicas almacenadas bajo tu identificador de cuenta en los repositorios de Cloudflare R2 dentro de un plazo máximo no superior a **14 días corridos**, garantizando tu pleno Derecho al Olvido sin retenciones residuales u ocultas.
 
 ---
 
 ## 5. Oficial de Privacidad y Contacto
-Si requieres ejercer tus derechos ARCO (Acceso, Rectificación, Cancelación u Oposición) o tienes cualquier duda sobre cómo se cuidan tus datos, puedes contactarnos en: **privacidad@ourstoryapp.cl**
+Si requieres ejercer tus derechos ARCO (Acceso, Rectificación, Cancelación u Oposición) o tienes cualquier duda sobre cómo se cuidan tus datos, puedes contactarnos en: **wearesamod@gmail.com**

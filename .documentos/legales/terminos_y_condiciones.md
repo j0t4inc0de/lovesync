@@ -41,4 +41,4 @@ El emparejamiento entre los dos dispositivos de la pareja se sustenta en el mutu
 ---
 
 ## 5. Contacto y Soporte
-Si tienes dudas o consultas respecto a estos Términos y Condiciones, puedes escribir directamente al equipo creador en: **soporte@ourstoryapp.cl**
+Si tienes dudas o consultas respecto a estos Términos y Condiciones, puedes escribir directamente al equipo creador en: **wearesamod@gmail.com**

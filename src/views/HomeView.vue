@@ -383,39 +383,47 @@
           </div>
 
           <!-- Tienda / Premium (Efecto Señuelo & Neuroventas) -->
-          <div class="rounded-2xl p-5 mb-4 relative overflow-hidden text-white border border-white/10" style="background: linear-gradient(135deg, rgba(26, 26, 46, 0.85) 0%, rgba(22, 33, 62, 0.95) 100%); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);">
-            <div class="absolute -right-6 -bottom-6 w-32 h-32 rounded-full" style="background: radial-gradient(circle, var(--accent-glow), transparent); opacity: 0.8;"></div>
+          <div class="rounded-2xl p-5 mb-4 relative overflow-hidden text-white border border-white/20 shadow-xl" style="background-color: #ff4c70;">
             <div class="flex items-center justify-between mb-2">
-              <p class="text-[0.65rem] font-bold uppercase tracking-widest text-white/40">Tienda de Recuerdos</p>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm">Oferta Cómplice</span>
+              <p class="text-[0.65rem] font-black uppercase tracking-widest text-white/80">Tienda de Recuerdos</p>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider uppercase bg-white text-[#ff4c70] shadow-sm flex items-center gap-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>Oferta Cómplice</span>
+              </span>
             </div>
-            <h3 class="text-[18px] font-bold mb-1" style="font-family: 'Comfortaa', sans-serif;">¿Necesitas más espacio?</h3>
-            <p class="text-[13px] mb-4 leading-relaxed text-white/70">Guarda todas sus citas en la bitácora sin preocuparte por el límite mensual.</p>
+            <h3 class="text-[18px] font-extrabold mb-1" style="font-family: 'Comfortaa', sans-serif;">¿Necesitas más espacio?</h3>
+            <p class="text-[13px] mb-4 leading-relaxed text-white/90 font-medium">Guarda todas sus citas en la bitácora sin preocuparte por el límite mensual.</p>
             
             <div class="flex flex-col gap-3">
               <!-- Opción Estrella (Señuelo irresistible · 50% DCTO) -->
-              <div @click="buySlots('slots_10')" class="cursor-pointer group relative rounded-xl p-3.5 border-2 border-amber-400/80 bg-gradient-to-r from-amber-500/20 via-pink-500/15 to-purple-500/20 hover:from-amber-500/30 hover:to-purple-500/30 transition-all shadow-lg active:scale-[0.99]">
-                <div class="absolute -top-2.5 right-3 bg-gradient-to-r from-amber-500 to-pink-500 text-white text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full shadow-md">🔥 MÁS VENDIDO · AHORRAS 50%</div>
+              <div @click="buySlots('slots_10')" class="cursor-pointer group relative rounded-xl p-3.5 border-2 border-white bg-black/20 hover:bg-black/30 transition-all shadow-lg active:scale-[0.99]">
+                <div class="absolute -top-2.5 right-3 bg-white text-[#ff4c70] text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                  <svg class="w-3 h-3 text-[#ff4c70]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" /></svg>
+                  <span>MÁS VENDIDO · AHORRAS 50%</span>
+                </div>
                 <div class="flex items-center justify-between mt-1">
                   <div>
-                    <div class="text-[14px] font-bold text-white group-hover:text-amber-200 transition-colors">Bolsa Estrella (+10 Citas)</div>
-                    <div class="text-[11px] text-amber-300/90 font-medium">¡Apenas $499 por recuerdo! ⚡</div>
+                    <div class="text-[14px] font-bold text-white group-hover:text-white/90 transition-colors">Bolsa Estrella (+10 Citas)</div>
+                    <div class="text-[11px] text-white/90 font-semibold flex items-center gap-1 mt-0.5">
+                      <span>¡Apenas $499 por recuerdo!</span>
+                      <svg class="w-3.5 h-3.5 text-amber-300 inline" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" /></svg>
+                    </div>
                   </div>
                   <div class="text-right">
-                    <div class="text-[16px] font-black text-amber-300">$4.990 <span class="text-[10px] font-normal text-white/60">CLP</span></div>
+                    <div class="text-[16px] font-black text-white">$4.990 <span class="text-[10px] font-normal text-white/80">CLP</span></div>
                   </div>
                 </div>
               </div>
 
               <!-- Opción Apuro (Señuelo alto costo unitario) -->
-              <div @click="buySlots('slots_2')" class="cursor-pointer group rounded-xl p-3 border border-white/15 bg-white/5 hover:bg-white/10 transition-all active:scale-[0.99]">
+              <div @click="buySlots('slots_2')" class="cursor-pointer group rounded-xl p-3 border border-white/30 bg-black/10 hover:bg-black/20 transition-all active:scale-[0.99]">
                 <div class="flex items-center justify-between">
                   <div>
-                    <div class="text-[13px] font-medium text-white/90">Bolsa de Apuro (+2 Citas)</div>
-                    <div class="text-[11px] text-white/50">$995 por recuerdo</div>
+                    <div class="text-[13px] font-bold text-white">Bolsa de Apuro (+2 Citas)</div>
+                    <div class="text-[11px] text-white/75 font-medium">$995 por recuerdo</div>
                   </div>
                   <div class="text-right">
-                    <div class="text-[14px] font-bold text-white/80">$1.990 <span class="text-[10px] font-normal text-white/50">CLP</span></div>
+                    <div class="text-[14px] font-bold text-white">$1.990 <span class="text-[10px] font-normal text-white/75">CLP</span></div>
                   </div>
                 </div>
               </div>
@@ -498,18 +506,17 @@
           </div>
 
           <!-- Escudo Legal y Cumplimiento (Términos / Privacidad) -->
-          <div class="glass rounded-2xl p-4 mb-6 text-center">
-            <p class="text-[11px] font-semibold mb-2" style="color: var(--text-muted);">Información y Acuerdos Legales</p>
-            <div class="flex items-center justify-center gap-4">
-              <router-link to="/terms" class="text-[12px] font-bold text-pink-400 hover:underline flex items-center gap-1.5 transition-opacity hover:opacity-80">
-                <svg class="w-3.5 h-3.5 text-pink-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <div class="glass rounded-2xl p-4 mb-6 text-center border border-white/15">
+            <p class="text-[11px] font-semibold mb-3" style="color: var(--text-muted);">Información y Acuerdos Legales</p>
+            <div class="flex flex-wrap items-center justify-center gap-2.5">
+              <router-link to="/terms" class="text-[12px] font-extrabold text-black bg-white/90 hover:bg-white px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-sm">
+                <svg class="w-3.5 h-3.5 text-black" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <span>Términos y Condiciones</span>
               </router-link>
-              <span class="text-white/20">|</span>
-              <router-link to="/privacy" class="text-[12px] font-bold text-purple-400 hover:underline flex items-center gap-1.5 transition-opacity hover:opacity-80">
-                <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <router-link to="/privacy" class="text-[12px] font-extrabold text-black bg-white/90 hover:bg-white px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-sm">
+                <svg class="w-3.5 h-3.5 text-black" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 <span>Política de Privacidad</span>
