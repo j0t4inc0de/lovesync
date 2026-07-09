@@ -463,21 +463,21 @@ app.post('/api/profile/slots', authenticateToken, async (req, res) => {
 // Create preference to buy extra slots
 app.post('/api/payments/create-preference', authenticateToken, async (req, res) => {
   try {
-    const { packageId } = req.body; // e.g. 'slots_5' or 'slots_15'
+    const { packageId } = req.body; // e.g. 'slots_2' or 'slots_10'
     const userRes = await pool.query('SELECT id, name, email, couple_id FROM users WHERE id = $1', [req.user.id]);
     const user = userRes.rows[0];
     if (!user || !user.couple_id) {
       return res.status(400).json({ error: 'Debes estar vinculado a una pareja para comprar cupos extras.' });
     }
 
-    let title = 'LoveSync - Paquete 5 Cupos Extras';
-    let unit_price = 1990;
-    let slotsAmount = 5;
+    let title = 'LoveSync - Bolsa Estrella (+10 Cupos · 50% DCTO)';
+    let unit_price = 4990;
+    let slotsAmount = 10;
 
-    if (packageId === 'slots_15') {
-      title = 'LoveSync - Paquete 15 Cupos Extras';
-      unit_price = 4990;
-      slotsAmount = 15;
+    if (packageId === 'slots_2') {
+      title = 'LoveSync - Bolsa de Apuro (+2 Cupos)';
+      unit_price = 1990;
+      slotsAmount = 2;
     }
 
     const client = getMPClient();

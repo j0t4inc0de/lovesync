@@ -382,15 +382,43 @@
             <button @click="buyPDF" class="btn-soft w-full text-[15px]">Generar PDF</button>
           </div>
 
-          <!-- Premium -->
-          <div class="rounded-2xl p-5 mb-4 relative overflow-hidden text-white border border-white/10" style="background: linear-gradient(135deg, rgba(26, 26, 46, 0.75) 0%, rgba(22, 33, 62, 0.9) 100%); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);">
+          <!-- Tienda / Premium (Efecto Señuelo & Neuroventas) -->
+          <div class="rounded-2xl p-5 mb-4 relative overflow-hidden text-white border border-white/10" style="background: linear-gradient(135deg, rgba(26, 26, 46, 0.85) 0%, rgba(22, 33, 62, 0.95) 100%); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);">
             <div class="absolute -right-6 -bottom-6 w-32 h-32 rounded-full" style="background: radial-gradient(circle, var(--accent-glow), transparent); opacity: 0.8;"></div>
-            <p class="text-[0.65rem] font-bold uppercase tracking-widest mb-3 text-white/40">Premium</p>
-            <h3 class="text-[17px] font-bold mb-1" style="font-family: 'Comfortaa', sans-serif;">¿Más espacio?</h3>
-            <p class="text-[13px] mb-4 leading-relaxed text-white/60">Añade cupos adicionales para guardar todas sus citas en la bitácora.</p>
-            <div class="grid grid-cols-2 gap-2.5">
-              <button @click="buySlots('slots_5')" class="btn-soft w-full text-[13px] py-2.5 bg-white/10 hover:bg-white/20 border border-white/15 text-white font-semibold transition-all">$1.990 · +5 cupos</button>
-              <button @click="buySlots('slots_15')" class="btn-primary w-full text-[13px] py-2.5 shadow-lg font-semibold transition-all">$4.990 · +15 cupos</button>
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-[0.65rem] font-bold uppercase tracking-widest text-white/40">Tienda de Recuerdos</p>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm">Oferta Cómplice</span>
+            </div>
+            <h3 class="text-[18px] font-bold mb-1" style="font-family: 'Comfortaa', sans-serif;">¿Necesitas más espacio?</h3>
+            <p class="text-[13px] mb-4 leading-relaxed text-white/70">Guarda todas sus citas en la bitácora sin preocuparte por el límite mensual.</p>
+            
+            <div class="flex flex-col gap-3">
+              <!-- Opción Estrella (Señuelo irresistible · 50% DCTO) -->
+              <div @click="buySlots('slots_10')" class="cursor-pointer group relative rounded-xl p-3.5 border-2 border-amber-400/80 bg-gradient-to-r from-amber-500/20 via-pink-500/15 to-purple-500/20 hover:from-amber-500/30 hover:to-purple-500/30 transition-all shadow-lg active:scale-[0.99]">
+                <div class="absolute -top-2.5 right-3 bg-gradient-to-r from-amber-500 to-pink-500 text-white text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full shadow-md">🔥 MÁS VENDIDO · AHORRAS 50%</div>
+                <div class="flex items-center justify-between mt-1">
+                  <div>
+                    <div class="text-[14px] font-bold text-white group-hover:text-amber-200 transition-colors">Bolsa Estrella (+10 Citas)</div>
+                    <div class="text-[11px] text-amber-300/90 font-medium">¡Apenas $499 por recuerdo! ⚡</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-[16px] font-black text-amber-300">$4.990 <span class="text-[10px] font-normal text-white/60">CLP</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Opción Apuro (Señuelo alto costo unitario) -->
+              <div @click="buySlots('slots_2')" class="cursor-pointer group rounded-xl p-3 border border-white/15 bg-white/5 hover:bg-white/10 transition-all active:scale-[0.99]">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-[13px] font-medium text-white/90">Bolsa de Apuro (+2 Citas)</div>
+                    <div class="text-[11px] text-white/50">$995 por recuerdo</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-[14px] font-bold text-white/80">$1.990 <span class="text-[10px] font-normal text-white/50">CLP</span></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
