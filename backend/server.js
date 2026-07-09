@@ -125,6 +125,11 @@ const initDatabase = async (retries = 10, delay = 3000) => {
       await pool.query('SELECT 1');
       // Run schema
       await pool.query(schemaSql);
+      try {
+        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0;');
+      } catch (e) {
+        console.warn('Advertencia ejecutando alter en initDatabase:', e.message);
+      }
       console.log('PostgreSQL database schemas verified/created successfully.');
       return;
     } catch (error) {
@@ -245,6 +250,9 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
     let unpairState = 'idle';
     let unpairRequestedBy = null;
     let unpairDaysLeft = 0;
+    let streakCount = 0;
+    let lastStreakDate = null;
+    let previousStreak = 0;
 
     if (user.couple_id) {
       // Get partner info
@@ -255,6 +263,13 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
       if (partnerRes.rows.length > 0) {
         partnerName = partnerRes.rows[0].name;
         partnerId = partnerRes.rows[0].id;
+      }
+
+      // Ensure streak columns exist in production even if startup migrations were skipped
+      try {
+        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0;');
+      } catch (migErr) {
+        // Ignored if already exists or permissions
       }
 
       // Get couple slots (base_slots + sum of extra_slots for the current month)
@@ -279,6 +294,9 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
       if (coupleRes.rows.length > 0) {
         const couple = coupleRes.rows[0];
         maxSlots = couple.base_slots + couple.extra_slots;
+        streakCount = couple.streak_count || 0;
+        lastStreakDate = couple.last_streak_date || null;
+        previousStreak = couple.previous_streak || 0;
 
         if (couple.unpair_requested_at) {
           const requestedDate = new Date(couple.unpair_requested_at);
@@ -297,15 +315,6 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
           }
         }
       }
-    }
-
-    let streakCount = 0;
-    let lastStreakDate = null;
-    let previousStreak = 0;
-    if (user.couple_id && coupleRes && coupleRes.rows.length > 0) {
-      streakCount = coupleRes.rows[0].streak_count || 0;
-      lastStreakDate = coupleRes.rows[0].last_streak_date || null;
-      previousStreak = coupleRes.rows[0].previous_streak || 0;
     }
 
     res.json({
