@@ -387,8 +387,11 @@
             <div class="absolute -right-6 -bottom-6 w-32 h-32 rounded-full" style="background: radial-gradient(circle, var(--accent-glow), transparent); opacity: 0.8;"></div>
             <p class="text-[0.65rem] font-bold uppercase tracking-widest mb-3 text-white/40">Premium</p>
             <h3 class="text-[17px] font-bold mb-1" style="font-family: 'Comfortaa', sans-serif;">¿Más espacio?</h3>
-            <p class="text-[13px] mb-4 leading-relaxed text-white/60">5 citas adicionales válidas para el mes actual.</p>
-            <button @click="buySlots" class="btn-primary w-full text-[15px]">$4.990 CLP · +5 cupos</button>
+            <p class="text-[13px] mb-4 leading-relaxed text-white/60">Añade cupos adicionales para guardar todas sus citas en la bitácora.</p>
+            <div class="grid grid-cols-2 gap-2.5">
+              <button @click="buySlots('slots_5')" class="btn-soft w-full text-[13px] py-2.5 bg-white/10 hover:bg-white/20 border border-white/15 text-white font-semibold transition-all">$1.990 · +5 cupos</button>
+              <button @click="buySlots('slots_15')" class="btn-primary w-full text-[13px] py-2.5 shadow-lg font-semibold transition-all">$4.990 · +15 cupos</button>
+            </div>
           </div>
 
           <!-- Panel de Control Administrador (Red themed Premium style card) -->
@@ -1352,20 +1355,18 @@ const handlePhotoUpload = async (event, mode) => {
   }
 };
 
-const buySlots = async () => {
-  const confirmPurchase = confirm('¿Deseas simular la compra de +5 cupos mensuales por $4.990 CLP?');
-  if (!confirmPurchase) return;
+const buySlots = async (packageOrEvent = 'slots_5') => {
+  const packageId = typeof packageOrEvent === 'string' ? packageOrEvent : 'slots_5';
 
   try {
-    const res = await api.addSlots(5);
-    if (res.success && res.newMaxSlots) {
-      maxSlots.value = res.newMaxSlots;
-      showPopup('¡Compra completada con éxito! +5 cupos mensuales añadidos.');
+    const res = await api.createPaymentPreference(packageId);
+    if (res && res.init_point) {
+      window.location.href = res.init_point;
+    } else {
+      showPopup(res?.error || 'Error al iniciar pago');
     }
   } catch (error) {
-    console.warn('Backend buySlots failed, using local fallback:', error.message);
-    maxSlots.value += 5;
-    showPopup('Simulación exitosa: +5 cupos mensuales añadidos.');
+    showPopup(error.message || 'Error al iniciar pago');
   }
 };
 const buyPDF = async () => {
@@ -1567,23 +1568,36 @@ const restartTrivia = () => {
   matchedDailySlots.value = false;
 };
 
+const fetchProfile = async () => {
+  const profile = await api.getProfile();
+  if (!profile || !profile.user || !profile.user.couple_id) {
+    router.push('/pair');
+    return false;
+  }
+  currentUser.value = profile.user;
+  userCoupleId.value = profile.user.couple_id;
+  maxSlots.value = profile.maxSlots;
+  partnerName.value = profile.partnerName || 'Pareja';
+  partnerId.value = profile.partnerId || null;
+  unpairState.value = profile.unpairState || 'idle';
+  unpairRequestedBy.value = profile.unpairRequestedBy || null;
+  unpairDaysLeft.value = profile.unpairDaysLeft || 0;
+  return true;
+};
+
 onMounted(async () => {
   // Auth state verification
   try {
-    const profile = await api.getProfile();
-    if (!profile || !profile.user || !profile.user.couple_id) {
-      router.push('/pair');
-      return;
+    const profileLoaded = await fetchProfile();
+    if (!profileLoaded) return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    if (paymentStatus === 'success') {
+      showPopup('🎉 ¡Pago aprobado! Tienes nuevos cupos disponibles en tu bitácora.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+      await fetchProfile();
     }
-    
-    currentUser.value = profile.user;
-    userCoupleId.value = profile.user.couple_id;
-    maxSlots.value = profile.maxSlots;
-    partnerName.value = profile.partnerName || 'Pareja';
-    partnerId.value = profile.partnerId || null;
-    unpairState.value = profile.unpairState || 'idle';
-    unpairRequestedBy.value = profile.unpairRequestedBy || null;
-    unpairDaysLeft.value = profile.unpairDaysLeft || 0;
 
     // Load actual dates list from Database
     await loadDates();

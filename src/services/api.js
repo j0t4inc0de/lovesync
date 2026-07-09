@@ -142,6 +142,8 @@ export const api = {
     });
   },
   
+  createPaymentPreference: (packageId) => request('/api/payments/create-preference', { method: 'POST', body: JSON.stringify({ packageId }) }),
+  
   playTrivia: async (correct) => {
     const localDate = new Date().toLocaleDateString('sv-SE');
     return request('/api/trivia/play', {

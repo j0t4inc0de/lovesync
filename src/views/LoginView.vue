@@ -51,6 +51,14 @@
               {{ isSignUp ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate' }}
             </button>
           </div>
+
+          <!-- Legal Terms & Privacy Discrete Links -->
+          <div class="pt-4 mt-4 border-t border-white/30 text-center animate-fade-in text-[11.5px] leading-relaxed" style="color: var(--text-secondary);">
+            Al registrarte o continuar, aceptas nuestros 
+            <router-link to="/terms" class="font-semibold hover:underline transition-all" style="color: var(--accent);">Términos y Condiciones</router-link> 
+            y 
+            <router-link to="/privacy" class="font-semibold hover:underline transition-all" style="color: var(--accent);">Política de Privacidad</router-link>.
+          </div>
         </div>
       </div>
     </ion-content>
