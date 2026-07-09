@@ -73,3 +73,9 @@ CREATE TABLE IF NOT EXISTS daily_trivia_answers (
 -- Migration for existing couples table (unpair request system)
 ALTER TABLE couples ADD COLUMN IF NOT EXISTS unpair_requested_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;
 ALTER TABLE couples ADD COLUMN IF NOT EXISTS unpair_requested_by INT REFERENCES users(id) ON DELETE SET NULL DEFAULT NULL;
+
+-- Create Processed Payments Table for Webhook deduplication
+CREATE TABLE IF NOT EXISTS processed_payments (
+    payment_id VARCHAR(255) PRIMARY KEY,
+    processed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

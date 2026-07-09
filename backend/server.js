@@ -546,19 +546,25 @@ app.post('/api/payments/webhook', async (req, res) => {
 
         if (paymentData.status === 'approved' && paymentData.external_reference) {
           try {
-            const refData = JSON.parse(paymentData.external_reference);
-            const { coupleId, slotsAmount } = refData;
+            const checkRes = await pool.query('SELECT 1 FROM processed_payments WHERE payment_id = $1', [paymentId.toString()]);
+            if (checkRes.rowCount === 0) {
+              await pool.query('INSERT INTO processed_payments (payment_id) VALUES ($1)', [paymentId.toString()]);
+              const refData = JSON.parse(paymentData.external_reference);
+              const { coupleId, slotsAmount } = refData;
 
-            if (coupleId && slotsAmount) {
-              await pool.query(
-                `INSERT INTO couple_extra_slots (couple_id, amount, year, month) 
-                 VALUES ($1, $2, EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int)`,
-                [coupleId, slotsAmount]
-              );
-              console.log(`✅ [MercadoPago Éxito] +${slotsAmount} cupos acreditados a pareja ID ${coupleId}`);
+              if (coupleId && slotsAmount) {
+                await pool.query(
+                  `INSERT INTO couple_extra_slots (couple_id, amount, year, month) 
+                   VALUES ($1, $2, EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int)`,
+                  [coupleId, slotsAmount]
+                );
+                console.log(`✅ [MercadoPago Éxito] +${slotsAmount} cupos acreditados a pareja ID ${coupleId} (Ref: ${paymentId})`);
+              }
+            } else {
+              console.log(`ℹ️ [MercadoPago Webhook] El pago ID ${paymentId} ya fue procesado anteriormente. Omitiendo duplicado.`);
             }
           } catch (parseErr) {
-            console.error('Error parseando external_reference de MercadoPago:', parseErr.message);
+            console.error('Error parseando external_reference de MercadoPago o verificando duplicado:', parseErr.message);
           }
         }
       }
@@ -662,7 +668,20 @@ app.post('/api/trivia/play', authenticateToken, async (req, res) => {
   }
 });
 
-app.get('/api/debug/user-trivia', async (req, res) => {
+// Admin Verification Middleware
+const requireAdmin = async (req, res, next) => {
+  try {
+    const adminCheck = await pool.query('SELECT is_admin FROM users WHERE id = $1', [req.user.id]);
+    if (adminCheck.rows.length === 0 || !adminCheck.rows[0].is_admin) {
+      return res.status(403).json({ error: 'Acceso denegado. Se requiere rol de Administrador.' });
+    }
+    next();
+  } catch (error) {
+    res.status(500).json({ error: 'Error al verificar permisos de administrador.' });
+  }
+};
+
+app.get('/api/debug/user-trivia', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const users = await pool.query(
       'SELECT id, name, email, last_trivia_date::text AS last_trivia_date, CURRENT_DATE::text as server_current_date, NOW() as server_now FROM users ORDER BY id ASC'
@@ -723,7 +742,7 @@ app.get('/api/debug/user-trivia', async (req, res) => {
   }
 });
 
-app.get('/api/debug/reset-jota', async (req, res) => {
+app.get('/api/debug/reset-jota', authenticateToken, requireAdmin, async (req, res) => {
   try {
     await pool.query("UPDATE users SET last_trivia_date = '2026-07-04' WHERE id = 1");
     await pool.query("UPDATE daily_trivia_answers SET date = '2026-07-04' WHERE user_id = 1 AND date = '2026-07-05'");
@@ -734,7 +753,7 @@ app.get('/api/debug/reset-jota', async (req, res) => {
 });
 
 // ponytail: Debug endpoint to verify R2 connectivity and config in any environment
-app.get('/api/debug/r2-status', async (req, res) => {
+app.get('/api/debug/r2-status', authenticateToken, requireAdmin, async (req, res) => {
   const accountId = (process.env.R2_ACCOUNT_ID || '').trim();
   const accessKey = (process.env.R2_ACCESS_KEY_ID || '').trim();
   const secretKey = (process.env.R2_SECRET_ACCESS_KEY || '').trim();
@@ -748,52 +767,34 @@ app.get('/api/debug/r2-status', async (req, res) => {
 
   if (client && bucketName) {
     try {
-      const testKey = `debug_test_${Date.now()}.txt`;
+      const testKey = `test_r2_status_${Date.now()}.txt`;
       await client.send(new PutObjectCommand({
         Bucket: bucketName,
         Key: testKey,
-        Body: Buffer.from('lovesync r2 diagnostic test'),
-        ContentType: 'text/plain'
+        Body: 'R2 connectivity check'
       }));
-      testResult = `Success! Uploaded ${testKey} to ${bucketName}`;
+      await client.send(new DeleteObjectCommand({
+        Bucket: bucketName,
+        Key: testKey
+      }));
+      testResult = 'SUCCESS (Write and Delete verified)';
     } catch (err) {
-      testResult = 'Failed';
-      errorDetails = {
-        message: err.message,
-        code: err.code || err.name,
-        stack: err.stack
-      };
+      testResult = 'FAILED';
+      errorDetails = err.message;
     }
   }
 
   res.json({
-    status: (client && bucketName && testResult.startsWith('Success')) ? 'OK' : 'ERROR',
-    config: {
-      hasAccountId: !!accountId,
-      accountIdMasked: accountId ? `${accountId.substring(0, 4)}...` : null,
-      hasAccessKeyId: !!accessKey,
-      hasSecretAccessKey: !!secretKey,
-      bucketName: bucketName || null,
-      publicUrl: publicUrl || null,
-      s3ClientInitialized: !!client
-    },
+    configured: !!client,
+    hasAccountId: !!accountId,
+    hasAccessKey: !!accessKey,
+    hasSecretKey: !!secretKey,
+    bucketName: bucketName || null,
+    publicUrl: publicUrl || null,
     testUpload: testResult,
     error: errorDetails
   });
 });
-
-// Admin Verification Middleware
-const requireAdmin = async (req, res, next) => {
-  try {
-    const adminCheck = await pool.query('SELECT is_admin FROM users WHERE id = $1', [req.user.id]);
-    if (adminCheck.rows.length === 0 || !adminCheck.rows[0].is_admin) {
-      return res.status(403).json({ error: 'Acceso denegado. Se requiere rol de Administrador.' });
-    }
-    next();
-  } catch (error) {
-    res.status(500).json({ error: 'Error al verificar permisos de administrador.' });
-  }
-};
 
 // Admin: Get all couples and members
 app.get('/api/admin/couples', authenticateToken, requireAdmin, async (req, res) => {
