@@ -1,15 +1,15 @@
-# Términos y Condiciones de Uso — Our Story / LoveSync
+# Términos y Condiciones de Uso — OurStory
 **Última actualización: 9 de Julio, 2026**
 
-Bienvenido/a a **Our Story / LoveSync**, una plataforma móvil y web de software diseñada para ser una bitácora digital íntima y un álbum compartido de citas para parejas en Chile y el mundo. Al acceder, registrarte o utilizar nuestra aplicación, aceptas de manera libre y expresa el presente **Acuerdo de Licencia de Usuario Final (EULA)** y las normas de convivencia que aquí se estipulan.
+Bienvenido/a a **OurStory**, una plataforma móvil y web de software diseñada para ser una bitácora digital íntima y un álbum compartido de citas para parejas en Chile y el mundo. Al acceder, registrarte o utilizar nuestra aplicación, aceptas de manera libre y expresa el presente **Acuerdo de Licencia de Usuario Final (EULA)** y las normas de convivencia que aquí se estipulan.
 
 ---
 
 ## 1. Naturaleza y Disponibilidad del Servicio
-Our Story / LoveSync proporciona un servicio de software "tal cual" (*as is*) y "según disponibilidad" (*as available*) cuyo propósito es permitir la sincronización en tiempo real de registros, notas y fotografías entre los dos dispositivos móviles emparejados bajo el código criptográfico único de su cuenta (`couple_id`).
+OurStory proporciona un servicio de software "tal cual" (*as is*) y "según disponibilidad" (*as available*) cuyo propósito es permitir la sincronización en tiempo real de registros, notas y fotografías entre los dos dispositivos móviles emparejados bajo el código criptográfico único de su cuenta (`couple_id`).
 
-* **Exención de Garantías:** Aunque nos esforzamos continuamente para mantener nuestros servidores en **Docker/PostgreSQL** y almacenamiento en **Cloudflare R2** operando con los más altos estándares técnicos de seguridad, no garantizamos un funcionamiento ininterrumpido o exento de latencias debidas al estado de la red del usuario o al mantenimiento periódico.
-* En la máxima medida autorizada por la legislación chilena (Ley N° 19.496 sobre Protección de los Derechos de los Consumidores), los desarrolladores de LoveSync no asumirán responsabilidad civil por interrupciones temporales o pérdida fortuita de información no respaldada previamente por la pareja.
+* **Exención de Garantías:** Aunque nos esforzamos continuamente para mantener nuestros servidores y almacenamiento en **Cloudflare R2** operando con los más altos estándares técnicos de seguridad, no garantizamos un funcionamiento ininterrumpido o exento de latencias debidas al estado de la red del usuario o al mantenimiento periódico.
+* En la máxima medida autorizada por la legislación chilena (Ley N° 19.496 sobre Protección de los Derechos de los Consumidores), los desarrolladores de OurStory no asumirán responsabilidad civil por interrupciones temporales o pérdida fortuita de información no respaldada previamente por la pareja.
 
 ---
 
@@ -22,13 +22,13 @@ Aunque las bitácoras y fotografías de cada pareja son completamente privadas, 
 
 ---
 
-## 3. Tienda de Recuerdos, Lógica de Cupos y Vigencia Mensual (Opción A)
-En LoveSync cada pareja dispone de un límite base mensual de citas gratuitas para registrar su historia de amor. Si la pareja desea documentar un mayor número de citas en un mismo mes, ponemos a disposición paquetes de expansión de cupos a través de nuestra Tienda:
+## 3. Tienda de Recuerdos, Cupos y Vigencia Mensual
+En OurStory cada pareja dispone de un límite base mensual de citas gratuitas para registrar su historia de amor. Si la pareja desea documentar un mayor número de citas en un mismo mes, ponemos a disposición paquetes de expansión de cupos a través de nuestra Tienda integrada:
 
-### ✨ Vigencia de Cupos Extras (Modelo de Vigencia Mensual):
-Los paquetes de cupos adquiridos (como la *Bolsa de Apuro* de +2 cupos por $1.990 CLP o la *Bolsa Estrella* de +10 cupos por $4.990 CLP) expanden la capacidad máxima de la bitácora **para el mes calendario en curso en el que se realiza la compra**. El primer día del mes siguiente, el contador de citas se reinicia automáticamente al límite base de la pareja (10 citas por mes), incentivando a disfrutar, tomar fotografías y documentar sus citas activamente mes a mes. Los cupos extras no se traspasan ni acumulan para meses posteriores.
+### Vigencia de Cupos Extras (Renovación Mensual)
+Los paquetes de cupos adquiridos en la Tienda expanden la capacidad máxima de la bitácora **para el mes calendario en curso en el que se realiza la compra**. El primer día del mes siguiente, el contador de citas se reinicia automáticamente al límite base de la pareja (10 citas por mes), incentivando a disfrutar, tomar fotografías y documentar sus citas activamente mes a mes. Los cupos extras no se traspasan ni acumulan para meses posteriores.
 
-### ⚖️ Bienes Digitales y Política de Devoluciones (SERNAC - Ley N° 19.496 / N° 21.398):
+### Bienes Digitales y Política de Devoluciones (SERNAC - Ley N° 19.496 / N° 21.398)
 La compra de paquetes de cupos constituye la adquisición de un **servicio digital suministrado por medios electrónicos de ejecución y acreditación inmediata**. Conforme a la ley chilena, una vez que los cupos son sumados instantáneamente a la cuenta del usuario tras la confirmación satisfactoria del pago vía **MercadoPago** o tiendas oficiales, el usuario reconoce que la ejecución del servicio ha comenzado en ese acto, no procediendo el derecho de retracto ni devoluciones por periodos no utilizados, salvo casos de indisponibilidad técnica prolongada en los servidores centrales atribuible directamente a la plataforma.
 
 ---
@@ -41,4 +41,4 @@ El emparejamiento entre los dos dispositivos de la pareja se sustenta en el mutu
 ---
 
 ## 5. Contacto y Soporte
-Si tienes dudas o consultas respecto a estos Términos y Condiciones, puedes escribir directamente al equipo creador en: **soporte@ourstoryapp.cl** o al teléfono de atención de la aplicación en Chile.
+Si tienes dudas o consultas respecto a estos Términos y Condiciones, puedes escribir directamente al equipo creador en: **soporte@ourstoryapp.cl**

@@ -500,13 +500,19 @@
           <!-- Escudo Legal y Cumplimiento (Términos / Privacidad) -->
           <div class="glass rounded-2xl p-4 mb-6 text-center">
             <p class="text-[11px] font-semibold mb-2" style="color: var(--text-muted);">Información y Acuerdos Legales</p>
-            <div class="flex items-center justify-center gap-3">
-              <router-link to="/terms" class="text-[12px] font-bold text-pink-400 hover:underline flex items-center gap-1">
-                <span>📄 Términos y Condiciones</span>
+            <div class="flex items-center justify-center gap-4">
+              <router-link to="/terms" class="text-[12px] font-bold text-pink-400 hover:underline flex items-center gap-1.5 transition-opacity hover:opacity-80">
+                <svg class="w-3.5 h-3.5 text-pink-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Términos y Condiciones</span>
               </router-link>
               <span class="text-white/20">|</span>
-              <router-link to="/privacy" class="text-[12px] font-bold text-purple-400 hover:underline flex items-center gap-1">
-                <span>🔒 Política de Privacidad</span>
+              <router-link to="/privacy" class="text-[12px] font-bold text-purple-400 hover:underline flex items-center gap-1.5 transition-opacity hover:opacity-80">
+                <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <span>Política de Privacidad</span>
               </router-link>
             </div>
           </div>

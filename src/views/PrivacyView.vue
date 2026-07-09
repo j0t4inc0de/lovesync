@@ -14,8 +14,11 @@
             <span>Volver Atrás</span>
           </button>
 
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30">
-            🔒 Confianza y Resguardo
+          <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30">
+            <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            Privacidad y Resguardo
           </span>
         </header>
 
@@ -27,7 +30,7 @@
                 Política de Privacidad
               </h1>
               <p class="mt-2 text-sm text-purple-200/80 font-medium">
-                Cuidado de Datos, Recuerdos en Nube y Conexión — Our Story / LoveSync
+                Tratamiento de Datos Personales y Repositorio en Nube — OurStory
               </p>
             </div>
             <div class="text-right text-xs text-white/60 bg-white/5 py-2 px-3.5 rounded-xl border border-white/10 self-start sm:self-center">
@@ -36,7 +39,7 @@
             </div>
           </div>
 
-          <!-- R2 Cloudflare Friendly Highlight -->
+          <!-- R2 Cloudflare Official Highlight -->
           <div class="bg-purple-500/10 border border-purple-500/20 rounded-2xl p-6 mb-8 text-sm sm:text-base text-white/90 leading-relaxed shadow-lg">
             <div class="flex gap-4 items-start">
               <div class="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center shrink-0 mt-0.5 text-purple-300">
@@ -49,63 +52,82 @@
                   Almacenamiento en Nube con Cloudflare R2
                 </h3>
                 <p class="italic text-white/85 font-medium border-l-2 border-purple-400 pl-3.5 my-2">
-                  "Las fotografías e imágenes de la bitácora se transmiten cifradas y se almacenan en servidores seguros de la nube en Cloudflare R2 con el único objetivo de permitir la sincronización instantánea y privada entre los teléfonos de ambos miembros de la pareja (`couple_id`). Jamás se venden, comparten ni analizan con fines publicitarios."
+                  "Las fotografías e imágenes de la bitácora de OurStory se transmiten mediante protocolos cifrados y se resguardan en servidores de la nube de Cloudflare R2 con el único objetivo de hacer posible la sincronización privada y en tiempo real entre los dos dispositivos móviles emparejados (`couple_id`). No se ceden, venden ni explotan con fines publicitarios ni de entrenamiento artificial."
                 </p>
                 <p class="text-xs text-white/65 mt-2">
-                  Usamos cifrado moderno de grado industrial (TLS 1.3 en tránsito y AES-256 en reposo). Solo los dos teléfonos autorizados en tu enlace de pareja tienen acceso a tu álbum fotográfico.
+                  Implementamos protocolos de seguridad estándar de la industria (cifrado TLS en tránsito y AES-256 en reposo). Solo los dos teléfonos autorizados bajo tu enlace de pareja tienen acceso y visibilidad sobre el álbum.
                 </p>
               </div>
             </div>
           </div>
 
-          <!-- 1. Datos que Recopilamos -->
+          <!-- 1. Datos Personales Mínimos Recolectados -->
           <article class="mb-8">
             <div class="flex items-center gap-3 mb-3">
               <div class="w-8 h-8 rounded-lg bg-purple-500 text-white flex items-center justify-center font-bold text-sm shadow-md">1</div>
-              <h2 class="text-xl font-bold text-white tracking-wide">Datos Mínimos que Cuidamos</h2>
+              <h2 class="text-xl font-bold text-white tracking-wide">Datos Personales Mínimos Recolectados</h2>
             </div>
             <div class="pl-11 space-y-3 text-white/80 text-sm sm:text-base leading-relaxed">
               <p>
-                Para brindarte la experiencia de sincronización con tu persona especial, solo recolectamos lo estrictamente indispensable:
+                En cumplimiento con el principio de minimización de datos y conforme a las exigencias de la Ley N° 19.628 sobre Protección de la Vida Privada de Chile, OurStory únicamente requiere la información estrictamente indispensable para operar tu cuenta y sincronización:
               </p>
               <ul class="list-disc pl-5 space-y-2 text-white/75">
-                <li><strong class="text-white">Información de Perfil:</strong> Correo electrónico, nombre de pila y foto opcional del perfil.</li>
-                <li><strong class="text-white">Identificador de Pareja (`couple_id`):</strong> El código criptográfico que vincula en tiempo real tu dispositivo con el de tu pareja.</li>
-                <li><strong class="text-white">Contenido de la Bitácora:</strong> Las fechas, títulos, descripciones y fotos de sus citas para presentarlos en la línea de tiempo.</li>
+                <li><strong class="text-white">Información de Cuenta:</strong> Correo electrónico (empleado de manera exclusiva para autenticación y recuperación de credenciales) y el nombre de pila o seudónimo del usuario.</li>
+                <li><strong class="text-white">Identificador Criptográfico de Pareja (`couple_id`):</strong> Token relacional privado que enlaza en exclusiva las dos cuentas y terminales móviles autorizadas.</li>
+                <li><strong class="text-white">Historial y Recuerdos de la Bitácora:</strong> Fechas, títulos, relatos escritos e imágenes que tú y tu pareja deciden adjuntar libremente a la línea de tiempo.</li>
               </ul>
             </div>
           </article>
 
-          <!-- 2. Pagos de Terceros -->
+          <!-- 2. Procesamiento Seguro de Pagos de Terceros -->
           <article class="mb-8">
             <div class="flex items-center gap-3 mb-3">
               <div class="w-8 h-8 rounded-lg bg-pink-500 text-white flex items-center justify-center font-bold text-sm shadow-md">2</div>
-              <h2 class="text-xl font-bold text-white tracking-wide">Seguridad Bancaria y Pasarelas (MercadoPago)</h2>
+              <h2 class="text-xl font-bold text-white tracking-wide">Seguridad Bancaria y Pasarelas de Pago</h2>
             </div>
             <div class="pl-11 space-y-3 text-white/80 text-sm sm:text-base leading-relaxed">
               <p>
-                Todas las compras de paquetes de cupos en nuestra tienda son procesadas externamente por pasarelas especializadas de alta seguridad certificada (como <strong>MercadoPago / Transbank</strong> o tiendas oficiales de Apple/Google). LoveSync <strong>jamás recibe, recopila ni almacena los números de tus tarjetas de crédito, débito o Cuenta RUT</strong> en nuestros servidores. Solo recibimos un aviso seguro de que tu pago fue aprobado para sumar tus cupos al instante.
+                OurStory <strong>no solicita, recibe ni almacena en sus servidores números de tarjetas de crédito o débito, códigos CVV ni credenciales bancarias o de Cuenta RUT</strong>. Todas las compras y suscripciones de paquetes de cupos en la tienda son procesadas externamente por pasarelas especializadas de alta seguridad certificadas con el estándar PCI-DSS (como MercadoPago, Transbank o sistemas nativos de Apple App Store y Google Play Store). Nuestros sistemas reciben únicamente un comprobante digital encriptado de aprobación que acredita los cupos de manera instantánea.
               </p>
             </div>
           </article>
 
-          <!-- 3. Derecho al Olvido y Borrado -->
+          <!-- 3. Derecho al Olvido y Borrado de Cuenta -->
           <article class="mb-4">
             <div class="flex items-center gap-3 mb-3">
               <div class="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-md">3</div>
-              <h2 class="text-xl font-bold text-white tracking-wide">Tu Derecho al Olvido (Ley N° 19.628 de Chile)</h2>
+              <h2 class="text-xl font-bold text-white tracking-wide">Tu Derecho al Olvido y Eliminación de Datos</h2>
             </div>
             <div class="pl-11 space-y-3 text-white/80 text-sm sm:text-base leading-relaxed">
               <p>
-                Eres el único dueño de tus recuerdos. En cumplimiento con la legislación chilena y las exigencias globales de Apple y Google, cuentas con el control total para solicitar o ejecutar la purga y borrado absoluto de tu cuenta desde la sección de Ajustes en la app. Al confirmar la eliminación, todos los registros en base de datos y los archivos en Cloudflare R2 son destruidos de manera permanente sin posibilidad de recuperación.
+                Eres soberano sobre tu información e historia personal. En apego al artículo 12 de la Ley N° 19.628 de Chile y a las normativas de purga obligatoria de Apple App Store y Google Play Store, el usuario puede solicitar y ejecutar en cualquier momento la eliminación completa y definitiva de su cuenta y registros directamente desde el menú de Ajustes dentro de la aplicación.
+              </p>
+              <p>
+                Al confirmar la eliminación definitiva, el perfil y los identificadores se borran del servidor de base de datos y se activa un proceso automatizado que destruye para siempre los archivos y fotografías alojados bajo su cuenta o `couple_id` en los buckets de Cloudflare R2 en un plazo no mayor a 14 días corridos, sin posibilidad de recuperación ni retención oculta.
               </p>
             </div>
           </article>
+
+          <!-- Bottom Action Section -->
+          <div class="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="text-xs text-white/60 text-center sm:text-left">
+              ¿Dudas sobre el tratamiento de tus datos en Chile o el extranjero?<br />
+              <span class="text-white font-medium">Oficial de Privacidad:</span> privacidad@ourstoryapp.cl
+            </div>
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+              <router-link to="/terms" class="btn-soft px-5 py-3 text-sm rounded-xl font-semibold text-white/90 border border-white/20 hover:bg-white/10 text-center flex-1 sm:flex-none">
+                Ver Términos y Condiciones
+              </router-link>
+              <button @click="goBack" class="btn-soft px-6 py-3 text-sm rounded-xl font-bold active:scale-95 transition-transform flex-1 sm:flex-none text-center bg-purple-500/30 text-white hover:bg-purple-500/40 border border-purple-500/50">
+                Aceptar y Volver
+              </button>
+            </div>
+          </div>
         </section>
 
         <!-- Footer -->
         <footer class="text-center text-xs text-white/40 pb-6">
-          <p>© 2026 Our Story / LoveSync. Hecho con amor para conectar parejas.</p>
+          <p>© 2026 OurStory. Todos los derechos reservados.</p>
         </footer>
       </div>
     </ion-content>
@@ -126,48 +148,3 @@ const goBack = () => {
   }
 };
 </script>
-
-<style scoped>
-.liquid-bg {
-  --background: #0f111a;
-  background-color: #0f111a;
-  color: #e5e7eb;
-}
-
-.dark-glass-card {
-  background: rgba(24, 26, 42, 0.78) !important;
-  backdrop-filter: blur(36px) saturate(190%) !important;
-  -webkit-backdrop-filter: blur(36px) saturate(190%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45),
-              0 2px 6px rgba(155, 81, 224, 0.08) !important;
-}
-
-.bg-orb {
-  position: absolute;
-  border-radius: 9999px;
-  pointer-events: none;
-  filter: blur(130px);
-  opacity: 0.6;
-}
-
-.btn-soft {
-  background: rgba(255, 55, 95, 0.15);
-  color: #ff375f;
-  border: 1px solid rgba(255, 55, 95, 0.35);
-}
-.btn-soft:hover {
-  background: rgba(255, 55, 95, 0.25);
-  border-color: rgba(255, 55, 95, 0.5);
-}
-
-.btn-ghost {
-  background: rgba(255, 255, 255, 0.06);
-  color: #f3f4f6;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-.btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.25);
-}
-</style>
