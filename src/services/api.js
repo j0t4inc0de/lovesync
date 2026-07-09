@@ -2,9 +2,12 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export const getApiUrl = () => API_URL;
 
-export const getToken = () => localStorage.getItem('lovesync_token');
-export const setToken = (token) => localStorage.setItem('lovesync_token', token);
-export const removeToken = () => localStorage.removeItem('lovesync_token');
+export const getToken = () => localStorage.getItem('ourstory_token') || localStorage.getItem('lovesync_token');
+export const setToken = (token) => localStorage.setItem('ourstory_token', token);
+export const removeToken = () => {
+  localStorage.removeItem('ourstory_token');
+  localStorage.removeItem('lovesync_token');
+};
 
 const request = async (endpoint, options = {}) => {
   const url = `${API_URL}${endpoint}`;
@@ -68,6 +71,36 @@ export const api = {
     });
   },
   
+  cancelUnpair: async () => {
+    return request('/api/profile/unpair/cancel', {
+      method: 'POST'
+    });
+  },
+  
+  confirmUnpair: async () => {
+    return request('/api/profile/unpair/confirm', {
+      method: 'POST'
+    });
+  },
+  
+  downloadPDF: async () => {
+    const response = await fetch(`${API_URL}/api/dates/pdf`, {
+      headers: {
+        'Authorization': `Bearer ${getToken()}`
+      }
+    });
+    if (!response.ok) throw new Error('Error al generar PDF');
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'nuestro_album_de_recuerdos.pdf';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  },
+  
   getDates: async () => {
     return request('/api/dates');
   },
@@ -110,9 +143,10 @@ export const api = {
   },
   
   playTrivia: async (correct) => {
+    const localDate = new Date().toLocaleDateString('sv-SE');
     return request('/api/trivia/play', {
       method: 'POST',
-      body: JSON.stringify({ correct })
+      body: JSON.stringify({ correct, localDate })
     });
   },
   

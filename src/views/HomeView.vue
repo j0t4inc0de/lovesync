@@ -8,7 +8,7 @@
               <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
             </div>
             <div>
-              <h1 class="text-[18px] font-bold tracking-tight m-0" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">LoveSync</h1>
+              <h1 class="text-[18px] font-bold tracking-tight m-0" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Our Story</h1>
               <p class="text-[12px] font-medium m-0" style="color: var(--text-secondary);">Vinculado con {{ partnerName }}</p>
             </div>
           </div>
@@ -82,10 +82,18 @@
           </div>
 
           <!-- Quick Action -->
-          <div class="glass rounded-2xl p-5 mb-5">
+          <div class="glass rounded-2xl p-5 mb-5 relative">
+            <!-- Tooltip for Quick Action Info -->
+            <div v-if="showQuickActionTooltip" 
+                 class="absolute z-30 w-52 p-3 rounded-2xl glass text-[11px] leading-snug font-semibold text-center flex items-center justify-center border border-white/60 animate-tooltip-in" 
+                 style="top: -65px; right: 10px; background: rgba(255,255,255,0.95); backdrop-filter: blur(25px); color: var(--text-primary); pointer-events: none; box-shadow: 0 8px 25px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.02);">
+              <div class="absolute -bottom-[5px] right-4 w-2.5 h-2.5 bg-white border-b border-r border-white/60 rotate-45" style="background: rgba(255,255,255,0.95);"></div>
+              <span>Presionen ambos al mismo tiempo para registrar su día juntos! ❤️</span>
+            </div>
+
             <h3 class="text-[15px] font-semibold mb-1 flex items-center justify-between" style="color: var(--text-primary);">
               <span>¿Tuvieron una cita hoy?</span>
-              <a href="" @click="citaInfo">
+              <a href="#" @click.prevent="toggleQuickActionTooltip">
                 <svg class="w-4 h-4" style="color: #a2a8b3;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3m0 4h.01"/></svg>
               </a>
             </h3>
@@ -102,6 +110,12 @@
               <svg v-else-if="doubleLockState === 'waiting'" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
               <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
               {{ doubleLockState === 'idle' ? 'Añadir Cita' : doubleLockState === 'waiting' ? 'Esperando a ' + partnerName + '...' : doubleLockState === 'waiting_partner' ? '¡' + partnerName + ' te espera! Presiona' : '¡Ambos Listos!' }}
+            </button>
+            
+            <button v-if="doubleLockState === 'waiting' || doubleLockState === 'waiting_partner'" 
+                    @click="cancelLock" 
+                    class="btn-soft w-full mt-2 text-[14px]">
+              Cancelar
             </button>
           </div>
 
@@ -161,9 +175,22 @@
 
         <!-- ═══ TRIVIA ═══ -->
         <div v-if="currentTab === 'trivia'">
-          <div class="mb-5">
-            <h2 class="text-[22px] font-bold tracking-tight" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Trivia</h2>
+          <div class="mb-5 relative">
+            <h2 class="text-[22px] font-bold tracking-tight flex items-center justify-between" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">
+              <span>Trivia</span>
+              <a href="#" @click.prevent="toggleTriviaTooltip">
+                <svg class="w-4 h-4" style="color: #a2a8b3;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3m0 4h.01"/></svg>
+              </a>
+            </h2>
             <p class="text-[13px] font-medium" style="color: var(--text-secondary);">Responde correctamente para ganar +1 cupo</p>
+
+            <!-- Tooltip for Trivia Info -->
+            <div v-if="showTriviaTooltip" 
+                 class="absolute z-30 w-52 p-3 rounded-2xl glass text-[11px] leading-snug font-semibold text-center flex items-center justify-center border border-white/60 animate-tooltip-in" 
+                 style="top: 40px; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(25px); color: var(--text-primary); pointer-events: none; box-shadow: 0 8px 25px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.02);">
+              <div class="absolute -top-[5px] right-2 w-2.5 h-2.5 bg-white border-t border-l border-white/60 rotate-45" style="background: rgba(255,255,255,0.95);"></div>
+              <span>Ambos deben responder correctamente hoy para ganar +1 cupo de cita ❤️</span>
+            </div>
           </div>
 
           <!-- Locked State if less than 3 dates -->
@@ -216,7 +243,7 @@
               </div>
               <h3 class="text-[17px] font-bold mb-1" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Intento Anulado</h3>
               <p class="text-[13px] mb-5" style="color: var(--text-secondary);">Cambiaste de pestaña o saliste de la app.</p>
-              <button @click="restartTrivia" class="btn text-[15px] mx-auto block text-white font-semibold shadow-lg shadow-red-500/20" style="background: #ff3b30;">Nueva Pregunta</button>
+              <button @click="restartTrivia" class="btn text-[15px] mx-auto block text-white font-semibold shadow-lg shadow-red-500/20" style="background: #ff3b30;">Aceptar</button>
             </div>
 
             <div v-else-if="triviaState === 'success'" class="glass rounded-2xl p-6 text-center">
@@ -224,9 +251,11 @@
                 <svg class="w-7 h-7 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
               </div>
               <h3 class="text-[17px] font-bold mb-1" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">¡Correcto!</h3>
-              <p class="text-[13px] mb-2" style="color: var(--text-secondary);">Ambos respondieron bien.</p>
-              <div class="inline-block px-3 py-1 rounded-full text-[12px] font-bold mb-5 border" style="background: rgba(52, 199, 89, 0.06); border-color: rgba(52, 199, 89, 0.12); color: #34c759;">+1 Cupo Ganado</div>
-              <button @click="restartTrivia" class="btn text-[15px] mx-auto block text-white font-semibold shadow-lg shadow-emerald-500/20" style="background: #34c759;">Volver a jugar</button>
+              <p class="text-[13.5px] mb-4 leading-relaxed" style="color: var(--text-secondary);">
+                {{ matchedDailySlots ? '¡Ambos respondieron bien!' : 'Respondiste correctamente. Esperando que tu pareja también responda hoy ♡' }}
+              </p>
+              <div v-if="matchedDailySlots" class="inline-block px-3 py-1 rounded-full text-[12px] font-bold mb-5 border" style="background: rgba(52, 199, 89, 0.06); border-color: rgba(52, 199, 89, 0.12); color: #34c759;">+1 Cupo Ganado</div>
+              <button @click="restartTrivia" class="btn text-[15px] mx-auto block text-white font-semibold shadow-lg shadow-emerald-500/20" style="background: #34c759;">Aceptar</button>
             </div>
 
             <div v-else-if="triviaState === 'wrong'" class="glass rounded-2xl p-6 text-center">
@@ -235,7 +264,7 @@
               </div>
               <h3 class="text-[17px] font-bold mb-1" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Incorrecto</h3>
               <p class="text-[13px] mb-5" style="color: var(--text-secondary);">La correcta era: <strong>{{ currentQuestion?.options[currentQuestion?.answerIdx] }}</strong></p>
-              <button @click="restartTrivia" class="btn-ghost text-[15px] mx-auto block">Otra pregunta</button>
+              <button @click="restartTrivia" class="btn text-[15px] mx-auto block text-white font-semibold bg-zinc-500 hover:bg-zinc-600 shadow-md">Aceptar</button>
             </div>
 
             <div v-else class="glass rounded-2xl p-6 text-center">
@@ -393,15 +422,48 @@
           <!-- Danger Zone: Unpair option pushed to the bottom -->
           <div class="glass rounded-2xl p-5 mb-4">
             <p class="text-[0.65rem] font-bold uppercase tracking-wider mb-2" style="color: var(--text-muted);">Desvincularse</p>
-            <p class="text-[13px] mb-4 leading-relaxed" style="color: var(--text-secondary);">Ambos deben estar de acuerdo. Tu pareja tiene 5 días para aceptar.</p>
-            <button @click="handleUnpairRequest"
-              :class="[
-                'w-full text-[13px] font-semibold transition-all active:scale-95 btn',
-                unpairState === 'idle' ? '' : 'bg-amber-500 text-white animate-pulse'
-              ]"
-              :style="unpairState === 'idle' ? 'background: rgba(255,59,48,0.08); color: #ff3b30;' : ''">
-              {{ unpairState === 'idle' ? 'Solicitar Desvinculación' : 'Solicitud Enviada (5 días)' }}
-            </button>
+            
+            <div v-if="unpairState === 'idle'">
+              <p class="text-[13px] mb-4 leading-relaxed" style="color: var(--text-secondary);">Ambos deben estar de acuerdo. Tu pareja tiene 5 días para aceptar.</p>
+              <button @click="handleUnpairRequest"
+                class="w-full text-[13px] font-semibold transition-all active:scale-95 btn"
+                style="background: rgba(255,59,48,0.08); color: #ff3b30;">
+                Solicitar Desvinculación
+              </button>
+            </div>
+
+            <div v-else-if="unpairState === 'pending'">
+              <!-- If initiated by current user -->
+              <div v-if="unpairRequestedBy === currentUser.id">
+                <p class="text-[13px] mb-4 leading-relaxed font-medium text-amber-600 animate-pulse">
+                  Solicitud enviada. Tu pareja tiene hasta {{ unpairDaysLeft }} días para aceptar.
+                </p>
+                <button @click="handleCancelUnpair"
+                  class="w-full text-[13px] font-semibold transition-all active:scale-95 btn"
+                  style="background: rgba(0,0,0,0.05); color: var(--text-primary);">
+                  Cancelar Solicitud
+                </button>
+              </div>
+              
+              <!-- If initiated by partner -->
+              <div v-else>
+                <p class="text-[13px] mb-4 leading-relaxed font-semibold text-red-500">
+                  Tu pareja ha solicitado desvincularse. Te quedan {{ unpairDaysLeft }} días para responder.
+                </p>
+                <div class="flex gap-2">
+                  <button @click="handleConfirmUnpair"
+                    class="flex-1 text-[13px] font-semibold transition-all active:scale-95 btn text-white"
+                    style="background: var(--accent);">
+                    Aceptar
+                  </button>
+                  <button @click="handleCancelUnpair"
+                    class="flex-1 text-[13px] font-semibold transition-all active:scale-95 btn"
+                    style="background: rgba(0,0,0,0.05); color: var(--text-primary);">
+                    Rechazar
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -700,9 +762,6 @@ const tabs = [
   { id: 'settings', label: 'Ajustes', icon: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 010 4h-.09c-.658.003-1.25.396-1.51 1z"/>' },
 ];
 
-const citaInfo = () => {
-  showPopup('Asegúrense de abrir la app a la vez para usar "Añadir Cita" ♡')
-}
 
 const isSubmitting = ref(false);
 
@@ -783,7 +842,11 @@ const editingDate = ref({
 const showHeartOverlay = ref(false);
 const showMatchCelebration = ref(false);
 const showSlotsTooltip = ref(false);
+const showQuickActionTooltip = ref(false);
+const showTriviaTooltip = ref(false);
 const unpairState = ref('idle');
+const unpairRequestedBy = ref(null);
+const unpairDaysLeft = ref(0);
 const availableTags = ['Comida', 'Baile', 'Paseo', 'Cine', 'Naturaleza', 'Playa', 'Cafecito', 'En Casa'];
 
 // Admin Panel state & actions
@@ -888,9 +951,10 @@ const isUser1 = computed(() => {
 
 const hasPlayedTriviaToday = computed(() => {
   if (!currentUser.value || !currentUser.value.last_trivia_date) return false;
-  const lastDate = new Date(currentUser.value.last_trivia_date);
-  const today = new Date();
-  return lastDate.toLocaleDateString('sv-SE') === today.toLocaleDateString('sv-SE');
+  const dateStr = currentUser.value.last_trivia_date;
+  const dbDateOnly = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+  const todayStr = new Date().toLocaleDateString('sv-SE');
+  return dbDateOnly === todayStr;
 });
 
 const datesList = ref([]);
@@ -1031,8 +1095,15 @@ const handleFirstLock = () => {
 
     setTimeout(() => {
       showMatchCelebration.value = false;
-      doubleLockState.value = 'idle'; // Reset Persona 2 (matcher) to idle; Persona 1 (initiator) will open the modal
+      doubleLockState.value = 'idle'; // Reset Persona 2 (matcher) to idle
     }, 1800);
+  }
+};
+
+const cancelLock = () => {
+  doubleLockState.value = 'idle';
+  if (socket) {
+    socket.emit('clear_lock', userCoupleId.value);
   }
 };
 
@@ -1055,6 +1126,28 @@ const toggleSlotsTooltip = () => {
   if (showSlotsTooltip.value) {
     tooltipTimeout = setTimeout(() => {
       showSlotsTooltip.value = false;
+    }, 3500);
+  }
+};
+
+let qaTooltipTimeout = null;
+const toggleQuickActionTooltip = () => {
+  showQuickActionTooltip.value = !showQuickActionTooltip.value;
+  if (qaTooltipTimeout) clearTimeout(qaTooltipTimeout);
+  if (showQuickActionTooltip.value) {
+    qaTooltipTimeout = setTimeout(() => {
+      showQuickActionTooltip.value = false;
+    }, 3500);
+  }
+};
+
+let triviaTooltipTimeout = null;
+const toggleTriviaTooltip = () => {
+  showTriviaTooltip.value = !showTriviaTooltip.value;
+  if (triviaTooltipTimeout) clearTimeout(triviaTooltipTimeout);
+  if (showTriviaTooltip.value) {
+    triviaTooltipTimeout = setTimeout(() => {
+      showTriviaTooltip.value = false;
     }, 3500);
   }
 };
@@ -1275,21 +1368,53 @@ const buySlots = async () => {
     showPopup('Simulación exitosa: +5 cupos mensuales añadidos.');
   }
 };
-const buyPDF = () => { showPopup('Próximamente ♡'); };
+const buyPDF = async () => {
+  try {
+    showPopup('Generando PDF... Se iniciará la descarga en breve ♡');
+    await api.downloadPDF();
+  } catch (error) {
+    showPopup('Error al generar PDF: ' + error.message);
+  }
+};
 
 const handleUnpairRequest = async () => {
   if (!userCoupleId.value) return;
-  if (unpairState.value === 'idle') {
-    const confirmUnpair = confirm('¿Estás seguro de que quieres desvincularte de tu pareja? Esto afectará los datos de ambos.');
-    if (!confirmUnpair) return;
+  const confirmUnpair = confirm('¿Estás seguro de que quieres solicitar la desvinculación de tu pareja? Tu pareja tendrá 5 días para aceptar.');
+  if (!confirmUnpair) return;
 
-    try {
-      await api.unpair();
-      alert('Te has desvinculado con éxito. Redireccionando...');
-      router.push('/pair');
-    } catch (error) {
-      alert('Error al desvincular: ' + error.message);
-    }
+  try {
+    const res = await api.unpair();
+    unpairState.value = 'pending';
+    unpairRequestedBy.value = currentUser.value.id;
+    unpairDaysLeft.value = 5;
+    alert(res.message || 'Solicitud de desvinculación enviada.');
+  } catch (error) {
+    alert('Error al solicitar desvinculación: ' + error.message);
+  }
+};
+
+const handleCancelUnpair = async () => {
+  try {
+    const res = await api.cancelUnpair();
+    unpairState.value = 'idle';
+    unpairRequestedBy.value = null;
+    unpairDaysLeft.value = 0;
+    alert(res.message || 'Solicitud cancelada con éxito.');
+  } catch (error) {
+    alert('Error al cancelar solicitud: ' + error.message);
+  }
+};
+
+const handleConfirmUnpair = async () => {
+  const confirmAction = confirm('¿Estás seguro de que quieres confirmar la desvinculación? Esta acción es definitiva.');
+  if (!confirmAction) return;
+
+  try {
+    const res = await api.confirmUnpair();
+    alert(res.message || 'Te has desvinculado con éxito.');
+    router.push('/pair');
+  } catch (error) {
+    alert('Error al confirmar desvinculación: ' + error.message);
   }
 };
 
@@ -1299,6 +1424,7 @@ const logOut = () => {
 };
 
 const triviaState = ref('idle');
+const matchedDailySlots = ref(false);
 const timerSeconds = ref(15);
 const currentQuestion = ref(null);
 let timerInterval = null;
@@ -1374,6 +1500,7 @@ const generateDynamicTrivia = () => {
 const handleVisibilityChange = () => { if (document.hidden && triviaState.value === 'active') triggerCheatAnnullment(); };
 
 const startTrivia = () => {
+  matchedDailySlots.value = false;
   const dynamicQuestions = generateDynamicTrivia();
   if (dynamicQuestions.length === 0) return;
 
@@ -1421,6 +1548,7 @@ const selectOption = async (idx) => {
     const res = await api.playTrivia(isCorrect);
     if (res.success) {
       currentUser.value.last_trivia_date = new Date().toLocaleDateString('sv-SE');
+      matchedDailySlots.value = res.matchedDailySlots || false;
       if (res.newMaxSlots) {
         maxSlots.value = res.newMaxSlots;
       }
@@ -1434,7 +1562,10 @@ const selectOption = async (idx) => {
   }
 };
 
-const restartTrivia = () => { triviaState.value = 'idle'; };
+const restartTrivia = () => { 
+  triviaState.value = 'idle'; 
+  matchedDailySlots.value = false;
+};
 
 onMounted(async () => {
   // Auth state verification
@@ -1450,6 +1581,9 @@ onMounted(async () => {
     maxSlots.value = profile.maxSlots;
     partnerName.value = profile.partnerName || 'Pareja';
     partnerId.value = profile.partnerId || null;
+    unpairState.value = profile.unpairState || 'idle';
+    unpairRequestedBy.value = profile.unpairRequestedBy || null;
+    unpairDaysLeft.value = profile.unpairDaysLeft || 0;
 
     // Load actual dates list from Database
     await loadDates();
@@ -1458,9 +1592,12 @@ onMounted(async () => {
 
     // Subscribe to couple WebSocket channel for real-time clicks
     socket = io(getApiUrl());
-    socket.emit('join_couple', userCoupleId.value);
     
     socket.on('partner_lock_event', (payload) => {
+      if (!payload || payload.userId === null) {
+        doubleLockState.value = 'idle';
+        return;
+      }
       if (payload.userId !== currentUser.value.id) {
         if (doubleLockState.value === 'waiting') {
           // Both clicked! Match!
@@ -1481,7 +1618,10 @@ onMounted(async () => {
     socket.on('date_created', () => {
       loadDates();
       loadExploreDates();
+      showDateModal.value = false; // Close the modal if it was open
     });
+
+    socket.emit('join_couple', { coupleId: userCoupleId.value, userId: currentUser.value.id });
 
     socket.on('date_updated', () => {
       loadDates();

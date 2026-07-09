@@ -8,6 +8,7 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import PDFDocument from 'pdfkit';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -155,7 +156,7 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/profile', authenticateToken, async (req, res) => {
   try {
     const userRes = await pool.query(
-      'SELECT id, name, email, couple_id, invite_code, last_trivia_date, is_admin FROM users WHERE id = $1',
+      'SELECT id, name, email, couple_id, invite_code, last_trivia_date::text AS last_trivia_date, is_admin FROM users WHERE id = $1',
       [req.user.id]
     );
     if (userRes.rows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado.' });
@@ -164,6 +165,9 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
     let partnerName = null;
     let partnerId = null;
     let maxSlots = 10;
+    let unpairState = 'idle';
+    let unpairRequestedBy = null;
+    let unpairDaysLeft = 0;
 
     if (user.couple_id) {
       // Get partner info
@@ -180,6 +184,8 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
       const coupleRes = await pool.query(
         `SELECT 
            c.slots AS base_slots,
+           c.unpair_requested_at,
+           c.unpair_requested_by,
            COALESCE(
              (SELECT SUM(amount) FROM couple_extra_slots 
               WHERE couple_id = c.id 
@@ -191,7 +197,25 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
         [user.couple_id]
       );
       if (coupleRes.rows.length > 0) {
-        maxSlots = coupleRes.rows[0].base_slots + coupleRes.rows[0].extra_slots;
+        const couple = coupleRes.rows[0];
+        maxSlots = couple.base_slots + couple.extra_slots;
+
+        if (couple.unpair_requested_at) {
+          const requestedDate = new Date(couple.unpair_requested_at);
+          const diffTime = (new Date()) - requestedDate;
+          const diffDays = diffTime / (1000 * 60 * 60 * 24);
+          if (diffDays < 5) {
+            unpairState = 'pending';
+            unpairRequestedBy = couple.unpair_requested_by;
+            unpairDaysLeft = Math.max(0, Math.ceil(5 - diffDays));
+          } else {
+            // Expired! We silently reset it
+            await pool.query(
+              'UPDATE couples SET unpair_requested_at = NULL, unpair_requested_by = NULL WHERE id = $1',
+              [user.couple_id]
+            );
+          }
+        }
       }
     }
 
@@ -199,11 +223,14 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
       user,
       partnerName,
       partnerId,
-      maxSlots
+      maxSlots,
+      unpairState,
+      unpairRequestedBy,
+      unpairDaysLeft
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Error del servidor al obtener perfil.' });
+    res.status(500).json({ error: 'Error del servidor al obtener perfil.', details: error.message, stack: error.stack });
   }
 });
 
@@ -250,20 +277,67 @@ app.post('/api/profile/pair', authenticateToken, async (req, res) => {
   }
 });
 
-// Unpair / Desvincularse (Decouples both partners but keeps the dates in DB)
+// Unpair / Desvincularse (Request, Cancel, and Confirm)
+
+// Initiate unpairing request
 app.post('/api/profile/unpair', authenticateToken, async (req, res) => {
   try {
     const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
     const coupleId = userRes.rows[0]?.couple_id;
+    if (!coupleId) return res.status(400).json({ error: 'No estás en una pareja.' });
     
-    if (coupleId) {
-      await pool.query('UPDATE users SET couple_id = NULL WHERE couple_id = $1', [coupleId]);
-    }
+    // Set unpair request to NOW and requested_by to current user
+    await pool.query(
+      'UPDATE couples SET unpair_requested_at = NOW(), unpair_requested_by = $1 WHERE id = $2',
+      [req.user.id, coupleId]
+    );
     
-    res.json({ message: 'Te has desvinculado con éxito.' });
+    res.json({ success: true, message: 'Solicitud de desvinculación creada. Tu pareja tiene 5 días para aceptar.' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Error al desvincular.' });
+    res.status(500).json({ error: 'Error al solicitar desvinculación.' });
+  }
+});
+
+// Cancel pending unpairing request
+app.post('/api/profile/unpair/cancel', authenticateToken, async (req, res) => {
+  try {
+    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    const coupleId = userRes.rows[0]?.couple_id;
+    if (!coupleId) return res.status(400).json({ error: 'No estás en una pareja.' });
+    
+    await pool.query(
+      'UPDATE couples SET unpair_requested_at = NULL, unpair_requested_by = NULL WHERE id = $1',
+      [coupleId]
+    );
+    
+    res.json({ success: true, message: 'Solicitud cancelada con éxito.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al cancelar solicitud.' });
+  }
+});
+
+// Confirm/Accept pending unpairing request
+app.post('/api/profile/unpair/confirm', authenticateToken, async (req, res) => {
+  try {
+    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    const coupleId = userRes.rows[0]?.couple_id;
+    if (!coupleId) return res.status(400).json({ error: 'No estás en una pareja.' });
+    
+    // Decouple both users
+    await pool.query('UPDATE users SET couple_id = NULL WHERE couple_id = $1', [coupleId]);
+    
+    // Reset the couple columns
+    await pool.query(
+      'UPDATE couples SET unpair_requested_at = NULL, unpair_requested_by = NULL WHERE id = $1',
+      [coupleId]
+    );
+    
+    res.json({ success: true, message: 'Te has desvinculado con éxito.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al confirmar desvinculación.' });
   }
 });
 
@@ -307,41 +381,67 @@ app.post('/api/profile/slots', authenticateToken, async (req, res) => {
   }
 });
 
-// Play daily trivia (enforces once per day per user, awards +1 expiring slot)
+// Play daily trivia (enforces once per day per user, awards +1 expiring slot if both answer correctly)
 app.post('/api/trivia/play', authenticateToken, async (req, res) => {
-  const { correct } = req.body;
+  const { correct, localDate } = req.body;
+  
+  // Validate localDate matches YYYY-MM-DD
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  const validatedLocalDate = (localDate && dateRegex.test(localDate)) 
+    ? localDate 
+    : new Date().toLocaleDateString('sv-SE');
+
+  const [year, month] = validatedLocalDate.split('-').map(Number);
   
   try {
     const userRes = await pool.query(
-      'SELECT couple_id, last_trivia_date FROM users WHERE id = $1',
+      'SELECT couple_id FROM users WHERE id = $1',
       [req.user.id]
     );
     const user = userRes.rows[0];
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado.' });
+    if (!user.couple_id) return res.status(400).json({ error: 'Debes estar en una pareja para jugar.' });
     
-    if (user.last_trivia_date) {
-      const lastDate = new Date(user.last_trivia_date);
-      const today = new Date();
-      // Format as YYYY-MM-DD in local time
-      const lastDateStr = lastDate.toLocaleDateString('sv-SE'); // Swedish format returns YYYY-MM-DD
-      const todayStr = today.toLocaleDateString('sv-SE');
-      
-      if (lastDateStr === todayStr) {
-        return res.status(400).json({ error: 'Ya has jugado la trivia de hoy. ¡Vuelve mañana!' });
-      }
+    // Check if the user already played today using the new daily_trivia_answers table
+    const alreadyPlayedRes = await pool.query(
+      'SELECT id FROM daily_trivia_answers WHERE user_id = $1 AND date = $2',
+      [req.user.id, validatedLocalDate]
+    );
+    
+    if (alreadyPlayedRes.rows.length > 0) {
+      return res.status(400).json({ error: 'Ya has jugado la trivia de hoy. ¡Vuelve mañana!' });
     }
     
+    // Insert response into daily_trivia_answers
     await pool.query(
-      'UPDATE users SET last_trivia_date = CURRENT_DATE WHERE id = $1',
-      [req.user.id]
+      'INSERT INTO daily_trivia_answers (user_id, couple_id, date, correct) VALUES ($1, $2, $3, $4)',
+      [req.user.id, user.couple_id, validatedLocalDate, !!correct]
+    );
+    
+    // Also update users.last_trivia_date for backward compatibility
+    await pool.query(
+      'UPDATE users SET last_trivia_date = $1 WHERE id = $2',
+      [validatedLocalDate, req.user.id]
     );
     
     let newMaxSlots = null;
-    if (correct && user.couple_id) {
+    
+    // Check if both partners have answered correctly today
+    const answersRes = await pool.query(
+      'SELECT user_id, correct FROM daily_trivia_answers WHERE couple_id = $1 AND date = $2',
+      [user.couple_id, validatedLocalDate]
+    );
+    
+    const answers = answersRes.rows;
+    const allAnswered = answers.length === 2;
+    const allCorrect = allAnswered && answers.every(a => a.correct);
+    
+    if (allCorrect) {
+      // Award +1 slot to the couple for the local month and year
       await pool.query(
         `INSERT INTO couple_extra_slots (couple_id, amount, year, month) 
-         VALUES ($1, 1, EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int)`,
-        [user.couple_id]
+         VALUES ($1, 1, $2, $3)`,
+        [user.couple_id, year, month]
       );
       
       const coupleRes = await pool.query(
@@ -350,20 +450,97 @@ app.post('/api/trivia/play', authenticateToken, async (req, res) => {
            COALESCE(
              (SELECT SUM(amount) FROM couple_extra_slots 
               WHERE couple_id = c.id 
-                AND year = EXTRACT(YEAR FROM CURRENT_DATE)::int
-                AND month = EXTRACT(MONTH FROM CURRENT_DATE)::int
+                AND year = $2
+                AND month = $3
              ), 0
            )::int AS extra_slots
          FROM couples c WHERE c.id = $1`,
-        [user.couple_id]
+        [user.couple_id, year, month]
       );
       newMaxSlots = coupleRes.rows[0].base_slots + coupleRes.rows[0].extra_slots;
     }
     
-    res.json({ success: true, won: !!correct, newMaxSlots });
+    res.json({ 
+      success: true, 
+      played: true, 
+      correct: !!correct, 
+      matchedDailySlots: allCorrect,
+      newMaxSlots 
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al procesar la trivia.' });
+  }
+});
+
+app.get('/api/debug/user-trivia', async (req, res) => {
+  try {
+    const users = await pool.query(
+      'SELECT id, name, email, last_trivia_date::text AS last_trivia_date, CURRENT_DATE::text as server_current_date, NOW() as server_now FROM users ORDER BY id ASC'
+    );
+    const answers = await pool.query(
+      'SELECT id, user_id, date, correct, created_at FROM daily_trivia_answers ORDER BY id DESC LIMIT 50'
+    );
+    
+    let couplesError = null;
+    let couplesCols = null;
+    try {
+      const couplesRes = await pool.query('SELECT * FROM couples LIMIT 1');
+      couplesCols = Object.keys(couplesRes.rows[0] || {});
+    } catch (err) {
+      couplesError = err.message;
+    }
+
+    let profileError = null;
+    try {
+      const uRes = await pool.query(
+        'SELECT id, name, email, couple_id, invite_code, last_trivia_date::text AS last_trivia_date, is_admin FROM users WHERE id = 1'
+      );
+      const user = uRes.rows[0];
+      if (user && user.couple_id) {
+        const partnerRes = await pool.query(
+          'SELECT id, name FROM users WHERE couple_id = $1 AND id != $2 LIMIT 1',
+          [user.couple_id, user.id]
+        );
+        const coupleRes = await pool.query(
+          `SELECT 
+             c.slots AS base_slots,
+             c.unpair_requested_at,
+             c.unpair_requested_by,
+             COALESCE(
+               (SELECT SUM(amount) FROM couple_extra_slots 
+                WHERE couple_id = c.id 
+                  AND year = EXTRACT(YEAR FROM CURRENT_DATE)::int
+                  AND month = EXTRACT(MONTH FROM CURRENT_DATE)::int
+               ), 0
+             )::int AS extra_slots
+           FROM couples c WHERE c.id = $1`,
+          [user.couple_id]
+        );
+      }
+    } catch (err) {
+      profileError = err.message + '\nStack: ' + err.stack;
+    }
+
+    res.json({ 
+      users: users.rows, 
+      answers: answers.rows,
+      couplesCols,
+      couplesError,
+      profileError
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/debug/reset-jota', async (req, res) => {
+  try {
+    await pool.query("UPDATE users SET last_trivia_date = '2026-07-04' WHERE id = 1");
+    await pool.query("UPDATE daily_trivia_answers SET date = '2026-07-04' WHERE user_id = 1 AND date = '2026-07-05'");
+    res.json({ success: true, message: 'Jota reset successfully to July 4th!' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -511,6 +688,184 @@ app.post('/api/dates/:id/like', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al procesar el like.' });
+  }
+});
+
+// Generate PDF Scrapbook of all dates for the couple
+app.get('/api/dates/pdf', authenticateToken, async (req, res) => {
+  try {
+    // 1. Get user profile and couple_id
+    const userRes = await pool.query(
+      'SELECT couple_id, name FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    const user = userRes.rows[0];
+    if (!user || !user.couple_id) {
+      return res.status(400).json({ error: 'No estás vinculado a una pareja.' });
+    }
+
+    // Get partner name
+    const partnerRes = await pool.query(
+      'SELECT name FROM users WHERE couple_id = $1 AND id != $2 LIMIT 1',
+      [user.couple_id, req.user.id]
+    );
+    const partnerName = partnerRes.rows[0]?.name || 'Pareja';
+
+    // 2. Fetch all dates for the couple ordered by date_time
+    const datesRes = await pool.query(
+      'SELECT location, city, date_time, description, rating_user_1, rating_user_2, photo_url, tags FROM dates WHERE couple_id = $1 ORDER BY date_time ASC',
+      [user.couple_id]
+    );
+    const dates = datesRes.rows;
+
+    // Helper to strip emojis and unsupported unicode symbols (keeps Spanish accents/ñ/Ñ/etc.)
+    const cleanText = (str) => {
+      if (!str) return '';
+      return str.replace(/[^\x00-\x7F\u00C0-\u017F]/g, '');
+    };
+
+    // 3. Initialize PDFKit document with buffered pages
+    const doc = new PDFDocument({
+      size: 'LETTER',
+      bufferPages: true,
+      margins: { top: 50, bottom: 50, left: 50, right: 50 }
+    });
+
+    // Stream PDF to HTTP response
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="our_story_scrapbook.pdf"`);
+    doc.pipe(res);
+
+    // --- Cover Page ---
+    doc.rect(0, 0, doc.page.width, doc.page.height).fill('#fffafb'); // Cozy light pink background
+    
+    // Draw a vector heart on cover page
+    doc.save()
+       .translate(doc.page.width / 2 - 25, 120)
+       .path('M25,12 C25,12 18,3 8,3 C-2,3 -4,15 8,24 C16,30 25,38 25,38 C25,38 34,30 42,24 C54,15 52,3 42,3 C32,3 25,12 25,12 Z')
+       .fill('#ff375f')
+       .restore();
+    
+    doc.moveDown(8);
+    
+    doc.fillColor('#2c3e50')
+       .fontSize(36)
+       .font('Helvetica-Bold')
+       .text('Our Story', { align: 'center' });
+       
+    doc.fontSize(16)
+       .font('Helvetica')
+       .fillColor('#7f8c8d')
+       .text('Nuestro Álbum de Recuerdos', { align: 'center' })
+       .moveDown(2);
+       
+    doc.fontSize(22)
+       .font('Helvetica-Bold')
+       .fillColor('#ff375f')
+       .text(`${cleanText(user.name)} & ${cleanText(partnerName)}`, { align: 'center' })
+       .moveDown(3);
+       
+    doc.fontSize(12)
+       .font('Helvetica-Oblique')
+       .fillColor('#95a5a6')
+       .text('Generado con amor', { align: 'center' });
+
+    // --- Date Pages ---
+    for (let i = 0; i < dates.length; i++) {
+      const date = dates[i];
+      doc.addPage({ size: 'LETTER', margins: { top: 50, bottom: 50, left: 50, right: 50 } });
+      
+      // Page background
+      doc.rect(0, 0, doc.page.width, doc.page.height).fill('#ffffff');
+
+      // Top header band
+      doc.rect(50, 45, 512, 3).fill('#ff375f');
+
+      // Title/Location
+      doc.fillColor('#2c3e50')
+         .fontSize(20)
+         .font('Helvetica-Bold')
+         .text(cleanText(date.location), 50, 65)
+         .fontSize(12)
+         .font('Helvetica')
+         .fillColor('#7f8c8d')
+         .text(`${cleanText(date.city)} • ${new Date(date.date_time).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}`)
+         .moveDown(1);
+
+      // Ratings
+      const avgRating = ((parseFloat(date.rating_user_1) + parseFloat(date.rating_user_2)) / 2).toFixed(1);
+      doc.fontSize(12)
+         .font('Helvetica-Bold')
+         .fillColor('#e67e22')
+         .text(`Valoración Promedio: ${avgRating} / 5.0  (${cleanText(user.name)}: ${date.rating_user_1} • ${cleanText(partnerName)}: ${date.rating_user_2})`)
+         .moveDown(0.5);
+
+      // Tags
+      if (date.tags && date.tags.length > 0) {
+        doc.fontSize(10)
+           .font('Helvetica-Oblique')
+           .fillColor('#9b59b6')
+           .text(`Tags: ${cleanText(date.tags.join(', '))}`)
+           .moveDown(1);
+      }
+
+      // Description / Recuerdo
+      if (date.description) {
+        doc.fillColor('#34495e')
+           .fontSize(12)
+           .font('Helvetica')
+           .text(cleanText(date.description), { width: 512, align: 'justify' })
+           .moveDown(1.5);
+      }
+
+      // Photo
+      if (date.photo_url) {
+        try {
+          const photoStr = date.photo_url;
+          if (photoStr.includes('base64,')) {
+            const base64Data = photoStr.split('base64,')[1];
+            const imgBuffer = Buffer.from(base64Data, 'base64');
+            // Fit image beautifully with a max height of 200 to prevent unnecessary page overflows
+            doc.image(imgBuffer, {
+              fit: [512, 200],
+              align: 'center',
+              valign: 'center'
+            });
+          }
+        } catch (imgError) {
+          console.error('Error drawing image in PDF:', imgError.message);
+        }
+      }
+    }
+
+    // --- Dynamic Page Numbering ---
+    const range = doc.bufferedPageRange();
+    for (let i = 0; i < range.count; i++) {
+      doc.switchToPage(i);
+      
+      // Temporarily disable auto page breaks by setting bottom margin to 0
+      const oldBottomMargin = doc.page.margins.bottom;
+      doc.page.margins.bottom = 0;
+      
+      // Skip cover page
+      if (i > 0) {
+        doc.fontSize(9)
+           .fillColor('#bdc3c7')
+           .font('Helvetica')
+           .text(`Página ${i + 1} de ${range.count}`, 50, doc.page.height - 35, { align: 'center' });
+      }
+      
+      // Restore bottom margin
+      doc.page.margins.bottom = oldBottomMargin;
+    }
+
+    doc.end();
+
+  } catch (error) {
+    console.error(error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Error al generar el PDF.' });
+    }
   }
 });
 
@@ -693,9 +1048,19 @@ app.delete('/api/dates/:id', authenticateToken, async (req, res) => {
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
-  socket.on('join_couple', (coupleId) => {
+  socket.on('join_couple', (data) => {
+    const rawCoupleId = typeof data === 'object' ? data.coupleId : data;
+    const userId = typeof data === 'object' ? data.userId : null;
+    
+    if (!rawCoupleId) return;
+    const coupleId = Number(rawCoupleId);
+    
+    socket.coupleId = coupleId;
+    if (userId) socket.userId = userId;
+    
     socket.join(`couple_${coupleId}`);
     console.log(`Socket ${socket.id} joined room couple_${coupleId}`);
+    
     const waitingUser = pendingLocks.get(coupleId);
     if (waitingUser) {
       socket.emit('partner_lock_event', { userId: waitingUser });
@@ -703,26 +1068,49 @@ io.on('connection', (socket) => {
   });
 
   socket.on('partner_lock', (data) => {
-    const { coupleId, userId } = data;
-    if (coupleId) {
-      // Set the pending lock state in the Map
-      pendingLocks.set(coupleId, userId);
-      // Broadcast partner click to other users in the couple room
-      socket.to(`couple_${coupleId}`).emit('partner_lock_event', { userId });
-      setTimeout(() => {
-        if (pendingLocks.get(coupleId) === userId) {
-          pendingLocks.delete(coupleId);
-        }
-      }, 600000);
+    const { coupleId: rawCoupleId, userId } = data;
+    if (rawCoupleId) {
+      const coupleId = Number(rawCoupleId);
+      socket.coupleId = coupleId;
+      socket.userId = userId;
+      
+      const existingLock = pendingLocks.get(coupleId);
+      if (existingLock && existingLock !== userId) {
+        // Both clicked (Match). Clear lock immediately
+        pendingLocks.delete(coupleId);
+        socket.to(`couple_${coupleId}`).emit('partner_lock_event', { userId });
+      } else {
+        // First lock
+        pendingLocks.set(coupleId, userId);
+        socket.to(`couple_${coupleId}`).emit('partner_lock_event', { userId });
+        setTimeout(() => {
+          if (pendingLocks.get(coupleId) === userId) {
+            pendingLocks.delete(coupleId);
+            socket.to(`couple_${coupleId}`).emit('partner_lock_event', { userId: null });
+          }
+        }, 600000);
+      }
     }
   });
 
-  socket.on('clear_lock', (coupleId) => {
-    pendingLocks.delete(coupleId);
+  socket.on('clear_lock', (rawCoupleId) => {
+    if (rawCoupleId) {
+      const coupleId = Number(rawCoupleId);
+      pendingLocks.delete(coupleId);
+      socket.to(`couple_${coupleId}`).emit('partner_lock_event', { userId: null });
+    }
   });
 
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
+    if (socket.coupleId && socket.userId) {
+      const coupleId = Number(socket.coupleId);
+      const waitingUser = pendingLocks.get(coupleId);
+      if (waitingUser === socket.userId) {
+        pendingLocks.delete(coupleId);
+        socket.to(`couple_${coupleId}`).emit('partner_lock_event', { userId: null });
+      }
+    }
   });
 });
 
