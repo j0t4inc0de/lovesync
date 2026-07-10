@@ -485,8 +485,19 @@
           <!-- Divider line to visually isolate the Danger Zone -->
           <div class="my-6 border-t" style="border-color: var(--border-subtle);"></div>
 
-          <!-- Danger Zone: Unpair option pushed to the bottom -->
+          <!-- Danger Zone: Delete Account / Derecho al Olvido -->
           <div class="glass rounded-2xl p-5 mb-4">
+            <p class="text-[0.65rem] font-bold uppercase tracking-wider mb-2" style="color: var(--text-muted);">Eliminar Cuenta</p>
+            <p class="text-[13px] mb-4 leading-relaxed" style="color: var(--text-secondary);">Derecho al Olvido — Esta acción borra tu usuario y acceso de forma definitiva. Los recuerdos de la bitácora compartida permanecerán protegidos en la cuenta de tu pareja para resguardar su historia.</p>
+            <button @click="handleDeleteMyAccount"
+              class="w-full text-[13px] font-semibold transition-all active:scale-95 btn"
+              style="background: rgba(255,59,48,0.08); color: #ff3b30;">
+              Eliminar mi cuenta y datos
+            </button>
+          </div>
+
+          <!-- Danger Zone: Unpair option -->
+          <div class="glass rounded-2xl p-5 mb-6">
             <p class="text-[0.65rem] font-bold uppercase tracking-wider mb-2" style="color: var(--text-muted);">Desvincularse</p>
             
             <div v-if="unpairState === 'idle'">
@@ -530,17 +541,6 @@
                 </div>
               </div>
             </div>
-          </div>
-
-          <!-- Danger Zone: Delete Account / Derecho al Olvido pushed underneath Unpair -->
-          <div class="glass rounded-2xl p-5 mb-6">
-            <p class="text-[0.65rem] font-bold uppercase tracking-wider mb-2" style="color: var(--text-muted);">Eliminar Cuenta</p>
-            <p class="text-[13px] mb-4 leading-relaxed" style="color: var(--text-secondary);">Derecho al Olvido — Esta acción borra tu usuario y acceso de forma definitiva. Los recuerdos de la bitácora compartida permanecerán protegidos en la cuenta de tu pareja para resguardar su historia.</p>
-            <button @click="handleDeleteMyAccount"
-              class="w-full text-[13px] font-semibold transition-all active:scale-95 btn"
-              style="background: rgba(255,59,48,0.08); color: #ff3b30;">
-              Eliminar mi cuenta y datos (Derecho al Olvido)
-            </button>
           </div>
 
           <!-- Escudo Legal y Cumplimiento (Términos / Privacidad) -->
