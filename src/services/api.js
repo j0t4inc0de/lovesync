@@ -172,6 +172,13 @@ export const api = {
     });
   },
   
+  adminUpdateStreakTest: async (coupleId, streakCount, unclaimedRewards, previousStreak = 0) => {
+    return request(`/api/admin/couples/${coupleId}/streak-test`, {
+      method: 'PUT',
+      body: JSON.stringify({ streakCount, unclaimedRewards, previousStreak })
+    });
+  },
+  
   adminDeleteCouple: async (coupleId) => {
     return request(`/api/admin/couples/${coupleId}`, {
       method: 'DELETE'

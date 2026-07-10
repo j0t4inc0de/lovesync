@@ -1076,6 +1076,30 @@ app.put('/api/admin/couples/:id/slots', authenticateToken, requireAdmin, async (
   }
 });
 
+// Admin: Set streak & piggy bank rewards for testing
+app.put('/api/admin/couples/:id/streak-test', authenticateToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { streakCount = 7, unclaimedRewards = 1, previousStreak = 0 } = req.body;
+  try {
+    const todayStr = new Date().toLocaleDateString('sv-SE');
+    const updateRes = await pool.query(
+      `UPDATE couples SET 
+         streak_count = $1, 
+         unclaimed_streak_rewards = $2, 
+         previous_streak = $3, 
+         last_streak_date = $4,
+         last_rewarded_streak = $1
+       WHERE id = $5 RETURNING *`,
+      [streakCount, unclaimedRewards, previousStreak, todayStr, id]
+    );
+    if (updateRes.rows.length === 0) return res.status(404).json({ error: 'Pareja no encontrada.' });
+    res.json({ success: true, message: `🧪 Racha configurada a ${streakCount} días y ahorros a ${unclaimedRewards} 🎁.`, couple: updateRes.rows[0] });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar racha de prueba.' });
+  }
+});
+
 // Admin: Delete a couple (also decouple users and delete their dates)
 app.delete('/api/admin/couples/:id', authenticateToken, requireAdmin, async (req, res) => {
   const { id } = req.params;

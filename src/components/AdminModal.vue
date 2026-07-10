@@ -43,9 +43,15 @@
                   </button>
                 </div>
                 <!-- Action: Set 999 slots or 20 slots -->
-                <div class="flex gap-1.5">
-                  <button @click="quickSetSlots(cp.id, 20)" class="px-2 py-1 rounded bg-[var(--accent-soft)] text-[var(--accent)] text-[10px] font-bold active:scale-95 transition-transform">Premium (20)</button>
-                  <button @click="quickSetSlots(cp.id, 999)" class="px-2 py-1 rounded bg-amber-100 text-amber-700 text-[10px] font-bold active:scale-95 transition-transform">Tester (999)</button>
+                <div class="flex flex-col gap-1.5">
+                  <div class="flex gap-1.5">
+                    <button @click="quickSetSlots(cp.id, 20)" class="px-2 py-1 rounded bg-[var(--accent-soft)] text-[var(--accent)] text-[10px] font-bold active:scale-95 transition-transform">Premium (20)</button>
+                    <button @click="quickSetSlots(cp.id, 999)" class="px-2 py-1 rounded bg-amber-100 text-amber-700 text-[10px] font-bold active:scale-95 transition-transform">Tester (999)</button>
+                  </div>
+                  <div class="flex flex-wrap gap-1.5">
+                    <button @click="quickSetStreak(cp.id, 7, 1, 0)" class="px-2 py-1 rounded bg-pink-100 text-pink-700 text-[9.5px] font-bold active:scale-95 transition-transform" title="Poner 7 días de racha + 1 recompensa de ahorro">🎁 Racha 7 días (1🎁)</button>
+                    <button @click="quickSetStreak(cp.id, 0, 10, 14)" class="px-2 py-1 rounded bg-red-100 text-red-700 text-[9.5px] font-bold active:scale-95 transition-transform" title="Congelar racha y poner 10 recompensas para rescate">🚑 Probar Rescate (10🎁)</button>
+                  </div>
                 </div>
               </div>
 
@@ -215,6 +221,21 @@ const saveCoupleSlots = async (coupleId, slots) => {
 
 const quickSetSlots = async (coupleId, slots) => {
   await saveCoupleSlots(coupleId, slots);
+};
+
+const quickSetStreak = async (coupleId, streakCount, unclaimedRewards, previousStreak) => {
+  try {
+    const res = await api.adminUpdateStreakTest(coupleId, streakCount, unclaimedRewards, previousStreak);
+    if (res.success) {
+      showPopup(res.message);
+      await loadCouples();
+      if (props.userCoupleId === coupleId) {
+        window.location.reload();
+      }
+    }
+  } catch (error) {
+    alert('Error al probar racha: ' + error.message);
+  }
 };
 
 const deleteCouple = async (coupleId) => {
