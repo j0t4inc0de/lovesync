@@ -126,7 +126,7 @@ const initDatabase = async (retries = 10, delay = 3000) => {
       // Run schema
       await pool.query(schemaSql);
       try {
-        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0;');
+        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0;');
         await pool.query('ALTER TABLE dates ADD COLUMN IF NOT EXISTS reports_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS reported_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;');
       } catch (e) {
         console.warn('Advertencia ejecutando alter en initDatabase:', e.message);
@@ -249,6 +249,11 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
     let partnerName = null;
     let partnerId = null;
     let maxSlots = 10;
+    let baseSlots = 10;
+    let extraSlots = 0;
+    let permanentSlots = 0;
+    let unclaimedStreakRewards = 0;
+    let lastRewardedStreak = 0;
     let unpairState = 'idle';
     let unpairRequestedBy = null;
     let unpairDaysLeft = 0;
@@ -269,15 +274,18 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
 
       // Ensure streak columns exist in production even if startup migrations were skipped
       try {
-        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0;');
+        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0;');
       } catch (migErr) {
         // Ignored if already exists or permissions
       }
 
-      // Get couple slots (base_slots + sum of extra_slots for the current month)
+      // Get couple slots (base_slots + sum of extra_slots for the current month + permanent_slots)
       const coupleRes = await pool.query(
         `SELECT 
            c.slots AS base_slots,
+           COALESCE(c.permanent_slots, 0) AS permanent_slots,
+           COALESCE(c.unclaimed_streak_rewards, 0) AS unclaimed_streak_rewards,
+           COALESCE(c.last_rewarded_streak, 0) AS last_rewarded_streak,
            c.unpair_requested_at,
            c.unpair_requested_by,
            c.streak_count,
@@ -295,7 +303,12 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
       );
       if (coupleRes.rows.length > 0) {
         const couple = coupleRes.rows[0];
-        maxSlots = couple.base_slots + couple.extra_slots;
+        baseSlots = couple.base_slots || 10;
+        extraSlots = couple.extra_slots || 0;
+        permanentSlots = couple.permanent_slots || 0;
+        maxSlots = baseSlots + extraSlots + permanentSlots;
+        unclaimedStreakRewards = couple.unclaimed_streak_rewards || 0;
+        lastRewardedStreak = couple.last_rewarded_streak || 0;
         streakCount = couple.streak_count || 0;
         lastStreakDate = couple.last_streak_date || null;
         previousStreak = couple.previous_streak || 0;
@@ -324,6 +337,11 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
       partnerName,
       partnerId,
       maxSlots,
+      baseSlots,
+      extraSlots,
+      permanentSlots,
+      unclaimedStreakRewards,
+      lastRewardedStreak,
       unpairState,
       unpairRequestedBy,
       unpairDaysLeft,
@@ -627,12 +645,9 @@ app.post('/api/payments/webhook', async (req, res) => {
 
               if (coupleId && slotsAmount) {
                 await pool.query(
-                  `INSERT INTO couple_extra_slots (couple_id, amount, year, month) 
-                   VALUES ($1, $2, EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int)`,
-                  [coupleId, slotsAmount]
+                  `UPDATE couples SET permanent_slots = COALESCE(permanent_slots, 0) + $1 WHERE id = $2`,
+                  [slotsAmount, coupleId]
                 );
-                console.log(`✅ [MercadoPago Éxito] +${slotsAmount} cupos acreditados a pareja ID ${coupleId} (Ref: ${paymentId})`);
-
                 if (refData.streakRescue) {
                   const todayStr = new Date().toLocaleDateString('sv-SE');
                   await pool.query(
@@ -712,20 +727,76 @@ const updateCoupleStreak = async (coupleId, localDateStr) => {
       [newStreak, localDateStr, newPreviousStreak, coupleId]
     );
 
-    // Silent reward: Every 7 days completed, silently grant +1 extra slot
+    // Piggy Bank reward: Every 7 days completed, add +1 unclaimed reward to the couple's savings pool if not yet rewarded for this milestone
     if (newStreak > 0 && newStreak % 7 === 0) {
-      const year = new Date(localDateStr).getFullYear();
-      const month = new Date(localDateStr).getMonth() + 1;
-      await pool.query(
-        `INSERT INTO couple_extra_slots (couple_id, amount, year, month) VALUES ($1, 1, $2, $3)`,
-        [coupleId, year, month]
-      );
-      console.log(`🔥 [Racha 7 días] Premio silencioso +1 cupo asignado a pareja ID ${coupleId} (Racha: ${newStreak})`);
+      const cpCheck = await pool.query('SELECT COALESCE(last_rewarded_streak, 0) AS last_rewarded_streak FROM couples WHERE id = $1', [coupleId]);
+      const lastRewarded = cpCheck.rows[0]?.last_rewarded_streak || 0;
+      if (newStreak > lastRewarded) {
+        await pool.query(
+          `UPDATE couples SET unclaimed_streak_rewards = COALESCE(unclaimed_streak_rewards, 0) + 1, last_rewarded_streak = $1 WHERE id = $2`,
+          [newStreak, coupleId]
+        );
+        console.log(`🎁 [Racha ${newStreak} días] +1 recompensa acumulada al ahorro de racha para pareja ID ${coupleId}`);
+      }
     }
   } catch (err) {
     console.error('Error actualizando racha de la pareja:', err.message);
   }
 };
+
+// Claim streak reward from piggy bank
+app.post('/api/profile/streak/claim', authenticateToken, async (req, res) => {
+  try {
+    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    const coupleId = userRes.rows[0]?.couple_id;
+    if (!coupleId) return res.status(400).json({ error: 'No tienes una pareja vinculada.' });
+
+    const cpRes = await pool.query('SELECT COALESCE(unclaimed_streak_rewards, 0) AS unclaimed_streak_rewards FROM couples WHERE id = $1', [coupleId]);
+    const cp = cpRes.rows[0];
+    if (!cp || cp.unclaimed_streak_rewards <= 0) {
+      return res.status(400).json({ error: 'No tienes recompensas de racha pendientes por reclamar.' });
+    }
+
+    const now = new Date();
+    await pool.query('UPDATE couples SET unclaimed_streak_rewards = unclaimed_streak_rewards - 1 WHERE id = $1', [coupleId]);
+    await pool.query('INSERT INTO couple_extra_slots (couple_id, amount, year, month) VALUES ($1, 1, $2, $3)', [coupleId, now.getFullYear(), now.getMonth() + 1]);
+
+    console.log(`🎉 [Racha Claim] +1 cupo reclamado a la bitácora por pareja ID ${coupleId}`);
+    res.json({ success: true, message: '¡+1 Cupo de racha reclamado con éxito! Se ha sumado a tu bitácora del mes.' });
+  } catch (error) {
+    console.error('Error reclamando recompensa de racha:', error);
+    res.status(500).json({ error: 'Error del servidor al reclamar recompensa.' });
+  }
+});
+
+// Rescue streak using 10 accumulated rewards
+app.post('/api/profile/streak/rescue-rewards', authenticateToken, async (req, res) => {
+  try {
+    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    const coupleId = userRes.rows[0]?.couple_id;
+    if (!coupleId) return res.status(400).json({ error: 'No tienes una pareja vinculada.' });
+
+    const cpRes = await pool.query('SELECT streak_count, previous_streak, COALESCE(unclaimed_streak_rewards, 0) AS unclaimed_streak_rewards FROM couples WHERE id = $1', [coupleId]);
+    const cp = cpRes.rows[0];
+    if (!cp) return res.status(404).json({ error: 'Pareja no encontrada.' });
+    if (cp.streak_count > 0) return res.status(400).json({ error: 'Tu racha actual está activa, no necesitas recuperarla.' });
+    if (cp.unclaimed_streak_rewards < 10) {
+      return res.status(400).json({ error: 'Necesitas al menos 10 recompensas acumuladas para recuperar la racha gratis.' });
+    }
+
+    const restoredStreak = cp.previous_streak || 1;
+    await pool.query(
+      'UPDATE couples SET streak_count = $1, last_streak_date = CURRENT_DATE, unclaimed_streak_rewards = 0 WHERE id = $2',
+      [restoredStreak, coupleId]
+    );
+
+    console.log(`🛡️ [Racha Rescatada con Ahorros] Racha de ${restoredStreak} días restaurada para pareja ID ${coupleId}`);
+    res.json({ success: true, message: `¡Racha de ${restoredStreak} días restaurada con éxito usando tus recompensas acumuladas!` });
+  } catch (error) {
+    console.error('Error rescatando racha con recompensas:', error);
+    res.status(500).json({ error: 'Error del servidor al recuperar racha.' });
+  }
+});
 
 // Play daily trivia (enforces once per day per user, awards +1 expiring slot if both answer correctly)
 app.post('/api/trivia/play', authenticateToken, async (req, res) => {
@@ -1387,6 +1458,7 @@ app.post('/api/dates', authenticateToken, async (req, res) => {
               AND month = EXTRACT(MONTH FROM CURRENT_DATE)::int
            ), 0
          )::int AS extra_slots,
+         COALESCE(c.permanent_slots, 0) AS permanent_slots,
          (SELECT COUNT(id) FROM dates 
           WHERE couple_id = c.id 
             AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
@@ -1398,12 +1470,20 @@ app.post('/api/dates', authenticateToken, async (req, res) => {
     );
 
     if (limitRes.rows.length > 0) {
-      const { base_slots, extra_slots, dates_this_month } = limitRes.rows[0];
-      const maxSlots = base_slots + extra_slots;
-      if (dates_this_month >= maxSlots) {
+      const { base_slots, extra_slots, permanent_slots, dates_this_month } = limitRes.rows[0];
+      const monthlyFreeSlots = base_slots + extra_slots;
+      const totalAvailableSlots = monthlyFreeSlots + permanent_slots;
+
+      if (dates_this_month >= totalAvailableSlots) {
         return res.status(400).json({
-          error: `Límite de citas alcanzado. Has registrado ${dates_this_month}/${maxSlots} citas este mes. Juega la Trivia o adquiere más cupos para continuar.`
+          error: `Límite de citas alcanzado. Has registrado ${dates_this_month}/${totalAvailableSlots} citas este mes. Juega la Trivia o adquiere más cupos permanentes en la Tienda para continuar.`
         });
+      }
+
+      // Si ya consumieron toda la cuota mensual gratis (base + trivia), consumimos 1 de sus cupos permanentes
+      if (dates_this_month >= monthlyFreeSlots && permanent_slots > 0) {
+        await pool.query('UPDATE couples SET permanent_slots = GREATEST(0, permanent_slots - 1) WHERE id = $1', [user.couple_id]);
+        console.log(`🪙 [Gasto de Cupo Permanente] Pareja ID ${user.couple_id} consumió 1 cupo permanente en nueva cita.`);
       }
     }
 

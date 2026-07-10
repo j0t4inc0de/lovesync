@@ -2,7 +2,10 @@
 CREATE TABLE IF NOT EXISTS couples (
     id SERIAL PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    slots INT DEFAULT 10
+    slots INT DEFAULT 10,
+    permanent_slots INT DEFAULT 0,
+    unclaimed_streak_rewards INT DEFAULT 0,
+    last_rewarded_streak INT DEFAULT 0
 );
 
 -- Create Users Table

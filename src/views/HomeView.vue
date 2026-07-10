@@ -786,12 +786,46 @@
       <div class="p-2 rounded-xl bg-amber-50 border border-amber-200/60 flex items-center gap-2">
         <span class="text-amber-600 font-extrabold text-[12px]">★</span>
         <span class="text-[10px] text-amber-800 font-bold leading-tight">
-          ¡Cada 7 días de racha se premia con un cupo de cita!
+          ¡Cada 7 días de racha se premia con un cupo de cita en tu ahorro!
         </span>
       </div>
+
+      <!-- Piggy Bank Claim Card -->
+      <div v-if="unclaimedStreakRewards > 0" class="p-2.5 rounded-xl bg-gradient-to-r from-pink-500/15 to-violet-500/15 border border-pink-300/60 space-y-2">
+        <div class="flex items-center justify-between text-[11px] font-bold text-pink-700">
+          <span class="flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-pink-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
+            Ahorro de Recompensas: {{ unclaimedStreakRewards }} 🎁
+          </span>
+          <span class="text-[9px] bg-pink-100 text-pink-800 px-1.5 py-0.5 rounded-full">+{{ unclaimedStreakRewards }} Cupos</span>
+        </div>
+        <p class="text-[9.5px] text-gray-600 leading-tight m-0">
+          Reclámalos para usarlos en la bitácora de este mes, o acumúlalos como protección para recuperar tu racha si se rompe.
+        </p>
+        <button @click="claimStreakReward" :disabled="claimingReward" class="w-full py-2 px-2.5 rounded-xl btn-primary text-white font-extrabold text-[11px] shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-1.5">
+          <svg v-if="claimingReward" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
+          <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+          <span>{{ claimingReward ? 'Reclamando...' : 'Reclamar +1 Cupo al Mes' }}</span>
+        </button>
+      </div>
+
+      <!-- Streak At Risk Section -->
       <div v-if="isStreakAtRisk" class="pt-2 border-t border-black/5 space-y-1.5">
         <p class="text-[10px] text-red-500 font-bold leading-tight m-0">¡Tu racha anterior de {{ previousStreak }} días está congelada!</p>
+        
+        <!-- Option 1: Rescue using 10 accumulated rewards -->
+        <button v-if="unclaimedStreakRewards >= 10" @click="rescueStreakWithRewards" :disabled="rescuingWithRewards" class="w-full py-2 px-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold text-[11px] shadow-md active:scale-95 transition-transform flex items-center justify-center gap-1.5">
+          <svg v-if="rescuingWithRewards" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
+          <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <span>{{ rescuingWithRewards ? 'Salvando...' : 'Recuperar Racha Gratis (Usar 10 🎁)' }}</span>
+        </button>
+        <div v-else-if="unclaimedStreakRewards > 0" class="text-[9.5px] text-gray-500 text-center italic">
+          Tienes {{ unclaimedStreakRewards }}/10 recompensas acumuladas para rescate gratis.
+        </div>
+
+        <!-- Option 2: Rescue with $1.990 -->
         <button @click="rescueStreak" class="w-full py-2 px-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-[#ff4c70] text-white font-extrabold text-[11px] shadow-md active:scale-95 transition-transform flex items-center justify-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           <span>Salvar Racha + 2 Citas ($1.990)</span>
         </button>
       </div>
@@ -904,6 +938,9 @@ const loveStreak = ref(0);
 const previousStreak = ref(0);
 const lastStreakDate = ref(null);
 const showStreakTooltip = ref(false);
+const unclaimedStreakRewards = ref(0);
+const claimingReward = ref(false);
+const rescuingWithRewards = ref(false);
 const doubleLockState = ref('idle');
 const loadingPayment = ref(false);
 const showDateModal = ref(false);
@@ -1216,6 +1253,34 @@ const rescueStreak = async () => {
   } catch (err) {
     loadingPayment.value = false;
     showPopup(err.message || 'Error al iniciar pago.');
+  }
+};
+
+const claimStreakReward = async () => {
+  if (claimingReward.value) return;
+  claimingReward.value = true;
+  try {
+    const res = await api.claimStreakReward();
+    showPopup(res.message || '¡+1 Cupo de racha reclamado con éxito!');
+    await fetchProfile();
+  } catch (error) {
+    showPopup(error.message || 'Error al reclamar recompensa');
+  } finally {
+    claimingReward.value = false;
+  }
+};
+
+const rescueStreakWithRewards = async () => {
+  if (rescuingWithRewards.value) return;
+  rescuingWithRewards.value = true;
+  try {
+    const res = await api.rescueStreakWithRewards();
+    showPopup(res.message || '¡Racha restaurada con tus ahorros de recompensa!');
+    await fetchProfile();
+  } catch (error) {
+    showPopup(error.message || 'Error al recuperar racha con recompensas');
+  } finally {
+    rescuingWithRewards.value = false;
   }
 };
 
@@ -1719,6 +1784,7 @@ const fetchProfile = async () => {
     if (profile.streakCount !== undefined) loveStreak.value = profile.streakCount || 0;
     if (profile.previousStreak !== undefined) previousStreak.value = profile.previousStreak || 0;
     if (profile.lastStreakDate !== undefined) lastStreakDate.value = profile.lastStreakDate || null;
+    if (profile.unclaimedStreakRewards !== undefined) unclaimedStreakRewards.value = profile.unclaimedStreakRewards || 0;
   }
   partnerName.value = profile.partnerName || 'Pareja';
   partnerId.value = profile.partnerId || null;
