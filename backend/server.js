@@ -274,7 +274,7 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
 
       // Ensure streak columns exist in production even if startup migrations were skipped
       try {
-        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0;');
+        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS previous_streak_frozen_at TIMESTAMP DEFAULT NULL, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0;');
       } catch (migErr) {
         // Ignored if already exists or permissions
       }
@@ -291,6 +291,7 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
            c.streak_count,
            c.last_streak_date::text AS last_streak_date,
            c.previous_streak,
+           c.previous_streak_frozen_at,
            COALESCE(
              (SELECT SUM(amount) FROM couple_extra_slots 
               WHERE couple_id = c.id 
@@ -312,6 +313,27 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
         streakCount = couple.streak_count || 0;
         lastStreakDate = couple.last_streak_date || null;
         previousStreak = couple.previous_streak || 0;
+
+        // 2-hour window check for frozen streak rescue
+        if (previousStreak > 0) {
+          if (!couple.previous_streak_frozen_at) {
+            await pool.query('UPDATE couples SET previous_streak_frozen_at = CURRENT_TIMESTAMP WHERE id = $1', [user.couple_id]);
+            user.streakFrozenSecondsLeft = 7200;
+          } else {
+            const frozenDate = new Date(couple.previous_streak_frozen_at);
+            const now = new Date();
+            const diffSeconds = (now - frozenDate) / 1000;
+            if (diffSeconds >= 7200) {
+              await pool.query('UPDATE couples SET previous_streak = 0, previous_streak_frozen_at = NULL WHERE id = $1', [user.couple_id]);
+              previousStreak = 0;
+              user.streakFrozenSecondsLeft = 0;
+            } else {
+              user.streakFrozenSecondsLeft = Math.ceil(7200 - diffSeconds);
+            }
+          }
+        } else {
+          user.streakFrozenSecondsLeft = 0;
+        }
 
         if (couple.unpair_requested_at) {
           const requestedDate = new Date(couple.unpair_requested_at);
@@ -347,7 +369,8 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
       unpairDaysLeft,
       streakCount,
       lastStreakDate,
-      previousStreak
+      previousStreak,
+      streakFrozenSecondsLeft: user.streakFrozenSecondsLeft || 0
     });
   } catch (error) {
     console.error(error);
@@ -722,10 +745,17 @@ const updateCoupleStreak = async (coupleId, localDateStr) => {
       newStreak = 1;
     }
 
-    await pool.query(
-      'UPDATE couples SET streak_count = $1, last_streak_date = $2, previous_streak = $3 WHERE id = $4',
-      [newStreak, localDateStr, newPreviousStreak, coupleId]
-    );
+    if (newPreviousStreak > 0 && newPreviousStreak !== (couple.previous_streak || 0)) {
+      await pool.query(
+        'UPDATE couples SET streak_count = $1, last_streak_date = $2, previous_streak = $3, previous_streak_frozen_at = CURRENT_TIMESTAMP WHERE id = $4',
+        [newStreak, localDateStr, newPreviousStreak, coupleId]
+      );
+    } else {
+      await pool.query(
+        'UPDATE couples SET streak_count = $1, last_streak_date = $2, previous_streak = $3 WHERE id = $4',
+        [newStreak, localDateStr, newPreviousStreak, coupleId]
+      );
+    }
 
     // Piggy Bank reward: Every 7 days completed, add +1 unclaimed reward to the couple's savings pool if not yet rewarded for this milestone
     if (newStreak > 0 && newStreak % 7 === 0) {

@@ -797,13 +797,15 @@
         </span>
         <button @click="claimStreakReward(unclaimedStreakRewards >= 5 ? 'all' : 1)" :disabled="claimingReward" class="btn btn-primary rounded-full py-1 px-2.5 text-white font-extrabold text-[10px] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1 shrink-0 border border-white/30 !h-auto !min-h-0 scale-95 origin-right">
           <svg v-if="claimingReward" class="w-3 h-3 animate-spin shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
-          <span>{{ claimingReward ? '...' : (unclaimedStreakRewards >= 5 ? 'Reclamar' : 'Canjear +1') }}</span>
+          <span>{{ claimingReward ? '...' : (unclaimedStreakRewards >= 5 ? 'Reclamar' : 'Canjear') }}</span>
         </button>
       </div>
 
-      <!-- Streak At Risk Section (Secret Easter Egg when >= 10 rewards) -->
-      <div v-if="isStreakAtRisk" class="pt-2 border-t border-black/5 space-y-2 text-center">
-        <p class="text-[11px] text-red-600 font-bold leading-tight m-1">¡Tu racha anterior de {{ previousStreak }} días está congelada!</p>
+      <!-- Streak At Risk Section (Only shown if can rescue within 2 hours) -->
+      <div v-if="isStreakAtRisk && (unclaimedStreakRewards >= 10 || (maxSlots - datesList.length) >= 20)" class="pt-2 border-t border-black/5 space-y-2 text-center">
+        <p class="text-[11px] text-red-600 font-bold leading-tight m-1">
+          ¡Tu racha anterior de {{ previousStreak }} días está congelada! <span class="text-cyan-700 block text-[10px] font-extrabold mt-0.5">⏱️ Expira en: {{ formattedFrozenCountdown }}</span>
+        </p>
         <button v-if="unclaimedStreakRewards >= 10" @click="rescueStreakWithRewards" :disabled="rescuingWithRewards" class="btn rounded-full !px-3.5 !py-1.5 !min-h-0 !h-auto mx-auto !bg-gradient-to-r !from-cyan-500 !to-sky-500 hover:!from-cyan-400 hover:!to-sky-400 text-white text-[12px] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-cyan-200/70 animate-pulse scale-95 origin-center">
           <svg v-if="rescuingWithRewards" class="w-3.5 h-3.5 animate-spin shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
           <span>{{ rescuingWithRewards ? 'Salvando...' : `Salvar Racha (Usar ${unclaimedStreakRewards} recompensas)` }}</span>
@@ -811,9 +813,6 @@
         <button v-else-if="(maxSlots - datesList.length) >= 20" @click="rescueStreakWithSlots" :disabled="rescuingWithSlots" class="btn rounded-full !px-3.5 !py-1.5 !min-h-0 !h-auto mx-auto !bg-gradient-to-r !from-cyan-500 !to-sky-500 hover:!from-cyan-400 hover:!to-sky-400 text-white text-[12px] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-cyan-200/70 animate-pulse scale-95 origin-center">
           <svg v-if="rescuingWithSlots" class="w-3.5 h-3.5 animate-spin shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
           <span>{{ rescuingWithSlots ? 'Salvando...' : 'Salvar Racha (Pagar 20 cupos de cita)' }}</span>
-        </button>
-        <button v-else disabled class="rounded-full py-1.5 px-3 mx-auto bg-slate-200 text-slate-500 font-extrabold text-[9.5px] shadow-sm flex items-center justify-center gap-1 border border-slate-300/70 scale-95 origin-center cursor-not-allowed opacity-80">
-          <span>🔒 Salvar Racha (Tienes {{ maxSlots - datesList.length }}/20 cupos libres)</span>
         </button>
       </div>
     </div>
@@ -923,6 +922,15 @@ const dateSlots = computed(() => {
 const maxSlots = ref(10);
 const loveStreak = ref(0);
 const previousStreak = ref(0);
+const streakFrozenSecondsLeft = ref(0);
+const formattedFrozenCountdown = computed(() => {
+  const s = streakFrozenSecondsLeft.value;
+  if (s <= 0) return '00:00';
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return `${h > 0 ? h + 'h ' : ''}${m < 10 ? '0' : ''}${m}:${sec < 10 ? '0' : ''}${sec}`;
+});
 const lastStreakDate = ref(null);
 const showStreakTooltip = ref(false);
 const unclaimedStreakRewards = ref(0);
@@ -1781,6 +1789,7 @@ const fetchProfile = async () => {
     maxSlots.value = profile.maxSlots;
     if (profile.streakCount !== undefined) loveStreak.value = profile.streakCount || 0;
     if (profile.previousStreak !== undefined) previousStreak.value = profile.previousStreak || 0;
+    if (profile.streakFrozenSecondsLeft !== undefined) streakFrozenSecondsLeft.value = profile.streakFrozenSecondsLeft || 0;
     if (profile.lastStreakDate !== undefined) lastStreakDate.value = profile.lastStreakDate || null;
     if (profile.unclaimedStreakRewards !== undefined) unclaimedStreakRewards.value = profile.unclaimedStreakRewards || 0;
   }
@@ -1797,6 +1806,15 @@ onMounted(async () => {
   try {
     const profileLoaded = await fetchProfile();
     if (!profileLoaded) return;
+
+    setInterval(() => {
+      if (streakFrozenSecondsLeft.value > 0) {
+        streakFrozenSecondsLeft.value--;
+        if (streakFrozenSecondsLeft.value <= 0) {
+          previousStreak.value = 0;
+        }
+      }
+    }, 1000);
 
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment');
