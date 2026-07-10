@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS dates (
     rating_user_2 NUMERIC(3,1) DEFAULT 5.0,
     photo_url TEXT,
     tags TEXT[],
+    reports_count INT DEFAULT 0,
+    reported_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

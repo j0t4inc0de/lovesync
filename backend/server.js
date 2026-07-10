@@ -127,6 +127,7 @@ const initDatabase = async (retries = 10, delay = 3000) => {
       await pool.query(schemaSql);
       try {
         await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0;');
+        await pool.query('ALTER TABLE dates ADD COLUMN IF NOT EXISTS reports_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS reported_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;');
       } catch (e) {
         console.warn('Advertencia ejecutando alter en initDatabase:', e.message);
       }
@@ -1041,6 +1042,51 @@ app.delete('/api/admin/users/:id', authenticateToken, requireAdmin, async (req, 
   }
 });
 
+// Admin: Fetch reported dates for moderation
+app.get('/api/admin/reported-dates', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const query = `
+      SELECT d.id, d.location, d.city, d.description, d.photo_url, d.reports_count, d.reported_at, d.created_at,
+             d.couple_id,
+             COALESCE(u1.name, 'Usuario 1') AS author_1, COALESCE(u2.name, 'Usuario 2') AS author_2
+      FROM dates d
+      LEFT JOIN users u1 ON d.couple_id = u1.couple_id AND u1.id = (SELECT MIN(id) FROM users WHERE couple_id = d.couple_id)
+      LEFT JOIN users u2 ON d.couple_id = u2.couple_id AND u2.id = (SELECT MAX(id) FROM users WHERE couple_id = d.couple_id AND id != u1.id)
+      WHERE COALESCE(d.reports_count, 0) > 0
+      ORDER BY d.reports_count DESC, d.reported_at DESC;
+    `;
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error obteniendo citas reportadas.' });
+  }
+});
+
+// Admin: Dismiss report on a date
+app.post('/api/admin/reported-dates/:id/dismiss', authenticateToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query('UPDATE dates SET reports_count = 0, reported_at = NULL WHERE id = $1', [id]);
+    res.json({ success: true, message: 'Reporte descartado.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al descartar el reporte.' });
+  }
+});
+
+// Admin: Delete a reported date
+app.delete('/api/admin/reported-dates/:id', authenticateToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query('DELETE FROM dates WHERE id = $1', [id]);
+    res.json({ success: true, message: 'Cita reportada eliminada permanentemente.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al eliminar la cita reportada.' });
+  }
+});
+
 // ── Dates (Bitácora) Endpoints ──
 
 // Fetch all dates for exploration (anonymous display with likes)
@@ -1099,7 +1145,8 @@ app.post('/api/dates/:id/like', authenticateToken, async (req, res) => {
 app.post('/api/dates/:id/report', authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
-    console.log(`Report received for date ID ${id} by user ID ${req.user.id}`);
+    await pool.query('UPDATE dates SET reports_count = COALESCE(reports_count, 0) + 1, reported_at = NOW() WHERE id = $1', [id]);
+    console.log(`Report received and stored for date ID ${id} by user ID ${req.user.id}`);
     res.json({ success: true, message: 'Cita reportada a moderación.' });
   } catch (error) {
     console.error(error);

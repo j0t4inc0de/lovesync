@@ -180,6 +180,24 @@ export const api = {
       method: 'DELETE'
     });
   },
+
+  adminGetReportedDates: async () => {
+    return request('/api/admin/reported-dates', {
+      method: 'GET'
+    });
+  },
+
+  adminDismissReportedDate: async (dateId) => {
+    return request(`/api/admin/reported-dates/${dateId}/dismiss`, {
+      method: 'POST'
+    });
+  },
+
+  adminDeleteReportedDate: async (dateId) => {
+    return request(`/api/admin/reported-dates/${dateId}`, {
+      method: 'DELETE'
+    });
+  },
   
   logout: () => {
     removeToken();
