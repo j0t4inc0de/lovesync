@@ -794,7 +794,7 @@ app.post('/api/profile/streak/rescue-rewards', authenticateToken, async (req, re
 
     const restoredStreak = cp.previous_streak > 0 ? cp.previous_streak : (cp.streak_count || 1);
     await pool.query(
-      'UPDATE couples SET streak_count = $1, last_streak_date = CURRENT_DATE, previous_streak = 0, unclaimed_streak_rewards = GREATEST(0, unclaimed_streak_rewards - 10) WHERE id = $2',
+      'UPDATE couples SET streak_count = $1, last_streak_date = CURRENT_DATE, previous_streak = 0, unclaimed_streak_rewards = 0 WHERE id = $2',
       [restoredStreak, coupleId]
     );
 
