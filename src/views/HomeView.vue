@@ -565,8 +565,11 @@
         </div>
         <div class="p-5 overflow-y-auto flex-1 space-y-4">
           <div>
-            <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 block" style="color: var(--text-muted);">Título</label>
-            <input v-model="newDate.location" type="text" placeholder="Cafetería, Cine, Playa..." class="input-field w-full px-4 py-3.5 text-[15px] focus:outline-none" />
+            <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 flex items-center justify-between" style="color: var(--text-muted);">
+              <span>Título</span>
+              <span class="text-[9px] lowercase font-normal italic text-[var(--text-muted)]">obligatorio</span>
+            </label>
+            <input id="create-location-input" v-model="newDate.location" type="text" placeholder="Cafetería, Cine, Playa..." class="input-field w-full px-4 py-3.5 text-[15px] focus:outline-none" />
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
@@ -622,7 +625,7 @@
           </div>
           <div>
             <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 flex items-center justify-between" style="color: var(--text-muted);">
-              <span>Descripción <span class="text-red-500 font-bold">*</span></span>
+              <span>Descripción</span>
               <span class="text-[9px] lowercase font-normal italic text-[var(--text-muted)]">obligatoria</span>
             </label>
             <textarea v-model="newDate.description" rows="3" placeholder="¿Qué recuerdan de este momento?" class="input-field w-full p-4 text-[15px] focus:outline-none resize-none"></textarea>
@@ -648,8 +651,11 @@
         </div>
         <div class="p-5 overflow-y-auto flex-1 space-y-4">
           <div>
-            <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 block" style="color: var(--text-muted);">Lugar</label>
-            <input v-model="editingDate.location" type="text" placeholder="Cafetería, Cine, Playa..." class="input-field w-full px-4 py-3.5 text-[15px] focus:outline-none" />
+            <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 flex items-center justify-between" style="color: var(--text-muted);">
+              <span>Lugar / Título</span>
+              <span class="text-[9px] lowercase font-normal italic text-[var(--text-muted)]">obligatoria</span>
+            </label>
+            <input id="edit-location-input" v-model="editingDate.location" type="text" placeholder="Cafetería, Cine, Playa..." class="input-field w-full px-4 py-3.5 text-[15px] focus:outline-none" />
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
@@ -708,7 +714,7 @@
           </div>
           <div>
             <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 flex items-center justify-between" style="color: var(--text-muted);">
-              <span>Descripción <span class="text-red-500 font-bold">*</span></span>
+              <span>Descripción</span>
               <span class="text-[9px] lowercase font-normal italic text-[var(--text-muted)]">obligatoria</span>
             </label>
             <textarea v-model="editingDate.description" rows="3" placeholder="¿Qué recuerdan de este momento?" class="input-field w-full p-4 text-[15px] focus:outline-none resize-none"></textarea>
@@ -810,8 +816,14 @@ const isSubmitting = ref(false);
 
 const submitNewDate = async () => {
   if (isSubmitting.value) return;
-  if (!newDate.value.location || !newDate.value.location.trim()) { alert('Escribe el título / lugar de la cita.'); return; }
-  if (!newDate.value.description || !newDate.value.description.trim()) { alert('✍️ Por favor escribe una descripción de la cita para recordar este momento.'); return; }
+  if (!newDate.value.location || !newDate.value.location.trim()) {
+    showPopup('⚠️ Por favor escribe el título o lugar de la cita.');
+    return;
+  }
+  if (!newDate.value.description || !newDate.value.description.trim()) {
+    showPopup('✍️ Por favor escribe una descripción de la cita para recordar este momento.');
+    return;
+  }
   if (!userCoupleId.value) return;
 
   isSubmitting.value = true;
@@ -1302,8 +1314,14 @@ const closeEditModal = () => {
 };
 
 const submitEditDate = async () => {
-  if (!editingDate.value.location || !editingDate.value.location.trim()) { alert('Escribe el título / lugar de la cita.'); return; }
-  if (!editingDate.value.description || !editingDate.value.description.trim()) { alert('✍️ Por favor escribe una descripción de la cita para recordar este momento.'); return; }
+  if (!editingDate.value.location || !editingDate.value.location.trim()) {
+    showPopup('⚠️ Por favor escribe el título o lugar de la cita.');
+    return;
+  }
+  if (!editingDate.value.description || !editingDate.value.description.trim()) {
+    showPopup('✍️ Por favor escribe una descripción de la cita para recordar este momento.');
+    return;
+  }
   
   try {
     const updatedObj = {
