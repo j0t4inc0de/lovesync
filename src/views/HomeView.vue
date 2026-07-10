@@ -762,7 +762,7 @@
       <!-- Tiny upward triangle pointer -->
       <div class="absolute -top-[5px] right-6 w-2.5 h-2.5 bg-white border-t border-l border-white/60 rotate-45" style="background: rgba(255,255,255,0.95);"></div>
       
-      <span>Citas que pueden ingresar al mes</span>
+      <span>Cupos de citas para ingresar al mes</span>
       <svg class="w-3.5 h-3.5 text-red-500 fill-current animate-pulse shrink-0" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
     </div>
 
@@ -791,16 +791,15 @@
 
       <!-- Piggy Bank Claim Card -->
       <div v-if="unclaimedStreakRewards > 0" class="p-2.5 rounded-xl bg-gradient-to-r from-pink-500/15 to-violet-500/15 border border-pink-300/60 space-y-2">
-        <div class="flex items-center justify-between text-[11px] font-bold text-pink-700">
+        <div class="flex items-center justify-between text-[10px] font-bold text-pink-700">
           <span class="flex items-center gap-1.5">
             <svg class="w-4 h-4 text-pink-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-            <span>Recompensas disponibles: {{ unclaimedStreakRewards }}</span>
+            <span>Recompensas disponibles: {{ unclaimedStreakRewards }} cupos</span>
           </span>
         </div>
         <button @click="claimStreakReward" :disabled="claimingReward" class="w-full py-2 px-2.5 rounded-xl btn-primary text-white font-extrabold text-[11px] shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-1.5">
           <svg v-if="claimingReward" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
-          <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-          <span>{{ claimingReward ? 'Reclamando...' : 'Reclamar +1 Cupo al Mes' }}</span>
+          <span>{{ claimingReward ? 'Reclamando...' : 'Reclamar' }}</span>
         </button>
       </div>
 
