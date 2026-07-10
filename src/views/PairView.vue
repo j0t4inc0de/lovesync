@@ -64,7 +64,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonPage, IonContent } from '@ionic/vue';
 import { api } from '../services/api';
@@ -73,13 +73,32 @@ const router = useRouter();
 const partnerCode = ref('');
 const pairing = ref(false);
 const myCode = ref('Cargando...');
+let pollInterval = null;
 
-// Fetch my code on mount
+// Fetch my code on mount & start smart auto-detection
 onMounted(async () => {
   try {
     const profile = await api.getProfile();
     if (profile && profile.user) {
+      if (profile.user.couple_id) {
+        router.push('/home');
+        return;
+      }
       myCode.value = profile.user.invite_code;
+
+      // Detección automática en tiempo real: si la otra persona ingresa nuestro código, entramos solos sin recargar
+      pollInterval = setInterval(async () => {
+        try {
+          const res = await api.getProfile();
+          if (res && res.user && res.user.couple_id) {
+            clearInterval(pollInterval);
+            alert('¡Tu pareja ha ingresado tu código y se han conectado con éxito! Entrando a su santuario...');
+            router.push('/home');
+          }
+        } catch (e) {
+          // Ignorar de forma silenciosa si hay parpadeos en red durante la espera
+        }
+      }, 3000);
     } else {
       router.push('/login');
     }
@@ -88,6 +107,10 @@ onMounted(async () => {
     myCode.value = 'ERROR';
     router.push('/login');
   }
+});
+
+onUnmounted(() => {
+  if (pollInterval) clearInterval(pollInterval);
 });
 
 const copyCode = () => {
@@ -104,6 +127,7 @@ const handlePair = async () => {
     const cleanCode = partnerCode.value.trim().toUpperCase();
     await api.pair(cleanCode);
 
+    if (pollInterval) clearInterval(pollInterval);
     alert('¡Vinculación exitosa! Redireccionando a la Bitácora...');
     router.push('/home');
   } catch (error) {
@@ -114,6 +138,7 @@ const handlePair = async () => {
 };
 
 const goBack = () => {
+  if (pollInterval) clearInterval(pollInterval);
   api.logout();
   router.push('/login');
 };
