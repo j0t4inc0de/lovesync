@@ -803,11 +803,10 @@
 
       <!-- Streak At Risk Section (Secret Easter Egg when >= 10 rewards) -->
       <div v-if="isStreakAtRisk" class="pt-2 border-t border-black/5 space-y-2 text-center">
-        <p class="text-[11px] text-red-600 font-bold leading-tight m-0">¡Tu racha anterior de {{ previousStreak }} días está congelada!</p>
-        <button v-if="unclaimedStreakRewards >= 10" @click="rescueStreakWithRewards" :disabled="rescuingWithRewards" class="btn btn-primary rounded-full !px-3.5 !py-1.5 !min-h-0 !h-auto mx-auto !bg-gradient-to-r !from-cyan-500 !to-sky-500 hover:!from-cyan-400 hover:!to-sky-400 text-white font-extrabold text-[10px] shadow-lg shadow-cyan-500/35 active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-cyan-200/70 animate-pulse scale-95 origin-center">
+        <p class="text-[11px] text-red-600 font-bold leading-tight m-1">¡Tu racha anterior de {{ previousStreak }} días está congelada!</p>
+        <button v-if="unclaimedStreakRewards >= 10" @click="rescueStreakWithRewards" :disabled="rescuingWithRewards" class="btn rounded-full !px-3.5 !py-1.5 !min-h-0 !h-auto mx-auto !bg-gradient-to-r !from-cyan-500 !to-sky-500 hover:!from-cyan-400 hover:!to-sky-400 text-white text-[12px] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-cyan-200/70 animate-pulse scale-95 origin-center">
           <svg v-if="rescuingWithRewards" class="w-3.5 h-3.5 animate-spin shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
-          <svg v-else class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-          <span>{{ rescuingWithRewards ? 'Salvando...' : `Recuperar Racha (Usar ${unclaimedStreakRewards} cupos)` }}</span>
+          <span>{{ rescuingWithRewards ? 'Salvando...' : `Salvar Racha (Usar ${unclaimedStreakRewards} cupos)` }}</span>
         </button>
       </div>
     </div>
