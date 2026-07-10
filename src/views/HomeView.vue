@@ -38,7 +38,7 @@
           <div class="w-16 h-16 rounded-2xl bg-[var(--accent)] flex items-center justify-center mb-4 animate-bounce shadow-lg shadow-[var(--accent-glow)] text-white">
             <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
           </div>
-          <p class="text-[19px] font-bold mb-1" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">¡Cita guardada! ❤️</p>
+          <p class="text-[19px] font-bold mb-1" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">¡Cita guardada!</p>
           <p class="text-[13px] font-medium m-0" style="color: var(--text-secondary);">Sincronización completada</p>
         </div>
       </div>
@@ -96,7 +96,7 @@
                  class="absolute z-30 w-52 p-3 rounded-2xl glass text-[11px] leading-snug font-semibold text-center flex items-center justify-center border border-white/60 animate-tooltip-in" 
                  style="top: -65px; right: 10px; background: rgba(255,255,255,0.95); backdrop-filter: blur(25px); color: var(--text-primary); pointer-events: none; box-shadow: 0 8px 25px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.02);">
               <div class="absolute -bottom-[5px] right-4 w-2.5 h-2.5 bg-white border-b border-r border-white/60 rotate-45" style="background: rgba(255,255,255,0.95);"></div>
-              <span>Presionen ambos al mismo tiempo para registrar su día juntos! ❤️</span>
+              <span>Presionen ambos al mismo tiempo para registrar su día juntos.</span>
             </div>
 
             <h3 class="text-[15px] font-semibold mb-1 flex items-center justify-between" style="color: var(--text-primary);">
@@ -197,7 +197,7 @@
                  class="absolute z-30 w-52 p-3 rounded-2xl glass text-[11px] leading-snug font-semibold text-center flex items-center justify-center border border-white/60 animate-tooltip-in" 
                  style="top: 40px; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(25px); color: var(--text-primary); pointer-events: none; box-shadow: 0 8px 25px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.02);">
               <div class="absolute -top-[5px] right-2 w-2.5 h-2.5 bg-white border-t border-l border-white/60 rotate-45" style="background: rgba(255,255,255,0.95);"></div>
-              <span>Ambos deben responder correctamente hoy para ganar +1 cupo de cita ❤️</span>
+              <span>Ambos deben responder correctamente hoy para ganar +1 cupo de cita.</span>
             </div>
           </div>
 
@@ -260,7 +260,7 @@
               </div>
               <h3 class="text-[17px] font-bold mb-1" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">¡Correcto!</h3>
               <p class="text-[13.5px] mb-4 leading-relaxed" style="color: var(--text-secondary);">
-                {{ matchedDailySlots ? '¡Ambos respondieron bien!' : 'Respondiste correctamente. Esperando que tu pareja también responda hoy ♡' }}
+                {{ matchedDailySlots ? '¡Ambos respondieron bien!' : 'Respondiste correctamente. Esperando que tu pareja también responda hoy.' }}
               </p>
               <div v-if="matchedDailySlots" class="inline-block px-3 py-1 rounded-full text-[12px] font-bold mb-5 border" style="background: rgba(52, 199, 89, 0.06); border-color: rgba(52, 199, 89, 0.12); color: #34c759;">+1 Cupo Ganado</div>
               <button @click="restartTrivia" class="btn text-[15px] mx-auto block text-white font-semibold shadow-lg shadow-emerald-500/20" style="background: #34c759;">Aceptar</button>
@@ -346,6 +346,14 @@
                     <span v-if="exp.likes_count > 1" class="text-[12px] font-bold" :class="[isLiked(exp.id) ? 'text-[var(--accent)]' : 'text-[#9fa6b1]']">
                       {{ exp.likes_count }}
                     </span>
+                  </button>
+
+                  <!-- Botón Reportar (Kanban 1.4) -->
+                  <button @click="handleReportDate(exp.id)" class="flex items-center gap-1 text-[11px] font-medium text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-colors active:scale-90 cursor-pointer py-1 px-2 rounded-xl" title="Reportar contenido inapropiado">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                    </svg>
+                    <span>Reportar</span>
                   </button>
 
                   <!-- Nota promedio -->
@@ -540,6 +548,26 @@
                 </svg>
                 <span class="text-black">Política de Privacidad</span>
               </router-link>
+            </div>
+          </div>
+
+          <!-- Derecho al Olvido (Eliminar Cuenta) -->
+          <div class="glass rounded-2xl p-5 mb-8 border border-red-500/20">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div class="flex items-start gap-3 text-left">
+                <div class="w-11 h-11 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0 text-red-500">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-[15px] font-bold text-red-600" style="font-family: 'Comfortaa', sans-serif;">Eliminar mi cuenta y datos</h3>
+                  <p class="text-[12px] text-red-500/80 m-0">Derecho al Olvido — Esta acción borrará permanentemente tu perfil, fotos y recuerdos.</p>
+                </div>
+              </div>
+              <button @click="handleDeleteMyAccount" class="btn btn-sm px-4 py-2 text-[12px] font-bold rounded-xl bg-red-500 text-white hover:bg-red-600 active:scale-95 transition-all shrink-0">
+                Eliminar mi cuenta y datos (Derecho al Olvido)
+              </button>
             </div>
           </div>
         </div>
@@ -765,13 +793,13 @@
         Tu racha suma <b>+1 día</b> al contestar la trivia o añadir una cita diaria juntos.
       </p>
       <div class="p-2 rounded-xl bg-amber-50 border border-amber-200/60 flex items-center gap-2">
-        <span class="text-amber-600 font-extrabold text-[12px]">✨</span>
+        <span class="text-amber-600 font-extrabold text-[12px]">★</span>
         <span class="text-[10px] text-amber-800 font-bold leading-tight">
           ¡Cada 7 días de racha se premia con un cupo de cita!
         </span>
       </div>
       <div v-if="isStreakAtRisk" class="pt-2 border-t border-black/5 space-y-1.5">
-        <p class="text-[10px] text-red-500 font-bold leading-tight m-0">💔 ¡Tu racha anterior de {{ previousStreak }} días está congelada!</p>
+        <p class="text-[10px] text-red-500 font-bold leading-tight m-0">¡Tu racha anterior de {{ previousStreak }} días está congelada!</p>
         <button @click="rescueStreak" class="w-full py-2 px-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-[#ff4c70] text-white font-extrabold text-[11px] shadow-md active:scale-95 transition-transform flex items-center justify-center gap-1.5">
           <span>Salvar Racha + 2 Citas ($1.990)</span>
         </button>
@@ -1361,7 +1389,7 @@ const deleteDate = async () => {
 };
 
 const adminDeleteExploreDate = async (id) => {
-  const confirmDelete = confirm('⚠️ [MODERACIÓN ADMIN] ¿Estás seguro de que quieres eliminar esta cita del Muro Público para todos los usuarios?');
+  const confirmDelete = confirm('[MODERACIÓN ADMIN] ¿Estás seguro de que quieres eliminar esta cita del Muro Público para todos los usuarios?');
   if (!confirmDelete) return;
 
   try {
@@ -1371,6 +1399,16 @@ const adminDeleteExploreDate = async (id) => {
     await loadExploreDates();
   } catch (error) {
     showPopup('Error al eliminar la cita por moderación: ' + (error.message || error));
+  }
+};
+
+const handleReportDate = async (id) => {
+  try {
+    await api.reportDate(id);
+    exploreList.value = exploreList.value.filter(item => item.id !== id);
+    showPopup('Recuerdo reportado al equipo de moderación. Gracias por cuidar la comunidad.');
+  } catch (error) {
+    showPopup('Error al reportar: ' + (error.message || error));
   }
 };
 
@@ -1465,7 +1503,7 @@ const buySlots = async (packageOrEvent = 'slots_5') => {
 };
 const buyPDF = async () => {
   try {
-    showPopup('Generando PDF... Se iniciará la descarga en breve ♡');
+    showPopup('Generando PDF... Se iniciará la descarga en breve.');
     await api.downloadPDF();
   } catch (error) {
     showPopup('Error al generar PDF: ' + error.message);
@@ -1516,6 +1554,17 @@ const handleConfirmUnpair = async () => {
 const logOut = () => {
   api.logout();
   router.push('/login');
+};
+
+const handleDeleteMyAccount = async () => {
+  if (!confirm('¿Estás seguro de que deseas eliminar tu cuenta de forma permanente? Esta acción no se puede deshacer.')) return;
+  try {
+    await api.deleteMyAccount();
+    localStorage.clear();
+    router.push('/login');
+  } catch (error) {
+    showPopup('Error al eliminar la cuenta: ' + (error.message || error));
+  }
 };
 
 const triviaState = ref('idle');

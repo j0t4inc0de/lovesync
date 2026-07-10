@@ -37,6 +37,13 @@
               <input v-model="password" type="password" required placeholder="••••••••" class="input-field w-full px-4 py-3.5 text-[15px] focus:outline-none" />
             </div>
 
+            <div v-if="isSignUp" class="flex items-start gap-2.5 my-3 text-left">
+              <input id="terms-check" v-model="acceptedTerms" type="checkbox" class="mt-1 w-4 h-4 accent-[var(--accent)] rounded cursor-pointer" />
+              <label for="terms-check" class="text-[12px] leading-tight cursor-pointer" style="color: var(--text-secondary);">
+                He leído y acepto los <router-link to="/terms" class="font-bold underline" style="color: var(--accent);">Términos y Condiciones</router-link> y la <router-link to="/privacy" class="font-bold underline" style="color: var(--accent);">Política de Privacidad</router-link>.
+              </label>
+            </div>
+
             <div class="pt-2">
               <button type="submit" :disabled="loading" class="w-full btn btn-primary py-3.5 text-[15px] font-bold active:scale-95 transition-transform flex items-center justify-center gap-2">
                 <svg v-if="loading" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
@@ -70,10 +77,13 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonPage, IonContent } from '@ionic/vue';
 import { api } from '../services/api';
+import { usePopup } from '../services/popup';
 
 const router = useRouter();
+const { showPopup } = usePopup();
 const isSignUp = ref(false);
 const loading = ref(false);
+const acceptedTerms = ref(false);
 
 const name = ref('');
 const email = ref('');
@@ -81,6 +91,10 @@ const password = ref('');
 
 const handleSubmit = async () => {
   if (!email.value || !password.value) return;
+  if (isSignUp.value && !acceptedTerms.value) {
+    showPopup('Por favor acepta los Términos y Condiciones para registrarte.');
+    return;
+  }
   loading.value = true;
   
   try {

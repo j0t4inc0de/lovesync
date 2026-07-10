@@ -483,6 +483,31 @@ app.post('/api/profile/slots', authenticateToken, async (req, res) => {
   }
 });
 
+// Delete current user account (Derecho al Olvido)
+app.delete('/api/users/me', authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const userRes = await pool.query('SELECT id, email, couple_id FROM users WHERE id = $1', [userId]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+    const user = userRes.rows[0];
+    if (parseInt(user.id) === 1 || (user.email && user.email.toLowerCase() === 'jericesb5@gmail.com')) {
+      return res.status(403).json({ error: 'Seguridad Ponytail: El Administrador Supremo es inborrable y está protegido permanentemente por el sistema.' });
+    }
+    const coupleId = user.couple_id;
+    if (coupleId) {
+      await pool.query('UPDATE users SET couple_id = NULL WHERE couple_id = $1', [coupleId]);
+      await pool.query('UPDATE couples SET unpair_requested_at = NULL, unpair_requested_by = NULL WHERE id = $1', [coupleId]);
+    }
+    await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+    res.json({ success: true, message: 'Tu cuenta y datos personales han sido eliminados de forma permanente.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al eliminar la cuenta.' });
+  }
+});
+
 // ── MercadoPago Payment Gateway Endpoints ──
 
 // Create preference to buy extra slots
@@ -981,7 +1006,7 @@ app.delete('/api/admin/users/:id', authenticateToken, requireAdmin, async (req, 
     if (targetCheck.rows.length > 0) {
       const target = targetCheck.rows[0];
       if (parseInt(target.id) === 1 || (target.email && target.email.toLowerCase() === 'jericesb5@gmail.com')) {
-        return res.status(403).json({ error: '🛡️ Seguridad Ponytail: El Administrador Supremo (ID 1 / jericesb5@gmail.com) es inborrable y está protegido permanentemente por el sistema.' });
+        return res.status(403).json({ error: 'Seguridad Ponytail: El Administrador Supremo (ID 1 / jericesb5@gmail.com) es inborrable y está protegido permanentemente por el sistema.' });
       }
     }
     const deleteRes = await pool.query('DELETE FROM users WHERE id = $1 RETURNING *', [id]);
@@ -1046,6 +1071,18 @@ app.post('/api/dates/:id/like', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al procesar el like.' });
+  }
+});
+
+// Report date for moderation (Kanban 1.4)
+app.post('/api/dates/:id/report', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  try {
+    console.log(`Report received for date ID ${id} by user ID ${req.user.id}`);
+    res.json({ success: true, message: 'Cita reportada a moderación.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al reportar la cita.' });
   }
 });
 

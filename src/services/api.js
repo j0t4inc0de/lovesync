@@ -82,6 +82,8 @@ export const api = {
       method: 'POST'
     });
   },
+
+  deleteMyAccount: () => request('/api/users/me', { method: 'DELETE' }),
   
   downloadPDF: async () => {
     const response = await fetch(`${API_URL}/api/dates/pdf`, {
@@ -134,6 +136,8 @@ export const api = {
       method: 'POST'
     });
   },
+
+  reportDate: (id) => request('/api/dates/' + id + '/report', { method: 'POST' }),
   
   addSlots: async (amount) => {
     return request('/api/profile/slots', {
