@@ -244,6 +244,7 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
     if (userRes.rows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado.' });
     
     const user = userRes.rows[0];
+    user.is_admin = !!(user.is_admin && user.id === 1 && user.email && user.email.toLowerCase() === 'jericesb5@gmail.com');
     let partnerName = null;
     let partnerId = null;
     let maxSlots = 10;
@@ -777,9 +778,14 @@ app.post('/api/trivia/play', authenticateToken, async (req, res) => {
 // Admin Verification Middleware
 const requireAdmin = async (req, res, next) => {
   try {
-    const adminCheck = await pool.query('SELECT is_admin FROM users WHERE id = $1', [req.user.id]);
-    if (adminCheck.rows.length === 0 || !adminCheck.rows[0].is_admin) {
-      return res.status(403).json({ error: 'Acceso denegado. Se requiere rol de Administrador.' });
+    const adminCheck = await pool.query('SELECT id, email, is_admin FROM users WHERE id = $1', [req.user.id]);
+    if (adminCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'Acceso denegado. Usuario no encontrado.' });
+    }
+    const user = adminCheck.rows[0];
+    const isTrueSupremeAdmin = user.is_admin && user.id === 1 && user.email && user.email.toLowerCase() === 'jericesb5@gmail.com';
+    if (!isTrueSupremeAdmin) {
+      return res.status(403).json({ error: 'Acceso denegado. Se requiere credencial de Administrador Supremo verificado (ID 1 / jericesb5@gmail.com).' });
     }
     next();
   } catch (error) {
@@ -971,6 +977,13 @@ app.delete('/api/admin/couples/:id', authenticateToken, requireAdmin, async (req
 app.delete('/api/admin/users/:id', authenticateToken, requireAdmin, async (req, res) => {
   const { id } = req.params;
   try {
+    const targetCheck = await pool.query('SELECT id, email FROM users WHERE id = $1', [id]);
+    if (targetCheck.rows.length > 0) {
+      const target = targetCheck.rows[0];
+      if (parseInt(target.id) === 1 || (target.email && target.email.toLowerCase() === 'jericesb5@gmail.com')) {
+        return res.status(403).json({ error: '🛡️ Seguridad Ponytail: El Administrador Supremo (ID 1 / jericesb5@gmail.com) es inborrable y está protegido permanentemente por el sistema.' });
+      }
+    }
     const deleteRes = await pool.query('DELETE FROM users WHERE id = $1 RETURNING *', [id]);
     if (deleteRes.rows.length === 0) {
       return res.status(404).json({ error: 'Usuario no encontrado.' });
@@ -1376,8 +1389,9 @@ app.delete('/api/dates/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   
   try {
-    const userRes = await pool.query('SELECT couple_id, is_admin FROM users WHERE id = $1', [req.user.id]);
+    const userRes = await pool.query('SELECT id, email, couple_id, is_admin FROM users WHERE id = $1', [req.user.id]);
     const user = userRes.rows[0];
+    const isSupremeAdmin = user && user.is_admin && user.id === 1 && user.email && user.email.toLowerCase() === 'jericesb5@gmail.com';
     
     const dateRes = await pool.query('SELECT couple_id, created_at FROM dates WHERE id = $1', [id]);
     if (dateRes.rows.length === 0) {
@@ -1385,7 +1399,7 @@ app.delete('/api/dates/:id', authenticateToken, async (req, res) => {
     }
     
     const date = dateRes.rows[0];
-    if (!user.is_admin) {
+    if (!isSupremeAdmin) {
       if (!user.couple_id) {
         return res.status(400).json({ error: 'Debes estar vinculado a una pareja.' });
       }
