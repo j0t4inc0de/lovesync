@@ -361,18 +361,25 @@ app.post('/api/profile/pair', authenticateToken, async (req, res) => {
     if (partner.id === user.id) {
       return res.status(400).json({ error: 'No puedes vincularte contigo mismo.' });
     }
-    if (partner.couple_id) {
-      return res.status(400).json({ error: 'Esta pareja ya está vinculada con otra cuenta.' });
+    let coupleId = partner.couple_id;
+    if (coupleId) {
+      // Verificar cuántos miembros tiene actualmente este santuario de pareja
+      const membersRes = await pool.query('SELECT COUNT(*) FROM users WHERE couple_id = $1', [coupleId]);
+      const membersCount = parseInt(membersRes.rows[0].count, 10);
+      if (membersCount >= 2) {
+        return res.status(400).json({ error: 'Esta cuenta ya tiene un compañero/a vinculado y su bitácora está completa.' });
+      }
+      // Reconexión: el usuario se reincorpora al santuario existente donde se conservaron sus recuerdos
+      await pool.query('UPDATE users SET couple_id = $1 WHERE id = $2', [coupleId, user.id]);
+    } else {
+      // 3. Create a brand new couple record
+      const coupleRes = await pool.query('INSERT INTO couples (slots) VALUES (10) RETURNING id');
+      coupleId = coupleRes.rows[0].id;
+      // 4. Update both users with the new couple_id
+      await pool.query('UPDATE users SET couple_id = $1 WHERE id = $2 OR id = $3', [coupleId, user.id, partner.id]);
     }
 
-    // 3. Create a couple record
-    const coupleRes = await pool.query('INSERT INTO couples (slots) VALUES (10) RETURNING id');
-    const coupleId = coupleRes.rows[0].id;
-
-    // 4. Update both users with the new couple_id
-    await pool.query('UPDATE users SET couple_id = $1 WHERE id = $2 OR id = $3', [coupleId, user.id, partner.id]);
-
-    res.json({ message: 'Vinculación completada con éxito.', coupleId });
+    res.json({ message: 'Vinculación completada con éxito. ¡Bienvenidos a su santuario compartida!', coupleId });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error del servidor al vincular pareja.' });
