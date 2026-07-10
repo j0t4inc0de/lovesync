@@ -817,11 +817,11 @@ const isSubmitting = ref(false);
 const submitNewDate = async () => {
   if (isSubmitting.value) return;
   if (!newDate.value.location || !newDate.value.location.trim()) {
-    showPopup('⚠️ Por favor escribe el título o lugar de la cita.');
+    showPopup('Por favor escribe el título o lugar de la cita.');
     return;
   }
   if (!newDate.value.description || !newDate.value.description.trim()) {
-    showPopup('✍️ Por favor escribe una descripción de la cita para recordar este momento.');
+    showPopup('Por favor escribe una descripción de la cita para recordar este momento.');
     return;
   }
   if (!userCoupleId.value) return;
@@ -1315,11 +1315,11 @@ const closeEditModal = () => {
 
 const submitEditDate = async () => {
   if (!editingDate.value.location || !editingDate.value.location.trim()) {
-    showPopup('⚠️ Por favor escribe el título o lugar de la cita.');
+    showPopup('Por favor escribe el título o lugar de la cita.');
     return;
   }
   if (!editingDate.value.description || !editingDate.value.description.trim()) {
-    showPopup('✍️ Por favor escribe una descripción de la cita para recordar este momento.');
+    showPopup('Por favor escribe una descripción de la cita para recordar este momento.');
     return;
   }
   
@@ -1367,10 +1367,10 @@ const adminDeleteExploreDate = async (id) => {
   try {
     await api.deleteDate(id);
     exploreList.value = exploreList.value.filter(item => item.id !== id);
-    showPopup('🗑️ Cita eliminada por moderación administrativa al instante.');
+    showPopup('Cita eliminada por moderación administrativa al instante.');
     await loadExploreDates();
   } catch (error) {
-    showPopup('❌ Error al eliminar la cita por moderación: ' + (error.message || error));
+    showPopup('Error al eliminar la cita por moderación: ' + (error.message || error));
   }
 };
 
