@@ -423,7 +423,7 @@
 
             <div class="flex flex-col gap-3">
               <!-- Opción Estrella (Señuelo irresistible · 50% DCTO) -->
-              <div @click="buySlots('slots_10')" :class="{'opacity-60 pointer-events-none': loadingPayment}" class="cursor-pointer group relative rounded-xl p-3.5 border-2 border-white bg-black/20 hover:bg-black/30 transition-all shadow-lg active:scale-[0.99]">
+              <div @click="buySlots('slots_10')" :class="{'opacity-60 pointer-events-none': loadingPayment}" class="cursor-pointer group relative rounded-2xl p-4 border-2 border-white/60 bg-black/20 hover:bg-black/30 transition-all shadow-lg active:scale-[0.98]">
                 <div class="absolute -top-2.5 right-3 bg-white text-[#ff4c70] text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1">
                   <svg class="w-3 h-3 text-[#ff4c70]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" /></svg>
                   <span>MÁS VENDIDO · AHORRAS 50%</span>
@@ -443,14 +443,14 @@
               </div>
 
               <!-- Opción Apuro (Señuelo alto costo unitario) -->
-              <div @click="buySlots('slots_2')" :class="{'opacity-60 pointer-events-none': loadingPayment}" class="cursor-pointer group rounded-xl p-3 border border-white/30 bg-black/10 hover:bg-black/20 transition-all active:scale-[0.99]">
-                <div class="flex items-center justify-between">
+              <div @click="buySlots('slots_2')" :class="{'opacity-60 pointer-events-none': loadingPayment}" class="cursor-pointer group rounded-2xl p-3.5 border border-white/40 bg-white/10 hover:bg-white/20 transition-all active:scale-[0.98] shadow-md flex items-center justify-between">
+                <div class="flex items-center justify-between w-full">
                   <div>
                     <div class="text-[13px] font-bold text-white">Bolsa de Apuro (+2 Citas)</div>
                     <div class="text-[11px] text-white/75 font-medium">$995 por recuerdo</div>
                   </div>
                   <div class="text-right">
-                    <div class="text-[14px] font-bold text-white">$1.990 <span class="text-[10px] font-normal text-white/75">CLP</span></div>
+                    <div class="text-[14px] font-bold text-white bg-black/20 px-2.5 py-1 rounded-xl border border-white/10">$1.990 <span class="text-[10px] font-normal text-white/75">CLP</span></div>
                   </div>
                 </div>
               </div>
@@ -797,7 +797,7 @@
             <span>Recompensas disponibles: {{ unclaimedStreakRewards }}</span>
           </span>
         </div>
-        <button @click="claimStreakReward(unclaimedStreakRewards >= 5 ? 'all' : 1)" :disabled="claimingReward" class="w-full py-2 px-2.5 rounded-xl btn-primary text-white font-extrabold text-[11px] shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-1.5">
+        <button @click="claimStreakReward(unclaimedStreakRewards >= 5 ? 'all' : 1)" :disabled="claimingReward" class="btn btn-primary w-full py-2.5 px-3 rounded-2xl text-white font-extrabold text-[11px] shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5">
           <svg v-if="claimingReward" class="w-3.5 h-3.5 animate-spin shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
           <svg v-else class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
           <span>{{ claimingReward ? 'Reclamando...' : (unclaimedStreakRewards >= 5 ? `Reclamar Todo (+${unclaimedStreakRewards} Cupos)` : 'Reclamar +1 Cupo al Mes') }}</span>
@@ -807,7 +807,7 @@
       <!-- Streak At Risk Section (Secret Easter Egg when >= 10 rewards) -->
       <div v-if="isStreakAtRisk && unclaimedStreakRewards >= 10" class="pt-2 border-t border-black/5 space-y-1.5">
         <p class="text-[10px] text-red-500 font-bold leading-tight m-0">¡Tu racha anterior de {{ previousStreak }} días está congelada!</p>
-        <button @click="rescueStreakWithRewards" :disabled="rescuingWithRewards" class="w-full py-2 px-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold text-[11px] shadow-md active:scale-95 transition-transform flex items-center justify-center gap-1.5">
+        <button @click="rescueStreakWithRewards" :disabled="rescuingWithRewards" class="btn w-full py-2.5 px-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[11px] shadow-lg shadow-emerald-600/25 active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-emerald-400/40">
           <svg v-if="rescuingWithRewards" class="w-3.5 h-3.5 animate-spin shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
           <svg v-else class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
           <span>{{ rescuingWithRewards ? 'Salvando...' : 'Recuperar Racha Gratis (Canjear 10)' }}</span>
