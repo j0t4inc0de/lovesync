@@ -496,11 +496,25 @@ app.delete('/api/users/me', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Seguridad Ponytail: El Administrador Supremo es inborrable y está protegido permanentemente por el sistema.' });
     }
     const coupleId = user.couple_id;
-    if (coupleId) {
-      await pool.query('UPDATE users SET couple_id = NULL WHERE couple_id = $1', [coupleId]);
-      await pool.query('UPDATE couples SET unpair_requested_at = NULL, unpair_requested_by = NULL WHERE id = $1', [coupleId]);
-    }
+    
+    // 1. Eliminar únicamente a ESTE usuario que solicita el Derecho al Olvido
     await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+
+    // 2. Verificar cuántos miembros quedan en la pareja
+    if (coupleId) {
+      const remainingRes = await pool.query('SELECT COUNT(*) FROM users WHERE couple_id = $1', [coupleId]);
+      const remainingCount = parseInt(remainingRes.rows[0].count, 10);
+      
+      if (remainingCount === 0) {
+        // No queda ningún miembro en la pareja: purgar todas las citas y la pareja de la base de datos
+        await pool.query('DELETE FROM dates WHERE couple_id = $1', [coupleId]);
+        await pool.query('DELETE FROM couples WHERE id = $1', [coupleId]);
+      } else {
+        // La pareja aún sigue en OurStory: conservar su bitácora intacta y limpiar solicitudes de desvinculación
+        await pool.query('UPDATE couples SET unpair_requested_at = NULL, unpair_requested_by = NULL WHERE id = $1', [coupleId]);
+      }
+    }
+
     res.json({ success: true, message: 'Tu cuenta y datos personales han sido eliminados de forma permanente.' });
   } catch (error) {
     console.error(error);

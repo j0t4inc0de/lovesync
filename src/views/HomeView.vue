@@ -561,8 +561,8 @@
                   </svg>
                 </div>
                 <div>
-                  <h3 class="text-[15px] font-bold text-red-600" style="font-family: 'Comfortaa', sans-serif;">Eliminar mi cuenta y datos</h3>
-                  <p class="text-[12px] text-red-500/80 m-0">Derecho al Olvido — Esta acción borrará permanentemente tu perfil, fotos y recuerdos.</p>
+                  <h3 class="text-[15px] font-bold text-red-600" style="font-family: 'Comfortaa', sans-serif;">Eliminar mi cuenta y datos personales</h3>
+                  <p class="text-[12px] text-red-500/80 m-0 leading-relaxed">Derecho al Olvido — Esta acción borra tu usuario y acceso de forma definitiva. Los recuerdos de la bitácora compartida permanecerán protegidos en la cuenta de tu pareja para resguardar su historia.</p>
                 </div>
               </div>
               <button @click="handleDeleteMyAccount" class="btn btn-sm px-4 py-2 text-[12px] font-bold rounded-xl bg-red-500 text-white hover:bg-red-600 active:scale-95 transition-all shrink-0">
@@ -1557,7 +1557,7 @@ const logOut = () => {
 };
 
 const handleDeleteMyAccount = async () => {
-  if (!confirm('¿Estás seguro de que deseas eliminar tu cuenta de forma permanente? Esta acción no se puede deshacer.')) return;
+  if (!confirm('¿Estás seguro de que deseas eliminar tu cuenta de forma permanente? Tu usuario y datos personales serán borrados, mientras que la bitácora compartida se conservará a salvo para tu pareja.')) return;
   try {
     await api.deleteMyAccount();
     localStorage.clear();
