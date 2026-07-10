@@ -532,6 +532,17 @@
             </div>
           </div>
 
+          <!-- Danger Zone: Delete Account / Derecho al Olvido pushed underneath Unpair -->
+          <div class="glass rounded-2xl p-5 mb-6">
+            <p class="text-[0.65rem] font-bold uppercase tracking-wider mb-2" style="color: var(--text-muted);">Eliminar Cuenta</p>
+            <p class="text-[13px] mb-4 leading-relaxed" style="color: var(--text-secondary);">Derecho al Olvido — Esta acción borra tu usuario y acceso de forma definitiva. Los recuerdos de la bitácora compartida permanecerán protegidos en la cuenta de tu pareja para resguardar su historia.</p>
+            <button @click="handleDeleteMyAccount"
+              class="w-full text-[13px] font-semibold transition-all active:scale-95 btn"
+              style="background: rgba(255,59,48,0.08); color: #ff3b30;">
+              Eliminar mi cuenta y datos (Derecho al Olvido)
+            </button>
+          </div>
+
           <!-- Escudo Legal y Cumplimiento (Términos / Privacidad) -->
           <div class="glass rounded-2xl p-4 mb-6 text-center border border-white/15">
             <p class="text-[11px] font-semibold mb-3" style="color: var(--text-muted);">Información y Acuerdos Legales</p>
@@ -548,26 +559,6 @@
                 </svg>
                 <span class="text-black">Política de Privacidad</span>
               </router-link>
-            </div>
-          </div>
-
-          <!-- Derecho al Olvido (Eliminar Cuenta) -->
-          <div class="glass rounded-2xl p-5 mb-8 border border-red-500/20">
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div class="flex items-start gap-3 text-left">
-                <div class="w-11 h-11 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0 text-red-500">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 class="text-[15px] font-bold text-red-600" style="font-family: 'Comfortaa', sans-serif;">Eliminar mi cuenta y datos personales</h3>
-                  <p class="text-[12px] text-red-500/80 m-0 leading-relaxed">Derecho al Olvido — Esta acción borra tu usuario y acceso de forma definitiva. Los recuerdos de la bitácora compartida permanecerán protegidos en la cuenta de tu pareja para resguardar su historia.</p>
-                </div>
-              </div>
-              <button @click="handleDeleteMyAccount" class="btn btn-sm px-4 py-2 text-[12px] font-bold rounded-xl bg-red-500 text-white hover:bg-red-600 active:scale-95 transition-all shrink-0">
-                Eliminar mi cuenta y datos (Derecho al Olvido)
-              </button>
             </div>
           </div>
         </div>
