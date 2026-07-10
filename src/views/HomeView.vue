@@ -795,16 +795,16 @@
           <svg class="w-4 h-4 text-pink-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
           <span>Recompensas: {{ unclaimedStreakRewards }}</span>
         </span>
-        <button @click="claimStreakReward(unclaimedStreakRewards >= 5 ? 'all' : 1)" :disabled="claimingReward" class="py-1 px-2.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-white font-extrabold text-[10px] shadow-sm active:scale-95 transition-all flex items-center gap-1 animate-pulse shrink-0 border border-pink-400/40">
+        <button @click="claimStreakReward(unclaimedStreakRewards >= 5 ? 'all' : 1)" :disabled="claimingReward" class="btn btn-primary rounded-full py-1.5 px-3 text-white font-extrabold text-[10px] shadow-md active:scale-95 transition-all flex items-center justify-center gap-1 animate-pulse shrink-0 border border-white/30 !h-auto !min-h-0">
           <svg v-if="claimingReward" class="w-3 h-3 animate-spin shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
           <span>{{ claimingReward ? '...' : (unclaimedStreakRewards >= 5 ? 'Reclamar Todo' : 'Canjear +1') }}</span>
         </button>
       </div>
 
       <!-- Streak At Risk Section (Secret Easter Egg when >= 10 rewards) -->
-      <div v-if="isStreakAtRisk" class="pt-2 border-t border-black/5 space-y-2">
-        <p class="text-[10.5px] text-red-600 font-bold leading-tight m-0 text-center">¡Tu racha anterior de {{ previousStreak }} días está congelada!</p>
-        <button v-if="unclaimedStreakRewards >= 10" @click="rescueStreakWithRewards" :disabled="rescuingWithRewards" class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-[11px] shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-emerald-400/40 animate-pulse">
+      <div v-if="isStreakAtRisk" class="pt-2 border-t border-black/5 space-y-2 text-center">
+        <p class="text-[10.5px] text-red-600 font-bold leading-tight m-0">¡Tu racha anterior de {{ previousStreak }} días está congelada!</p>
+        <button v-if="unclaimedStreakRewards >= 10" @click="rescueStreakWithRewards" :disabled="rescuingWithRewards" class="btn rounded-full py-2 px-4 mx-auto bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[11px] shadow-lg shadow-emerald-600/30 active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-emerald-300/40 animate-pulse !h-auto !min-h-0">
           <svg v-if="rescuingWithRewards" class="w-3.5 h-3.5 animate-spin shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
           <svg v-else class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
           <span>{{ rescuingWithRewards ? 'Salvando...' : `Recuperar Racha Gratis (Usar ${unclaimedStreakRewards} cupos)` }}</span>
