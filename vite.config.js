@@ -11,8 +11,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
-        changeOrigin: true
+        target: 'https://ourstory.wearesamod.com',
+        changeOrigin: true,
+        secure: false
       }
     }
   }
