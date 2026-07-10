@@ -1376,11 +1376,8 @@ app.delete('/api/dates/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   
   try {
-    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    const userRes = await pool.query('SELECT couple_id, is_admin FROM users WHERE id = $1', [req.user.id]);
     const user = userRes.rows[0];
-    if (!user.couple_id) {
-      return res.status(400).json({ error: 'Debes estar vinculado a una pareja.' });
-    }
     
     const dateRes = await pool.query('SELECT couple_id, created_at FROM dates WHERE id = $1', [id]);
     if (dateRes.rows.length === 0) {
@@ -1388,19 +1385,26 @@ app.delete('/api/dates/:id', authenticateToken, async (req, res) => {
     }
     
     const date = dateRes.rows[0];
-    if (date.couple_id !== user.couple_id) {
-      return res.status(403).json({ error: 'No tienes permiso para eliminar esta cita.' });
-    }
-    
-    const createdAt = new Date(date.created_at);
-    const fiveDaysInMs = 5 * 24 * 60 * 60 * 1000;
-    if (Date.now() - createdAt.getTime() > fiveDaysInMs) {
-      return res.status(400).json({ error: 'El plazo de 5 días para eliminar esta cita ha vencido.' });
+    if (!user.is_admin) {
+      if (!user.couple_id) {
+        return res.status(400).json({ error: 'Debes estar vinculado a una pareja.' });
+      }
+      if (date.couple_id !== user.couple_id) {
+        return res.status(403).json({ error: 'No tienes permiso para eliminar esta cita.' });
+      }
+      const createdAt = new Date(date.created_at);
+      const fiveDaysInMs = 5 * 24 * 60 * 60 * 1000;
+      if (Date.now() - createdAt.getTime() > fiveDaysInMs) {
+        return res.status(400).json({ error: 'El plazo de 5 días para eliminar esta cita ha vencido.' });
+      }
     }
     
     await pool.query('DELETE FROM dates WHERE id = $1', [id]);
     
-    io.to(`couple_${user.couple_id}`).emit('date_deleted', { id: parseInt(id) });
+    if (date.couple_id) {
+      io.to(`couple_${date.couple_id}`).emit('date_deleted', { id: parseInt(id) });
+    }
+    io.emit('explore_date_deleted', { id: parseInt(id) });
     
     res.json({ message: 'Cita eliminada con éxito.' });
   } catch (error) {

@@ -316,7 +316,13 @@
             <div v-for="exp in filteredExploreList" :key="exp.id" class="glass rounded-2xl p-4">
               <div class="flex items-center justify-between mb-2.5">
                 <span class="px-2.5 py-1 rounded-lg text-[11px] font-medium" style="background: var(--fill); color: var(--text-secondary);">{{ exp.tag }}</span>
-                <span class="text-[12px] font-medium" style="color: var(--text-muted);">{{ exp.created_at ? formatRelativeTime(exp.created_at) : 'Hace un momento' }}</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-[12px] font-medium" style="color: var(--text-muted);">{{ exp.created_at ? formatRelativeTime(exp.created_at) : 'Hace un momento' }}</span>
+                  <!-- Botón Rápido de Borrado de Admin (Solo visible si currentUser.is_admin) -->
+                  <button v-if="currentUser && currentUser.is_admin" @click="adminDeleteExploreDate(exp.id)" class="p-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all active:scale-90 cursor-pointer flex items-center justify-center" title="Eliminar Cita (Moderación Admin)">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
+                </div>
               </div>
               <h4 class="text-[15px] font-bold mb-0.5" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">{{ exp.location }}</h4>
               <p class="text-[12px] font-medium flex items-center gap-1 mb-3" style="color: var(--text-secondary);">
@@ -1296,6 +1302,20 @@ const deleteDate = async () => {
   }
 };
 
+const adminDeleteExploreDate = async (id) => {
+  const confirmDelete = confirm('⚠️ [MODERACIÓN ADMIN] ¿Estás seguro de que quieres eliminar esta cita del Muro Público para todos los usuarios?');
+  if (!confirmDelete) return;
+
+  try {
+    await api.deleteDate(id);
+    exploreList.value = exploreList.value.filter(item => item.id !== id);
+    showPopup('🗑️ Cita eliminada por moderación administrativa al instante.');
+    await loadExploreDates();
+  } catch (error) {
+    showPopup('❌ Error al eliminar la cita por moderación: ' + (error.message || error));
+  }
+};
+
 const createFileInput = ref(null);
 const editFileInput = ref(null);
 
@@ -1684,6 +1704,11 @@ onMounted(async () => {
 
     socket.on('date_deleted', () => {
       loadDates();
+      loadExploreDates();
+    });
+
+    socket.on('explore_date_deleted', ({ id }) => {
+      exploreList.value = exploreList.value.filter(item => item.id !== id);
       loadExploreDates();
     });
 
