@@ -791,15 +791,28 @@
 
       <!-- Piggy Bank Claim Card -->
       <div v-if="unclaimedStreakRewards > 0" class="p-2.5 rounded-xl bg-gradient-to-r from-pink-500/15 to-violet-500/15 border border-pink-300/60 space-y-2">
-        <div class="flex items-center justify-between text-[10px] font-bold text-pink-700">
+        <div class="flex items-center justify-between text-[11px] font-bold text-pink-700">
           <span class="flex items-center gap-1.5">
             <svg class="w-4 h-4 text-pink-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-            <span>Recompensas disponibles: {{ unclaimedStreakRewards }} cupos</span>
+            <span>Recompensas disponibles: {{ unclaimedStreakRewards }}</span>
           </span>
         </div>
-        <button @click="claimStreakReward" :disabled="claimingReward" class="w-full py-2 px-2.5 rounded-xl btn-primary text-white font-extrabold text-[11px] shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-1.5">
-          <svg v-if="claimingReward" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
-          <span>{{ claimingReward ? 'Reclamando...' : 'Reclamar' }}</span>
+        
+        <!-- Bulk vs Single Claim Buttons -->
+        <div v-if="unclaimedStreakRewards > 1" class="flex flex-col gap-1.5 pt-0.5">
+          <button @click="claimStreakReward('all')" :disabled="claimingReward" class="w-full py-1.5 px-2 rounded-xl btn-primary text-white font-extrabold text-[11px] shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-1">
+            <svg v-if="claimingReward" class="w-3.5 h-3.5 animate-spin shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
+            <svg v-else class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <span>{{ claimingReward ? 'Reclamando...' : `Reclamar Todo (+${unclaimedStreakRewards} Cupos)` }}</span>
+          </button>
+          <button @click="claimStreakReward(1)" :disabled="claimingReward" class="w-full py-1 px-2 rounded-lg bg-pink-100/80 hover:bg-pink-200 text-pink-800 font-bold text-[10px] transition-colors flex items-center justify-center gap-1">
+            <span>Reclamar de a 1 (+1 Cupo)</span>
+          </button>
+        </div>
+        <button v-else @click="claimStreakReward(1)" :disabled="claimingReward" class="w-full py-2 px-2.5 rounded-xl btn-primary text-white font-extrabold text-[11px] shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-1.5">
+          <svg v-if="claimingReward" class="w-3.5 h-3.5 animate-spin shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
+          <svg v-else class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+          <span>{{ claimingReward ? 'Reclamando...' : 'Reclamar +1 Cupo al Mes' }}</span>
         </button>
       </div>
 
@@ -1222,11 +1235,7 @@ const toggleStreakTooltip = () => {
 
 const isStreakAtRisk = computed(() => {
   if (previousStreak.value <= 0) return false;
-  if (!lastStreakDate.value) return true;
-  const today = new Date();
-  const lastDate = new Date(lastStreakDate.value);
-  const diffDays = Math.round((today - lastDate) / (1000 * 60 * 60 * 24));
-  return diffDays >= 2;
+  return loveStreak.value === 0 || loveStreak.value < previousStreak.value;
 });
 
 const rescueStreak = async () => {
@@ -1247,12 +1256,12 @@ const rescueStreak = async () => {
   }
 };
 
-const claimStreakReward = async () => {
+const claimStreakReward = async (amount = 1) => {
   if (claimingReward.value) return;
   claimingReward.value = true;
   try {
-    const res = await api.claimStreakReward();
-    showPopup(res.message || '¡+1 Cupo de racha reclamado con éxito!');
+    const res = await api.claimStreakReward(amount);
+    showPopup(res.message || '¡Recompensas reclamadas con éxito!');
     await fetchProfile();
   } catch (error) {
     showPopup(error.message || 'Error al reclamar recompensa');

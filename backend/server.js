@@ -757,12 +757,20 @@ app.post('/api/profile/streak/claim', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'No tienes recompensas de racha pendientes por reclamar.' });
     }
 
-    const now = new Date();
-    await pool.query('UPDATE couples SET unclaimed_streak_rewards = unclaimed_streak_rewards - 1 WHERE id = $1', [coupleId]);
-    await pool.query('INSERT INTO couple_extra_slots (couple_id, amount, year, month) VALUES ($1, 1, $2, $3)', [coupleId, now.getFullYear(), now.getMonth() + 1]);
+    const requestedAmount = req.body.amount;
+    let claimAmount = 1;
+    if (requestedAmount === 'all') {
+      claimAmount = cp.unclaimed_streak_rewards;
+    } else if (Number.isInteger(Number(requestedAmount)) && Number(requestedAmount) > 0) {
+      claimAmount = Math.min(cp.unclaimed_streak_rewards, Number(requestedAmount));
+    }
 
-    console.log(`🎉 [Racha Claim] +1 cupo reclamado a la bitácora por pareja ID ${coupleId}`);
-    res.json({ success: true, message: '¡+1 Cupo de racha reclamado con éxito! Se ha sumado a tu bitácora del mes.' });
+    const now = new Date();
+    await pool.query('UPDATE couples SET unclaimed_streak_rewards = GREATEST(0, unclaimed_streak_rewards - $1) WHERE id = $2', [claimAmount, coupleId]);
+    await pool.query('INSERT INTO couple_extra_slots (couple_id, amount, year, month) VALUES ($1, $2, $3, $4)', [coupleId, claimAmount, now.getFullYear(), now.getMonth() + 1]);
+
+    console.log(`🎉 [Racha Claim] +${claimAmount} cupo(s) reclamado(s) a la bitácora por pareja ID ${coupleId}`);
+    res.json({ success: true, message: `¡+${claimAmount} Cupo(s) de racha reclamado(s) con éxito! Se han sumado a tu bitácora del mes.`, claimed: claimAmount });
   } catch (error) {
     console.error('Error reclamando recompensa de racha:', error);
     res.status(500).json({ error: 'Error del servidor al reclamar recompensa.' });
@@ -779,14 +787,14 @@ app.post('/api/profile/streak/rescue-rewards', authenticateToken, async (req, re
     const cpRes = await pool.query('SELECT streak_count, previous_streak, COALESCE(unclaimed_streak_rewards, 0) AS unclaimed_streak_rewards FROM couples WHERE id = $1', [coupleId]);
     const cp = cpRes.rows[0];
     if (!cp) return res.status(404).json({ error: 'Pareja no encontrada.' });
-    if (cp.streak_count > 0) return res.status(400).json({ error: 'Tu racha actual está activa, no necesitas recuperarla.' });
+    if (cp.streak_count > 0 && cp.previous_streak <= 0) return res.status(400).json({ error: 'Tu racha actual está activa y no hay racha congelada para recuperar.' });
     if (cp.unclaimed_streak_rewards < 10) {
       return res.status(400).json({ error: 'Necesitas al menos 10 recompensas acumuladas para recuperar la racha gratis.' });
     }
 
-    const restoredStreak = cp.previous_streak || 1;
+    const restoredStreak = cp.previous_streak > 0 ? cp.previous_streak : (cp.streak_count || 1);
     await pool.query(
-      'UPDATE couples SET streak_count = $1, last_streak_date = CURRENT_DATE, unclaimed_streak_rewards = 0 WHERE id = $2',
+      'UPDATE couples SET streak_count = $1, last_streak_date = CURRENT_DATE, previous_streak = 0, unclaimed_streak_rewards = GREATEST(0, unclaimed_streak_rewards - 10) WHERE id = $2',
       [restoredStreak, coupleId]
     );
 
