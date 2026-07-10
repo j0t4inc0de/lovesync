@@ -781,8 +781,12 @@
         <button @click="showStreakTooltip = false" class="text-[var(--text-muted)] hover:text-black font-bold p-1">✕</button>
       </div>
       <div class="flex items-center justify-between p-2 rounded-xl bg-amber-50/80 border border-amber-200/60">
-        <span class="text-[10px] text-amber-800 font-bold">★ +1 día con trivia o cita diaria</span>
-        <span class="text-[9.5px] bg-amber-200/70 text-amber-900 px-1.5 py-0.5 rounded-full font-extrabold">7 días = +1 Cupo</span>
+        <div class="flex items-center p-1">
+          <span class="text-amber-600 font-extrabold text-[12px]">★</span>
+        </div>
+        <span class="text-[10px] text-amber-800 font-bold leading-tight">
+          ¡Cada 7 días de racha se premia con un cupo de cita en tu ahorro!
+        </span>
       </div>
 
       <!-- Piggy Bank Claim Card -->
