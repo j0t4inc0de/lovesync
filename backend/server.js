@@ -1093,7 +1093,7 @@ app.put('/api/admin/couples/:id/streak-test', authenticateToken, requireAdmin, a
       [streakCount, unclaimedRewards, previousStreak, todayStr, id]
     );
     if (updateRes.rows.length === 0) return res.status(404).json({ error: 'Pareja no encontrada.' });
-    res.json({ success: true, message: `🧪 Racha configurada a ${streakCount} días y ahorros a ${unclaimedRewards} 🎁.`, couple: updateRes.rows[0] });
+    res.json({ success: true, message: `Racha configurada a ${streakCount} días y ahorros a ${unclaimedRewards} recompensas.`, couple: updateRes.rows[0] });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al actualizar racha de prueba.' });

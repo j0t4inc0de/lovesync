@@ -49,8 +49,14 @@
                     <button @click="quickSetSlots(cp.id, 999)" class="px-2 py-1 rounded bg-amber-100 text-amber-700 text-[10px] font-bold active:scale-95 transition-transform">Tester (999)</button>
                   </div>
                   <div class="flex flex-wrap gap-1.5">
-                    <button @click="quickSetStreak(cp.id, 7, 1, 0)" class="px-2 py-1 rounded bg-pink-100 text-pink-700 text-[9.5px] font-bold active:scale-95 transition-transform" title="Poner 7 días de racha + 1 recompensa de ahorro">🎁 Racha 7 días (1🎁)</button>
-                    <button @click="quickSetStreak(cp.id, 0, 10, 14)" class="px-2 py-1 rounded bg-red-100 text-red-700 text-[9.5px] font-bold active:scale-95 transition-transform" title="Congelar racha y poner 10 recompensas para rescate">🚑 Probar Rescate (10🎁)</button>
+                    <button @click="quickSetStreak(cp.id, 7, 1, 0)" class="px-2 py-1 rounded bg-pink-100 text-pink-700 text-[9.5px] font-bold active:scale-95 transition-transform flex items-center gap-1" title="Poner 7 días de racha + 1 recompensa de ahorro">
+                      <svg class="w-3 h-3 text-pink-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
+                      <span>Racha 7 días (+1 Recompensa)</span>
+                    </button>
+                    <button @click="quickSetStreak(cp.id, 0, 10, 14)" class="px-2 py-1 rounded bg-red-100 text-red-700 text-[9.5px] font-bold active:scale-95 transition-transform flex items-center gap-1" title="Congelar racha y poner 10 recompensas para rescate">
+                      <svg class="w-3 h-3 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                      <span>Prueba Rescate (10 Recompensas)</span>
+                    </button>
                   </div>
                 </div>
               </div>
