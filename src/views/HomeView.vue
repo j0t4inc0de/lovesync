@@ -501,7 +501,7 @@
             <p class="text-[0.65rem] font-bold uppercase tracking-wider mb-2" style="color: var(--text-muted);">Desvincularse</p>
             
             <div v-if="unpairState === 'idle'">
-              <p class="text-[13px] mb-4 leading-relaxed" style="color: var(--text-secondary);">Ambos deben estar de acuerdo. Tu pareja tiene 5 días para aceptar.</p>
+              <p class="text-[13px] mb-4 leading-relaxed" style="color: var(--text-secondary);">Esto borrará toda sus recuerdos en la applicación. Ambos deben estar de acuerdo. Tu pareja tiene 5 días para aceptar.</p>
               <button @click="handleUnpairRequest"
                 class="w-full text-[13px] font-semibold transition-all active:scale-95 btn"
                 style="background: rgba(255,59,48,0.08); color: #ff3b30;">
