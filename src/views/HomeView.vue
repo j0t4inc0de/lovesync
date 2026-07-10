@@ -806,10 +806,14 @@
         <p class="text-[11px] text-red-600 font-bold leading-tight m-1">¡Tu racha anterior de {{ previousStreak }} días está congelada!</p>
         <button v-if="unclaimedStreakRewards >= 10" @click="rescueStreakWithRewards" :disabled="rescuingWithRewards" class="btn rounded-full !px-3.5 !py-1.5 !min-h-0 !h-auto mx-auto !bg-gradient-to-r !from-cyan-500 !to-sky-500 hover:!from-cyan-400 hover:!to-sky-400 text-white text-[12px] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-cyan-200/70 animate-pulse scale-95 origin-center">
           <svg v-if="rescuingWithRewards" class="w-3.5 h-3.5 animate-spin shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
-          <span>{{ rescuingWithRewards ? 'Salvando...' : `Salvar Racha (Usar ${unclaimedStreakRewards} cupos)` }}</span>
+          <span>{{ rescuingWithRewards ? 'Salvando...' : `Salvar Racha (Usar ${unclaimedStreakRewards} recompensas)` }}</span>
+        </button>
+        <button v-else-if="(maxSlots - datesList.length) >= 20" @click="rescueStreakWithSlots" :disabled="rescuingWithSlots" class="btn rounded-full !px-3.5 !py-1.5 !min-h-0 !h-auto mx-auto !bg-gradient-to-r !from-cyan-500 !to-sky-500 hover:!from-cyan-400 hover:!to-sky-400 text-white text-[12px] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-cyan-200/70 animate-pulse scale-95 origin-center">
+          <svg v-if="rescuingWithSlots" class="w-3.5 h-3.5 animate-spin shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
+          <span>{{ rescuingWithSlots ? 'Salvando...' : 'Salvar Racha (Pagar 20 cupos de cita)' }}</span>
         </button>
         <button v-else disabled class="rounded-full py-1.5 px-3 mx-auto bg-slate-200 text-slate-500 font-extrabold text-[9.5px] shadow-sm flex items-center justify-center gap-1 border border-slate-300/70 scale-95 origin-center cursor-not-allowed opacity-80">
-          <span>🔒 Salvar Racha ({{ unclaimedStreakRewards }}/10 cupos)</span>
+          <span>🔒 Salvar Racha (Tienes {{ maxSlots - datesList.length }}/20 cupos libres)</span>
         </button>
       </div>
     </div>
@@ -924,6 +928,7 @@ const showStreakTooltip = ref(false);
 const unclaimedStreakRewards = ref(0);
 const claimingReward = ref(false);
 const rescuingWithRewards = ref(false);
+const rescuingWithSlots = ref(false);
 const doubleLockState = ref('idle');
 const loadingPayment = ref(false);
 const showDateModal = ref(false);
@@ -1260,6 +1265,20 @@ const rescueStreakWithRewards = async () => {
     showPopup(error.message || 'Error al recuperar racha con recompensas');
   } finally {
     rescuingWithRewards.value = false;
+  }
+};
+
+const rescueStreakWithSlots = async () => {
+  if (rescuingWithSlots.value) return;
+  rescuingWithSlots.value = true;
+  try {
+    const res = await api.rescueStreakWithSlots();
+    showPopup(res.message || '¡Racha restaurada usando tus cupos de cita disponibles!');
+    await fetchProfile();
+  } catch (error) {
+    showPopup(error.message || 'Error al recuperar racha con cupos de cita');
+  } finally {
+    rescuingWithSlots.value = false;
   }
 };
 

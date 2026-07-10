@@ -806,6 +806,59 @@ app.post('/api/profile/streak/rescue-rewards', authenticateToken, async (req, re
   }
 });
 
+// Rescue streak using 20 available monthly slots
+app.post('/api/profile/streak/rescue-slots', authenticateToken, async (req, res) => {
+  try {
+    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    const coupleId = userRes.rows[0]?.couple_id;
+    if (!coupleId) return res.status(400).json({ error: 'No tienes una pareja vinculada.' });
+
+    const cpRes = await pool.query('SELECT streak_count, previous_streak, slots AS base_slots, COALESCE(permanent_slots, 0) AS permanent_slots FROM couples WHERE id = $1', [coupleId]);
+    const cp = cpRes.rows[0];
+    if (!cp) return res.status(404).json({ error: 'Pareja no encontrada.' });
+    if (cp.streak_count > 0 && cp.previous_streak <= 0) return res.status(400).json({ error: 'Tu racha actual está activa y no hay racha congelada para recuperar.' });
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    const extraRes = await pool.query(
+      'SELECT COALESCE(SUM(amount), 0)::int AS extra_slots FROM couple_extra_slots WHERE couple_id = $1 AND year = $2 AND month = $3',
+      [coupleId, currentYear, currentMonth]
+    );
+    const extraSlots = extraRes.rows[0]?.extra_slots || 0;
+    const maxSlots = (cp.base_slots || 10) + (cp.permanent_slots || 0) + extraSlots;
+
+    const datesRes = await pool.query(
+      `SELECT COUNT(*)::int AS used_slots FROM dates WHERE couple_id = $1 AND EXTRACT(YEAR FROM created_at)::int = $2 AND EXTRACT(MONTH FROM created_at)::int = $3`,
+      [coupleId, currentYear, currentMonth]
+    );
+    const usedSlots = datesRes.rows[0]?.used_slots || 0;
+    const availableSlots = maxSlots - usedSlots;
+
+    if (availableSlots < 20) {
+      return res.status(400).json({ error: `Necesitas al menos 20 cupos de cita disponibles para salvar la racha. Actualmente tienes ${availableSlots} libres.` });
+    }
+
+    const restoredStreak = cp.previous_streak > 0 ? cp.previous_streak : (cp.streak_count || 1);
+    await pool.query(
+      'UPDATE couples SET streak_count = $1, last_streak_date = CURRENT_DATE, previous_streak = 0 WHERE id = $2',
+      [restoredStreak, coupleId]
+    );
+
+    await pool.query(
+      'INSERT INTO couple_extra_slots (couple_id, amount, year, month) VALUES ($1, -20, $2, $3)',
+      [coupleId, currentYear, currentMonth]
+    );
+
+    console.log(`🛡️ [Racha Rescatada con Cupos] Racha de ${restoredStreak} días restaurada para pareja ID ${coupleId} (-20 cupos de cita)`);
+    res.json({ success: true, message: `¡Racha de ${restoredStreak} días restaurada con éxito usando 20 cupos de cita!` });
+  } catch (error) {
+    console.error('Error rescatando racha con cupos:', error);
+    res.status(500).json({ error: 'Error del servidor al recuperar racha con cupos.' });
+  }
+});
+
 // Play daily trivia (enforces once per day per user, awards +1 expiring slot if both answer correctly)
 app.post('/api/trivia/play', authenticateToken, async (req, res) => {
   const { correct, localDate } = req.body;
