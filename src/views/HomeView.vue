@@ -621,8 +621,11 @@
             </div>
           </div>
           <div>
-            <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 block" style="color: var(--text-muted);">Descripción</label>
-            <textarea v-model="newDate.description" rows="3" placeholder="¿Qué recuerdan?" class="input-field w-full p-4 text-[15px] focus:outline-none resize-none"></textarea>
+            <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 flex items-center justify-between" style="color: var(--text-muted);">
+              <span>Descripción <span class="text-red-500 font-bold">*</span></span>
+              <span class="text-[9px] lowercase font-normal italic text-[var(--text-muted)]">obligatoria</span>
+            </label>
+            <textarea v-model="newDate.description" rows="3" placeholder="¿Qué recuerdan de este momento?" class="input-field w-full p-4 text-[15px] focus:outline-none resize-none"></textarea>
           </div>
         </div>
       </div>
@@ -704,8 +707,11 @@
             </div>
           </div>
           <div>
-            <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 block" style="color: var(--text-muted);">Descripción</label>
-            <textarea v-model="editingDate.description" rows="3" placeholder="¿Qué recuerdan?" class="input-field w-full p-4 text-[15px] focus:outline-none resize-none"></textarea>
+            <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 flex items-center justify-between" style="color: var(--text-muted);">
+              <span>Descripción <span class="text-red-500 font-bold">*</span></span>
+              <span class="text-[9px] lowercase font-normal italic text-[var(--text-muted)]">obligatoria</span>
+            </label>
+            <textarea v-model="editingDate.description" rows="3" placeholder="¿Qué recuerdan de este momento?" class="input-field w-full p-4 text-[15px] focus:outline-none resize-none"></textarea>
           </div>
           <div class="pt-2">
             <button @click="deleteDate" class="btn-danger w-full text-[15px]">
@@ -779,7 +785,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, defineAsyncComponent } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, defineAsyncComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonPage, IonHeader, IonToolbar, IonContent } from '@ionic/vue';
 import { api, getApiUrl } from '../services/api';
@@ -804,7 +810,8 @@ const isSubmitting = ref(false);
 
 const submitNewDate = async () => {
   if (isSubmitting.value) return;
-  if (!newDate.value.location) { alert('Escribe la ubicación de la cita.'); return; }
+  if (!newDate.value.location || !newDate.value.location.trim()) { alert('Escribe el título / lugar de la cita.'); return; }
+  if (!newDate.value.description || !newDate.value.description.trim()) { alert('✍️ Por favor escribe una descripción de la cita para recordar este momento.'); return; }
   if (!userCoupleId.value) return;
 
   isSubmitting.value = true;
@@ -1007,6 +1014,38 @@ const filteredExploreList = computed(() => {
 });
 
 const newDate = ref({ location: '', city: 'Villa Alemana', date: new Date().toISOString().split('T')[0], tags: [], rating1: 5.0, rating2: 5.0, description: '', photo_url: '' });
+
+const detectNearestCity = () => {
+  if (typeof navigator !== 'undefined' && navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`);
+          const data = await res.json();
+          if (data && data.address) {
+            const cityName = data.address.city || data.address.town || data.address.village || data.address.county || data.address.state;
+            if (cityName) {
+              newDate.value.city = cityName;
+            }
+          }
+        } catch (e) {
+          console.warn('Geocoding falló, manteniendo ciudad actual:', e);
+        }
+      },
+      (err) => {
+        console.warn('Geolocalización no disponible u omitida:', err);
+      },
+      { timeout: 5000, maximumAge: 600000 }
+    );
+  }
+};
+
+watch(showDateModal, (isOpen) => {
+  if (isOpen) {
+    detectNearestCity();
+  }
+});
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -1263,7 +1302,8 @@ const closeEditModal = () => {
 };
 
 const submitEditDate = async () => {
-  if (!editingDate.value.location) { alert('Escribe la ubicación de la cita.'); return; }
+  if (!editingDate.value.location || !editingDate.value.location.trim()) { alert('Escribe el título / lugar de la cita.'); return; }
+  if (!editingDate.value.description || !editingDate.value.description.trim()) { alert('✍️ Por favor escribe una descripción de la cita para recordar este momento.'); return; }
   
   try {
     const updatedObj = {

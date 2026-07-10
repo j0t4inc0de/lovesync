@@ -1260,8 +1260,8 @@ app.get('/api/dates', authenticateToken, async (req, res) => {
 // Create date
 app.post('/api/dates', authenticateToken, async (req, res) => {
   const { location, city, date_time, description, rating_user_1, rating_user_2, tags, photo_url } = req.body;
-  if (!location || !city || !date_time) {
-    return res.status(400).json({ error: 'Ubicación, ciudad y fecha son requeridas.' });
+  if (!location || !location.trim() || !city || !city.trim() || !date_time || !description || !description.trim()) {
+    return res.status(400).json({ error: 'Ubicación/Título, ciudad, fecha y descripción de la cita son obligatorios.' });
   }
 
   try {
@@ -1341,8 +1341,8 @@ app.put('/api/dates/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   const { location, city, date_time, description, rating_user_1, rating_user_2, tags, photo_url } = req.body;
   
-  if (!location || !city || !date_time) {
-    return res.status(400).json({ error: 'Ubicación, ciudad y fecha son requeridas.' });
+  if (!location || !location.trim() || !city || !city.trim() || !date_time || !description || !description.trim()) {
+    return res.status(400).json({ error: 'Ubicación/Título, ciudad, fecha y descripción de la cita son obligatorios.' });
   }
   
   try {
