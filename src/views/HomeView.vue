@@ -789,25 +789,25 @@
         </span>
       </div>
 
-      <!-- Piggy Bank Claim Row (Compact inline inside the header div with pulse) -->
+      <!-- Piggy Bank Claim Row (Compact inline inside the header div without pulse) -->
       <div v-if="unclaimedStreakRewards > 0" class="p-2.5 rounded-xl bg-gradient-to-r from-pink-500/15 to-violet-500/15 border border-pink-300/60 flex items-center justify-between text-[11px] font-bold text-pink-700 gap-2">
         <span class="flex items-center gap-1.5 shrink-0">
           <svg class="w-4 h-4 text-pink-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
           <span>Recompensas: {{ unclaimedStreakRewards }}</span>
         </span>
-        <button @click="claimStreakReward(unclaimedStreakRewards >= 5 ? 'all' : 1)" :disabled="claimingReward" class="btn btn-primary rounded-full py-1.5 px-3 text-white font-extrabold text-[10px] shadow-md active:scale-95 transition-all flex items-center justify-center gap-1 animate-pulse shrink-0 border border-white/30 !h-auto !min-h-0">
+        <button @click="claimStreakReward(unclaimedStreakRewards >= 5 ? 'all' : 1)" :disabled="claimingReward" class="btn btn-primary rounded-full py-1 px-2.5 text-white font-extrabold text-[9.5px] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1 shrink-0 border border-white/30 !h-auto !min-h-0 scale-95 origin-right">
           <svg v-if="claimingReward" class="w-3 h-3 animate-spin shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
-          <span>{{ claimingReward ? '...' : (unclaimedStreakRewards >= 5 ? 'Reclamar Todo' : 'Canjear +1') }}</span>
+          <span>{{ claimingReward ? '...' : (unclaimedStreakRewards >= 5 ? 'Reclamar' : 'Canjear +1') }}</span>
         </button>
       </div>
 
       <!-- Streak At Risk Section (Secret Easter Egg when >= 10 rewards) -->
       <div v-if="isStreakAtRisk" class="pt-2 border-t border-black/5 space-y-2 text-center">
         <p class="text-[10.5px] text-red-600 font-bold leading-tight m-0">¡Tu racha anterior de {{ previousStreak }} días está congelada!</p>
-        <button v-if="unclaimedStreakRewards >= 10" @click="rescueStreakWithRewards" :disabled="rescuingWithRewards" class="btn rounded-full py-2 px-4 mx-auto bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[11px] shadow-lg shadow-emerald-600/30 active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-emerald-300/40 animate-pulse !h-auto !min-h-0">
-          <svg v-if="rescuingWithRewards" class="w-3.5 h-3.5 animate-spin shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
-          <svg v-else class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-          <span>{{ rescuingWithRewards ? 'Salvando...' : `Recuperar Racha Gratis (Usar ${unclaimedStreakRewards} cupos)` }}</span>
+        <button v-if="unclaimedStreakRewards >= 10" @click="rescueStreakWithRewards" :disabled="rescuingWithRewards" class="rounded-full py-1.5 px-3 mx-auto bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[9.5px] shadow-md shadow-emerald-600/25 active:scale-95 transition-all flex items-center justify-center gap-1 border border-emerald-300/40 animate-pulse max-w-full truncate scale-90 origin-center">
+          <svg v-if="rescuingWithRewards" class="w-3 h-3 animate-spin shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
+          <svg v-else class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
+          <span>{{ rescuingWithRewards ? 'Salvando...' : `Recuperar Racha (Usar ${unclaimedStreakRewards} cupos)` }}</span>
         </button>
       </div>
     </div>
