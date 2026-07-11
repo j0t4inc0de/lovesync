@@ -367,118 +367,254 @@
           </div>
         </div>
 
-        <!-- ═══ SETTINGS ═══ -->
-        <div v-if="currentTab === 'settings'">
-          <h2 class="text-[22px] font-bold tracking-tight mb-5" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Ajustes</h2>
-
-          <!-- 🌟 SANTUARIO DE PAREJA ESTILO STEAM 🌟 -->
+        <!-- ═══ PERFIL / STEAM COMMUNITY SHOWCASE ═══ -->
+        <div v-if="currentTab === 'profile'" class="space-y-6 pb-12 animate-fade-in">
+          
+          <!-- BANNER HERO ESTILO STEAM COMMUNITY -->
           <div :style="availableThemes.find(t => t.id === profileTheme)?.bgStyle || 'background: rgba(255, 255, 255, 0.65);'"
                :class="availableThemes.find(t => t.id === profileTheme)?.border || 'border-white/50'"
-               class="rounded-3xl p-5 mb-5 border-2 shadow-2xl backdrop-blur-xl transition-all relative overflow-hidden group">
+               class="rounded-[2.5rem] p-6 sm:p-8 border-2 shadow-2xl backdrop-blur-2xl relative overflow-hidden transition-all group">
             
-            <!-- Header del Santuario & Nivel Steam -->
-            <div class="flex items-center justify-between pb-4 border-b border-black/10 mb-4">
-              <div class="flex items-center gap-3.5">
-                <div class="relative">
-                  <!-- Avatar con Marco Steam -->
-                  <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-400 flex items-center justify-center text-white text-xl font-black shadow-lg"
+            <!-- Resplandor / Decoraciones de fondo -->
+            <div class="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-gradient-to-br from-pink-500/20 via-rose-500/10 to-transparent blur-3xl pointer-events-none"></div>
+            <div class="absolute -left-20 -bottom-20 w-64 h-64 rounded-full bg-gradient-to-tr from-cyan-500/20 via-sky-500/10 to-transparent blur-3xl pointer-events-none"></div>
+
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-black/10">
+              
+              <!-- Left side: Avatars & Steam Shield Level -->
+              <div class="flex flex-col sm:flex-row sm:items-center gap-5">
+                <div class="relative mx-auto sm:mx-0">
+                  <!-- Doble Avatar con Marco -->
+                  <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-[2rem] bg-gradient-to-tr from-pink-500 via-rose-400 to-amber-300 flex items-center justify-center text-white text-3xl font-black shadow-2xl transition-transform duration-500 group-hover:scale-105"
                        :class="availableFrames.find(f => f.id === profileFrame)?.class">
                     <span>{{ (currentUser?.name || 'A')[0].toUpperCase() }}&{{ (partnerName || 'B')[0].toUpperCase() }}</span>
                   </div>
-                  <span class="absolute -bottom-1 -right-1 bg-slate-900 text-amber-300 border border-amber-400/50 text-[10px] font-black px-1.5 py-0.5 rounded-md shadow">
-                    Lvl {{ coupleLevel }}
-                  </span>
+                  <!-- Corona / Insignia flotante de nivel -->
+                  <div class="absolute -bottom-2 -right-2 bg-slate-950 text-amber-300 border-2 border-amber-400/80 px-2.5 py-1 rounded-xl shadow-xl flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5 text-amber-400 fill-current animate-bounce" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                    <span class="text-[12px] font-black tracking-wider">Lvl {{ coupleLevel }}</span>
+                  </div>
                 </div>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <h3 class="text-[17px] font-black text-slate-900 tracking-tight" style="font-family: 'Comfortaa', sans-serif;">
-                      Santuario de Pareja
-                    </h3>
-                    <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-black/8 border border-black/10 text-slate-700">
-                      {{ coupleRankTitle }}
+
+                <div class="text-center sm:text-left">
+                  <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 mb-1.5">
+                    <h2 class="text-[24px] sm:text-[28px] font-black text-slate-900 tracking-tight leading-none" style="font-family: 'Comfortaa', sans-serif;">
+                      {{ currentUser?.name }} & {{ partnerName }}
+                    </h2>
+                    <span class="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-slate-900 text-white shadow-md border border-white/20">
+                      ✨ {{ coupleRankTitle }}
                     </span>
                   </div>
-                  <!-- Barra de XP -->
-                  <div class="mt-1.5 flex items-center gap-2 w-48 sm:w-60">
-                    <div class="flex-1 h-2 bg-black/10 rounded-full overflow-hidden p-0.5">
-                      <div class="h-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-400 rounded-full transition-all duration-700"
-                           :style="{ width: levelProgressPercent + '%' }"></div>
+                  
+                  <p class="text-[13px] text-slate-600 font-medium mb-3 flex items-center justify-center sm:justify-start gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Bitácora activa · Código de vínculo: <span class="font-mono font-bold text-slate-900">{{ currentUser?.invite_code }}</span></span>
+                  </p>
+
+                  <!-- Steam XP Progress Bar -->
+                  <div class="max-w-xs mx-auto sm:mx-0">
+                    <div class="flex items-center justify-between text-[11px] font-bold text-slate-700 mb-1">
+                      <span>Progreso al Nivel {{ coupleLevel + 1 }}</span>
+                      <span class="font-mono">{{ coupleXp }} / {{ nextLevelXp }} XP</span>
                     </div>
-                    <span class="text-[10px] font-mono font-bold text-slate-600 shrink-0">
-                      {{ coupleXp }} XP
-                    </span>
+                    <div class="h-3.5 bg-black/10 rounded-full overflow-hidden p-0.5 shadow-inner">
+                      <div class="h-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-400 rounded-full transition-all duration-1000 relative overflow-hidden"
+                           :style="{ width: levelProgressPercent + '%' }">
+                        <div class="absolute inset-0 bg-white/30 animate-pulse"></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-              
-              <!-- Botón Personalizar Santuario (Steam Points Store / Showcase Editor) -->
-              <button @click="showSanctuaryModal = true"
-                      class="btn rounded-full !px-3 !py-1.5 !min-h-0 !h-auto bg-slate-900 text-white hover:bg-slate-800 text-[11px] font-bold shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
-                <svg class="w-3.5 h-3.5 text-amber-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
-                </svg>
-                <span>Personalizar</span>
-              </button>
-            </div>
 
-            <!-- 1. VITRINA DE INSIGNIAS Y LOGROS ESTILO STEAM -->
-            <div class="mb-4">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1">
-                  <span>🎖️ Vitrina de Insignias ({{ steamAchievements.filter(a => a.unlocked).length }}/{{ steamAchievements.length }})</span>
-                </span>
-                <span class="text-[10px] font-semibold text-slate-500">Haz clic para ver rareza</span>
-              </div>
-              <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                <div v-for="ach in steamAchievements" :key="ach.id"
-                     @click="showPopup(`${ach.icon} ${ach.title} [${ach.rarity}]: ${ach.desc}`)"
-                     :class="ach.unlocked 
-                       ? 'bg-gradient-to-br from-white/80 to-white/40 border-pink-300 shadow-sm hover:scale-105 cursor-pointer' 
-                       : 'bg-black/5 border-black/10 opacity-40 grayscale cursor-not-allowed'"
-                     class="p-2.5 rounded-2xl border flex flex-col items-center justify-center text-center transition-all">
-                  <div class="text-2xl mb-1">{{ ach.icon }}</div>
-                  <div class="text-[10px] font-bold text-slate-800 line-clamp-1">{{ ach.title }}</div>
-                  <div class="text-[8.5px] font-extrabold uppercase mt-0.5" :class="ach.unlocked ? 'text-rose-600' : 'text-slate-500'">
-                    {{ ach.unlocked ? ach.rarity : 'Bloqueado' }}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 2. VITRINA DE RECUERDOS DESTACADOS (FAVORITOS FIJADOS) -->
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1">
-                  <span>🖼️ Vitrina de Recuerdos Destacados ({{ pinnedDatesList.length }}/3)</span>
-                </span>
-                <button @click="showSanctuaryModal = true" class="text-[10px] font-bold text-rose-600 hover:underline">
-                  + Fijar Recuerdos
+              <!-- Right side: Customization Button (Steam Points Store / Showcase Editor) -->
+              <div class="flex justify-center sm:justify-end">
+                <button @click="showSanctuaryModal = true"
+                        class="btn rounded-2xl px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-[13px] shadow-xl hover:shadow-2xl transition-all flex items-center gap-2 active:scale-95 border border-white/15">
+                  <svg class="w-4 h-4 text-amber-300 animate-spin" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                  </svg>
+                  <span>Personalizar Santuario</span>
                 </button>
               </div>
-              
-              <div v-if="pinnedDatesList.length > 0" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                <div v-for="pDate in pinnedDatesList" :key="pDate.id"
-                     @click="openDateModal(pDate)"
-                     class="cursor-pointer group rounded-2xl overflow-hidden border border-black/10 bg-white/60 hover:bg-white/90 transition-all flex items-center gap-2.5 p-2 shadow-sm active:scale-[0.98]">
-                  <img v-if="pDate.photo_url" :src="pDate.photo_url" class="w-12 h-12 rounded-xl object-cover shrink-0" />
-                  <div v-else class="w-12 h-12 rounded-xl bg-pink-100 flex items-center justify-center text-pink-500 text-lg shrink-0">💖</div>
-                  <div class="min-w-0 flex-1">
-                    <div class="text-[12px] font-bold text-slate-800 truncate">{{ pDate.location || 'Recuerdo Especial' }}</div>
-                    <div class="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
-                      <span>📅 {{ pDate.date }}</span>
-                      <span v-if="pDate.rating1">· ⭐ {{ pDate.rating1 }}</span>
-                    </div>
-                  </div>
-                </div>
+            </div>
+
+            <!-- Quick Steam Stats Strip right inside the Banner -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-5">
+              <div class="bg-white/40 backdrop-blur-md rounded-2xl p-3 border border-white/60 text-center shadow-sm hover:bg-white/60 transition-colors">
+                <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-0.5">Racha Actual</span>
+                <span class="text-[18px] font-black text-rose-600 flex items-center justify-center gap-1">
+                  <span>🔥 {{ loveStreak }}</span>
+                  <span class="text-[11px] font-normal text-slate-600">días</span>
+                </span>
               </div>
-              
-              <!-- Placeholder vacío si no hay recuerdos fijados -->
-              <div v-else @click="showSanctuaryModal = true" class="border-2 border-dashed border-black/15 rounded-2xl p-4 text-center cursor-pointer hover:border-pink-400/60 hover:bg-pink-50/30 transition-all">
-                <p class="text-[12px] font-bold text-slate-600">No han fijado recuerdos en su vitrina todavía</p>
-                <p class="text-[10px] text-slate-400 mt-0.5">Haz clic aquí para seleccionar hasta 3 de sus fotos o citas favoritas.</p>
+              <div class="bg-white/40 backdrop-blur-md rounded-2xl p-3 border border-white/60 text-center shadow-sm hover:bg-white/60 transition-colors">
+                <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-0.5">Recuerdos Subidos</span>
+                <span class="text-[18px] font-black text-slate-900 flex items-center justify-center gap-1">
+                  <span>📸 {{ totalDatesCount || datesList.length }}</span>
+                  <span class="text-[11px] font-normal text-slate-600">citas</span>
+                </span>
+              </div>
+              <div class="bg-white/40 backdrop-blur-md rounded-2xl p-3 border border-white/60 text-center shadow-sm hover:bg-white/60 transition-colors">
+                <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-0.5">Capacidad Mes</span>
+                <span class="text-[18px] font-black text-emerald-600 flex items-center justify-center gap-1">
+                  <span>⭐ {{ maxSlots }}</span>
+                  <span class="text-[11px] font-normal text-slate-600">cupos</span>
+                </span>
+              </div>
+              <div class="bg-white/40 backdrop-blur-md rounded-2xl p-3 border border-white/60 text-center shadow-sm hover:bg-white/60 transition-colors">
+                <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-0.5">Alcancía Racha</span>
+                <span class="text-[18px] font-black text-pink-600 flex items-center justify-center gap-1">
+                  <span>🐷 {{ unclaimedStreakRewards }}</span>
+                  <span class="text-[11px] font-normal text-slate-600">ahorrados</span>
+                </span>
               </div>
             </div>
           </div>
+
+          <!-- LAYOUT EN 2 COLUMNAS (Estilo Steam Profile Layout) -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- COLUMNA IZQUIERDA: Medallas & Nivel -->
+            <div class="lg:col-span-1 space-y-6">
+              
+              <!-- Resumen de Insignias -->
+              <div class="glass rounded-3xl p-6 border border-white/60 shadow-xl relative overflow-hidden">
+                <div class="flex items-center justify-between pb-3 mb-4 border-b border-black/10">
+                  <h3 class="text-[16px] font-black text-slate-900 flex items-center gap-2 m-0" style="font-family: 'Comfortaa', sans-serif;">
+                    <span>🎖️ Insignias Steam</span>
+                  </h3>
+                  <span class="text-[12px] font-bold text-rose-600 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200">
+                    {{ steamAchievements.filter(a => a.unlocked).length }} / {{ steamAchievements.length }}
+                  </span>
+                </div>
+                <p class="text-[12px] text-slate-600 mb-4 font-medium leading-relaxed">
+                  Coleccionen medallas alcanzando hitos legendarios en su bitácora. ¡Haz clic para ver la rareza de cada una!
+                </p>
+
+                <div class="grid grid-cols-3 gap-2.5">
+                  <div v-for="ach in steamAchievements" :key="ach.id"
+                       @click="showPopup(`${ach.icon} ${ach.title} [${ach.rarity}]: ${ach.desc}`)"
+                       :class="ach.unlocked 
+                         ? 'bg-gradient-to-br from-white to-pink-50/60 border-pink-300 shadow-sm hover:scale-105 cursor-pointer' 
+                         : 'bg-black/5 border-black/10 opacity-35 grayscale cursor-not-allowed'"
+                       class="p-3 rounded-2xl border flex flex-col items-center justify-center text-center transition-all">
+                    <div class="text-3xl mb-1.5">{{ ach.icon }}</div>
+                    <div class="text-[11px] font-bold text-slate-800 line-clamp-1 w-full">{{ ach.title }}</div>
+                    <div class="text-[9px] font-black uppercase mt-0.5" :class="ach.unlocked ? 'text-rose-600' : 'text-slate-500'">
+                      {{ ach.unlocked ? ach.rarity : 'Bloqueado' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Nivel y Detalles de Experiencia -->
+              <div class="glass rounded-3xl p-6 border border-white/60 shadow-xl">
+                <h3 class="text-[16px] font-black text-slate-900 pb-3 mb-4 border-b border-black/10 flex items-center gap-2 m-0" style="font-family: 'Comfortaa', sans-serif;">
+                  <span>⚡ Motores de XP</span>
+                </h3>
+                <div class="space-y-3 text-[13px] font-semibold text-slate-700">
+                  <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/50 border border-white/80">
+                    <span class="flex items-center gap-2">📸 Recuerdos</span>
+                    <span class="font-mono font-black text-slate-900">+{{ (totalDatesCount || datesList.length) * 100 }} XP</span>
+                  </div>
+                  <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/50 border border-white/80">
+                    <span class="flex items-center gap-2">🔥 Días de Racha</span>
+                    <span class="font-mono font-black text-rose-600">+{{ loveStreak * 25 }} XP</span>
+                  </div>
+                  <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/50 border border-white/80">
+                    <span class="flex items-center gap-2">⭐ Capacidad Bitácora</span>
+                    <span class="font-mono font-black text-emerald-600">+{{ maxSlots * 50 }} XP</span>
+                  </div>
+                  <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/50 border border-white/80">
+                    <span class="flex items-center gap-2">🐷 Cupos en Alcancía</span>
+                    <span class="font-mono font-black text-pink-600">+{{ unclaimedStreakRewards * 30 }} XP</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- COLUMNA DERECHA/CENTRAL: Vitrina de Recuerdos Destacados (Steam Item Showcase) -->
+            <div class="lg:col-span-2 space-y-6">
+              
+              <!-- Vitrina Principal de Recuerdos -->
+              <div class="glass rounded-[2.5rem] p-6 sm:p-8 border border-white/60 shadow-2xl relative overflow-hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-6 border-b border-black/10">
+                  <div>
+                    <h3 class="text-[20px] font-black text-slate-900 flex items-center gap-2 m-0" style="font-family: 'Comfortaa', sans-serif;">
+                      <span>🖼️ Vitrina de Recuerdos Destacados</span>
+                    </h3>
+                    <p class="text-[13px] text-slate-500 font-medium mt-1">
+                      El expositor principal donde atesoran sus momentos más inolvidables ({{ pinnedDatesList.length }}/3).
+                    </p>
+                  </div>
+                  <button @click="showSanctuaryModal = true" class="btn rounded-2xl !py-2 !px-4 bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-[12px] shadow-lg shrink-0 transition-all flex items-center gap-1.5 self-start sm:self-center">
+                    <span>+ Fijar en Vitrina</span>
+                  </button>
+                </div>
+
+                <div v-if="pinnedDatesList.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  <div v-for="pDate in pinnedDatesList" :key="pDate.id"
+                       @click="openDateModal(pDate)"
+                       class="cursor-pointer group rounded-3xl overflow-hidden border-2 border-white/80 bg-white/70 hover:bg-white transition-all shadow-lg hover:shadow-2xl flex flex-col active:scale-[0.98]">
+                    
+                    <div class="relative w-full aspect-square overflow-hidden bg-slate-100">
+                      <img v-if="pDate.photo_url" :src="pDate.photo_url" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                      <div v-else class="w-full h-full flex items-center justify-center text-5xl bg-gradient-to-tr from-pink-100 to-rose-50">💖</div>
+                      <div class="absolute top-3 right-3 bg-slate-900/80 backdrop-blur-md text-amber-300 font-bold text-[11px] px-2.5 py-1 rounded-xl shadow border border-white/20">
+                        ⭐ Pinned
+                      </div>
+                    </div>
+
+                    <div class="p-4 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h4 class="text-[15px] font-bold text-slate-900 line-clamp-1 m-0 group-hover:text-rose-600 transition-colors">
+                          {{ pDate.location || 'Recuerdo Especial' }}
+                        </h4>
+                        <p class="text-[12px] text-slate-500 line-clamp-2 mt-1 font-normal leading-snug">
+                          {{ pDate.description || 'Sin descripción...' }}
+                        </p>
+                      </div>
+                      <div class="mt-3 pt-3 border-t border-black/5 flex items-center justify-between text-[11px] font-bold text-slate-500">
+                        <span>📅 {{ pDate.date }}</span>
+                        <span v-if="pDate.rating1" class="text-amber-500">⭐ {{ pDate.rating1 }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Estado vacío si aún no fijaron nada -->
+                <div v-else @click="showSanctuaryModal = true"
+                     class="border-2 border-dashed border-black/20 rounded-3xl p-10 text-center cursor-pointer hover:border-rose-400 hover:bg-rose-50/40 transition-all group">
+                  <div class="w-16 h-16 rounded-3xl bg-pink-100 text-pink-500 flex items-center justify-center text-3xl mx-auto mb-3 group-hover:scale-110 transition-transform shadow-md">
+                    🖼️
+                  </div>
+                  <h4 class="text-[17px] font-black text-slate-800 mb-1">Tu Vitrina está esperando sus mejores fotos</h4>
+                  <p class="text-[13px] text-slate-500 max-w-md mx-auto leading-relaxed">
+                    Al igual que en un perfil de Steam, haz clic aquí para elegir sus 3 recuerdos favoritos e inmortalizarlos en esta vitrina.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Dedicatoria de Pareja / Steam Bio Block -->
+              <div class="glass rounded-3xl p-6 border border-white/60 shadow-xl">
+                <h3 class="text-[16px] font-black text-slate-900 pb-3 mb-3 border-b border-black/10 flex items-center gap-2 m-0" style="font-family: 'Comfortaa', sans-serif;">
+                  <span>💬 Manifiesto de la Relación</span>
+                </h3>
+                <div class="p-4 rounded-2xl bg-white/50 border border-white/80 italic text-[14px] text-slate-700 font-medium leading-relaxed">
+                  "Una historia escrita recuerdo a recuerdo, protegiendo cada cita en nuestra bitácora digital de OurStory. Vínculo activo y respaldado en la nube."
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ═══ SETTINGS ═══ -->
+        <div v-if="currentTab === 'settings'">
+          <h2 class="text-[22px] font-bold tracking-tight mb-5" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Ajustes</h2>
 
           <div class="glass rounded-2xl p-5 mb-4">
             <div class="flex items-center justify-between">
@@ -1058,6 +1194,7 @@ const tabs = [
   { id: 'timeline', label: 'Bitácora', icon: '<path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5a2.5 2.5 0 01-2.5-2.5V4.5z"/>' },
   { id: 'trivia', label: 'Trivia', icon: '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>' },
   { id: 'explore', label: 'Explorar', icon: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>' },
+  { id: 'profile', label: 'Perfil', icon: '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>' },
   { id: 'settings', label: 'Ajustes', icon: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 010 4h-.09c-.658.003-1.25.396-1.51 1z"/>' },
 ];
 
