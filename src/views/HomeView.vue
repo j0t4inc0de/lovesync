@@ -410,11 +410,6 @@
                     <svg class="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                     {{ coupleRankTitle }}
                   </span>
-                  <!-- Dot activo -->
-                  <p class="text-[11px] font-medium flex items-center gap-1.5 truncate" style="color: var(--text-secondary);">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                    <span>Bitácora de recuerdos activa</span>
-                  </p>
                 </div>
 
                 <!-- Botón personalizar (esquina) -->
@@ -462,15 +457,50 @@
                     {{ maxSlots }}<span class="text-[11px] font-medium ml-0.5" style="color: var(--text-secondary);">mes</span>
                   </p>
                 </div>
-                <div class="rounded-2xl p-3 text-center" style="background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.7);">
-                  <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--text-muted);">Alcancía</p>
-                  <p class="text-[17px] font-black flex items-center justify-center gap-1" style="color: #ec4899;">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-                    {{ unclaimedStreakRewards }}<span class="text-[11px] font-medium ml-0.5" style="color: var(--text-secondary);">cupos</span>
+                <div @click="likeProfile" class="rounded-2xl p-3 text-center cursor-pointer active:scale-95 transition-all select-none hover:bg-white/70 group" style="background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.7);">
+                  <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--text-muted);">Likes</p>
+                  <p class="text-[17px] font-black flex items-center justify-center gap-1" style="color: var(--accent);">
+                    <svg class="w-4 h-4 fill-current group-hover:scale-110 transition-transform duration-300" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    {{ profileLikes }}
                   </p>
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- ── DESCRIPCIÓN DE PERFIL (Steam style bio) ── -->
+          <div class="glass rounded-[1.75rem] p-5 relative group">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-[12px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3h9m-9 3h3m-12 1.5a2.25 2.25 0 002.25 2.25h16.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H3.75A2.25 2.25 0 001.5 6v12z" />
+                </svg>
+                <span>Descripción</span>
+              </span>
+              <!-- Edit button -->
+              <button @click="isEditingBio = !isEditingBio" 
+                      class="text-[11px] font-bold text-[var(--accent)] hover:underline flex items-center gap-1">
+                <svg v-if="!isEditingBio" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                <span>{{ isEditingBio ? 'Cancelar' : 'Editar' }}</span>
+              </button>
+            </div>
+            
+            <div v-if="isEditingBio" class="space-y-3">
+              <textarea v-model="profileBioInput" 
+                        rows="3" 
+                        maxlength="300"
+                        placeholder="Escribe algo sobre ustedes o su historia de amor..." 
+                        class="input-field w-full p-3 text-[13px] focus:outline-none resize-none"></textarea>
+              <div class="flex justify-end">
+                <button @click="saveProfileBio" 
+                        class="btn-primary btn-sm !rounded-xl !py-1.5 !px-3.5 text-[11px]">
+                  Guardar
+                </button>
+              </div>
+            </div>
+            <p v-else class="text-[13px] leading-relaxed italic m-0 text-slate-700">
+              "{{ profileBio || 'Sin descripción aún. ¡Haz clic en editar para escribir su historia!' }}"
+            </p>
           </div>
 
           <!-- ── VITRINA DE RECUERDOS ─────────────────────────── -->
@@ -1296,6 +1326,10 @@ const profileTheme = ref('default');
 const profileFrame = ref('none');
 const pinnedDateIds = ref([]);
 const totalDatesCount = ref(0);
+const profileBio = ref('');
+const profileBioInput = ref('');
+const isEditingBio = ref(false);
+const profileLikes = ref(0);
 const showSanctuaryModal = ref(false);
 
 const coupleXp = computed(() => {
@@ -1438,6 +1472,27 @@ const togglePinnedDate = async (dateId) => {
 
 const clearPinnedDates = async () => {
   await applyCustomization(profileTheme.value, profileFrame.value, []);
+};
+
+const saveProfileBio = async () => {
+  try {
+    await api.updateProfileBio(profileBioInput.value);
+    profileBio.value = profileBioInput.value;
+    isEditingBio.value = false;
+    showPopup('Descripción de perfil actualizada.');
+  } catch (err) {
+    showPopup('Error al guardar descripción.');
+  }
+};
+
+const likeProfile = async () => {
+  try {
+    const res = await api.likeProfile();
+    profileLikes.value = res.likes;
+    showPopup('💖 ¡Te gusta este perfil!');
+  } catch (err) {
+    showPopup('Error al dar like al perfil.');
+  }
 };
 
 const availableTags = ['Comida', 'Baile', 'Paseo', 'Cine', 'Naturaleza', 'Playa', 'Cafecito', 'En Casa'];
@@ -2276,6 +2331,11 @@ const fetchProfile = async () => {
     if (profile.profileFrame !== undefined) profileFrame.value = profile.profileFrame || 'none';
     if (profile.pinnedDates !== undefined) pinnedDateIds.value = profile.pinnedDates || [];
     if (profile.totalDatesCount !== undefined) totalDatesCount.value = profile.totalDatesCount || 0;
+    if (profile.profileBio !== undefined) {
+      profileBio.value = profile.profileBio || '';
+      profileBioInput.value = profile.profileBio || '';
+    }
+    if (profile.profileLikes !== undefined) profileLikes.value = profile.profileLikes || 0;
   }
   partnerName.value = profile.partnerName || 'Pareja';
   partnerId.value = profile.partnerId || null;

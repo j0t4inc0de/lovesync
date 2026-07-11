@@ -150,6 +150,8 @@ export const api = {
   rescueStreakWithRewards: () => request('/api/profile/streak/rescue-rewards', { method: 'POST' }),
   rescueStreakWithSlots: () => request('/api/profile/streak/rescue-slots', { method: 'POST' }),
   updateSteamSanctuary: (profileTheme, profileFrame, pinnedDates) => request('/api/profile/steam/customize', { method: 'POST', body: JSON.stringify({ profileTheme, profileFrame, pinnedDates }) }),
+  updateProfileBio: (bio) => request('/api/profile/steam/bio', { method: 'POST', body: JSON.stringify({ bio }) }),
+  likeProfile: () => request('/api/profile/steam/like', { method: 'POST' }),
   
   createPaymentPreference: (packageId, streakRescue = false) => request('/api/payments/create-preference', { method: 'POST', body: JSON.stringify({ packageId, streakRescue }) }),
   

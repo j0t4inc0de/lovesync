@@ -274,7 +274,7 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
 
       // Ensure streak columns exist in production even if startup migrations were skipped
       try {
-        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS previous_streak_frozen_at TIMESTAMP DEFAULT NULL, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_theme VARCHAR(50) DEFAULT \'default\', ADD COLUMN IF NOT EXISTS profile_frame VARCHAR(50) DEFAULT \'none\', ADD COLUMN IF NOT EXISTS pinned_dates JSONB DEFAULT \'[]\'::jsonb;');
+        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS previous_streak_frozen_at TIMESTAMP DEFAULT NULL, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_theme VARCHAR(50) DEFAULT \'default\', ADD COLUMN IF NOT EXISTS profile_frame VARCHAR(50) DEFAULT \'none\', ADD COLUMN IF NOT EXISTS pinned_dates JSONB DEFAULT \'[]\'::jsonb, ADD COLUMN IF NOT EXISTS profile_bio VARCHAR(300) DEFAULT \'\', ADD COLUMN IF NOT EXISTS profile_likes INT DEFAULT 0;');
       } catch (migErr) {
         // Ignored if already exists or permissions
       }
@@ -295,6 +295,8 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
            COALESCE(c.profile_theme, 'default') AS profile_theme,
            COALESCE(c.profile_frame, 'none') AS profile_frame,
            COALESCE(c.pinned_dates, '[]'::jsonb) AS pinned_dates,
+           COALESCE(c.profile_bio, '') AS profile_bio,
+           COALESCE(c.profile_likes, 0) AS profile_likes,
            (SELECT COUNT(*)::int FROM dates WHERE couple_id = c.id) AS total_dates_count,
            COALESCE(
              (SELECT SUM(amount) FROM couple_extra_slots 
@@ -376,7 +378,9 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
           profileTheme: couple.profile_theme || 'default',
           profileFrame: couple.profile_frame || 'none',
           pinnedDates: couple.pinned_dates || [],
-          totalDatesCount: couple.total_dates_count || 0
+          totalDatesCount: couple.total_dates_count || 0,
+          profileBio: couple.profile_bio || '',
+          profileLikes: couple.profile_likes || 0
         });
         return;
       }
@@ -938,6 +942,48 @@ app.post('/api/profile/steam/customize', authenticateToken, async (req, res) => 
   } catch (error) {
     console.error('Error guardando santuario Steam:', error);
     res.status(500).json({ error: 'Error al guardar personalización.' });
+  }
+});
+
+// Steam Sanctuary Profile Bio Update
+app.post('/api/profile/steam/bio', authenticateToken, async (req, res) => {
+  const { bio = '' } = req.body;
+  if (bio.length > 300) {
+    return res.status(400).json({ error: 'La descripción no puede exceder los 300 caracteres.' });
+  }
+  try {
+    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    const coupleId = userRes.rows[0]?.couple_id;
+    if (!coupleId) return res.status(400).json({ error: 'No tienes una pareja vinculada.' });
+
+    await pool.query(
+      'UPDATE couples SET profile_bio = $1 WHERE id = $2',
+      [bio, coupleId]
+    );
+
+    res.json({ success: true, message: 'Descripción de perfil actualizada.' });
+  } catch (error) {
+    console.error('Error guardando bio de perfil:', error);
+    res.status(500).json({ error: 'Error al guardar descripción.' });
+  }
+});
+
+// Steam Sanctuary Profile Like Increment
+app.post('/api/profile/steam/like', authenticateToken, async (req, res) => {
+  try {
+    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    const coupleId = userRes.rows[0]?.couple_id;
+    if (!coupleId) return res.status(400).json({ error: 'No tienes una pareja vinculada.' });
+
+    const likeRes = await pool.query(
+      'UPDATE couples SET profile_likes = COALESCE(profile_likes, 0) + 1 WHERE id = $1 RETURNING profile_likes',
+      [coupleId]
+    );
+
+    res.json({ success: true, likes: likeRes.rows[0].profile_likes });
+  } catch (error) {
+    console.error('Error registrando like al perfil:', error);
+    res.status(500).json({ error: 'Error al registrar like.' });
   }
 });
 
