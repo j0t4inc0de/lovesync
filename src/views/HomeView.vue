@@ -371,6 +371,115 @@
         <div v-if="currentTab === 'settings'">
           <h2 class="text-[22px] font-bold tracking-tight mb-5" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Ajustes</h2>
 
+          <!-- 🌟 SANTUARIO DE PAREJA ESTILO STEAM 🌟 -->
+          <div :style="availableThemes.find(t => t.id === profileTheme)?.bgStyle || 'background: rgba(255, 255, 255, 0.65);'"
+               :class="availableThemes.find(t => t.id === profileTheme)?.border || 'border-white/50'"
+               class="rounded-3xl p-5 mb-5 border-2 shadow-2xl backdrop-blur-xl transition-all relative overflow-hidden group">
+            
+            <!-- Header del Santuario & Nivel Steam -->
+            <div class="flex items-center justify-between pb-4 border-b border-black/10 mb-4">
+              <div class="flex items-center gap-3.5">
+                <div class="relative">
+                  <!-- Avatar con Marco Steam -->
+                  <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-400 flex items-center justify-center text-white text-xl font-black shadow-lg"
+                       :class="availableFrames.find(f => f.id === profileFrame)?.class">
+                    <span>{{ (currentUser?.name || 'A')[0].toUpperCase() }}&{{ (partnerName || 'B')[0].toUpperCase() }}</span>
+                  </div>
+                  <span class="absolute -bottom-1 -right-1 bg-slate-900 text-amber-300 border border-amber-400/50 text-[10px] font-black px-1.5 py-0.5 rounded-md shadow">
+                    Lvl {{ coupleLevel }}
+                  </span>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-[17px] font-black text-slate-900 tracking-tight" style="font-family: 'Comfortaa', sans-serif;">
+                      Santuario de Pareja
+                    </h3>
+                    <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-black/8 border border-black/10 text-slate-700">
+                      {{ coupleRankTitle }}
+                    </span>
+                  </div>
+                  <!-- Barra de XP -->
+                  <div class="mt-1.5 flex items-center gap-2 w-48 sm:w-60">
+                    <div class="flex-1 h-2 bg-black/10 rounded-full overflow-hidden p-0.5">
+                      <div class="h-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-400 rounded-full transition-all duration-700"
+                           :style="{ width: levelProgressPercent + '%' }"></div>
+                    </div>
+                    <span class="text-[10px] font-mono font-bold text-slate-600 shrink-0">
+                      {{ coupleXp }} XP
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Botón Personalizar Santuario (Steam Points Store / Showcase Editor) -->
+              <button @click="showSanctuaryModal = true"
+                      class="btn rounded-full !px-3 !py-1.5 !min-h-0 !h-auto bg-slate-900 text-white hover:bg-slate-800 text-[11px] font-bold shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
+                <svg class="w-3.5 h-3.5 text-amber-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                </svg>
+                <span>Personalizar</span>
+              </button>
+            </div>
+
+            <!-- 1. VITRINA DE INSIGNIAS Y LOGROS ESTILO STEAM -->
+            <div class="mb-4">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1">
+                  <span>🎖️ Vitrina de Insignias ({{ steamAchievements.filter(a => a.unlocked).length }}/{{ steamAchievements.length }})</span>
+                </span>
+                <span class="text-[10px] font-semibold text-slate-500">Haz clic para ver rareza</span>
+              </div>
+              <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                <div v-for="ach in steamAchievements" :key="ach.id"
+                     @click="showPopup(`${ach.icon} ${ach.title} [${ach.rarity}]: ${ach.desc}`)"
+                     :class="ach.unlocked 
+                       ? 'bg-gradient-to-br from-white/80 to-white/40 border-pink-300 shadow-sm hover:scale-105 cursor-pointer' 
+                       : 'bg-black/5 border-black/10 opacity-40 grayscale cursor-not-allowed'"
+                     class="p-2.5 rounded-2xl border flex flex-col items-center justify-center text-center transition-all">
+                  <div class="text-2xl mb-1">{{ ach.icon }}</div>
+                  <div class="text-[10px] font-bold text-slate-800 line-clamp-1">{{ ach.title }}</div>
+                  <div class="text-[8.5px] font-extrabold uppercase mt-0.5" :class="ach.unlocked ? 'text-rose-600' : 'text-slate-500'">
+                    {{ ach.unlocked ? ach.rarity : 'Bloqueado' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. VITRINA DE RECUERDOS DESTACADOS (FAVORITOS FIJADOS) -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1">
+                  <span>🖼️ Vitrina de Recuerdos Destacados ({{ pinnedDatesList.length }}/3)</span>
+                </span>
+                <button @click="showSanctuaryModal = true" class="text-[10px] font-bold text-rose-600 hover:underline">
+                  + Fijar Recuerdos
+                </button>
+              </div>
+              
+              <div v-if="pinnedDatesList.length > 0" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div v-for="pDate in pinnedDatesList" :key="pDate.id"
+                     @click="openDateModal(pDate)"
+                     class="cursor-pointer group rounded-2xl overflow-hidden border border-black/10 bg-white/60 hover:bg-white/90 transition-all flex items-center gap-2.5 p-2 shadow-sm active:scale-[0.98]">
+                  <img v-if="pDate.photo_url" :src="pDate.photo_url" class="w-12 h-12 rounded-xl object-cover shrink-0" />
+                  <div v-else class="w-12 h-12 rounded-xl bg-pink-100 flex items-center justify-center text-pink-500 text-lg shrink-0">💖</div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-[12px] font-bold text-slate-800 truncate">{{ pDate.location || 'Recuerdo Especial' }}</div>
+                    <div class="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                      <span>📅 {{ pDate.date }}</span>
+                      <span v-if="pDate.rating1">· ⭐ {{ pDate.rating1 }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Placeholder vacío si no hay recuerdos fijados -->
+              <div v-else @click="showSanctuaryModal = true" class="border-2 border-dashed border-black/15 rounded-2xl p-4 text-center cursor-pointer hover:border-pink-400/60 hover:bg-pink-50/30 transition-all">
+                <p class="text-[12px] font-bold text-slate-600">No han fijado recuerdos en su vitrina todavía</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">Haz clic aquí para seleccionar hasta 3 de sus fotos o citas favoritas.</p>
+              </div>
+            </div>
+          </div>
+
           <div class="glass rounded-2xl p-5 mb-4">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
@@ -747,6 +856,108 @@
       </div>
     </div>
 
+    <!-- Steam Sanctuary Customization Modal -->
+    <div v-if="showSanctuaryModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+      <div @click="showSanctuaryModal = false" class="absolute inset-0 bg-black/40 backdrop-blur-md"></div>
+      <div class="relative w-full max-w-lg glass-modal sm:rounded-3xl rounded-t-[2.2rem] shadow-2xl overflow-hidden animate-slide-up max-h-[90vh] flex flex-col border border-white/40">
+        <div class="w-12 h-1.5 bg-black/10 rounded-full mx-auto my-3 shrink-0"></div>
+
+        <div class="px-5 pb-3 flex justify-between items-center border-b border-black/10">
+          <button @click="showSanctuaryModal = false" class="text-[14px] font-bold text-slate-500 hover:text-slate-800 transition-all">Cerrar</button>
+          <h3 class="text-[16px] font-black m-0 text-slate-900 flex items-center gap-1.5" style="font-family: 'Comfortaa', sans-serif;">
+            🎨 Personalizar Santuario
+          </h3>
+          <button @click="saveSanctuaryCustomization(profileTheme, profileFrame, pinnedDateIds)" class="text-[14px] font-bold text-rose-600 hover:text-rose-500 transition-all">Guardar</button>
+        </div>
+
+        <div class="p-5 overflow-y-auto space-y-6 flex-1">
+          <!-- 1. Elige tu Tema / Fondo de Santuario -->
+          <div>
+            <h4 class="text-[13px] font-black uppercase tracking-wider text-slate-700 mb-2.5 flex items-center gap-1.5">
+              <span>🌈 Fondo y Estilo Visual</span>
+            </h4>
+            <div class="grid grid-cols-2 gap-3">
+              <div v-for="thm in availableThemes" :key="thm.id"
+                   @click="profileTheme = thm.id"
+                   :style="thm.bgStyle"
+                   :class="profileTheme === thm.id ? 'ring-2 ring-rose-500 shadow-md scale-[1.02]' : 'opacity-70 hover:opacity-100'"
+                   class="cursor-pointer rounded-2xl p-3 border border-white/60 transition-all text-center flex flex-col justify-center min-h-[70px]">
+                <span class="text-[12px] font-extrabold text-slate-900">{{ thm.name }}</span>
+                <span v-if="profileTheme === thm.id" class="text-[9px] font-black text-rose-600 uppercase mt-1">✓ Activo</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Elige tu Marco de Avatar -->
+          <div>
+            <h4 class="text-[13px] font-black uppercase tracking-wider text-slate-700 mb-2.5 flex items-center gap-1.5">
+              <span>👑 Marco de Avatar</span>
+            </h4>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div v-for="frm in availableFrames" :key="frm.id"
+                   @click="profileFrame = frm.id"
+                   :class="profileFrame === frm.id ? 'bg-white/80 ring-2 ring-rose-500 shadow-md' : 'bg-white/30 opacity-70 hover:opacity-100'"
+                   class="cursor-pointer rounded-2xl p-3 border border-black/10 transition-all text-center flex flex-col items-center justify-center gap-2">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-pink-500 to-rose-400 flex items-center justify-center text-white text-xs font-black shadow"
+                     :class="frm.class">
+                  <span>{{ (currentUser?.name || 'A')[0].toUpperCase() }}&{{ (partnerName || 'B')[0].toUpperCase() }}</span>
+                </div>
+                <span class="text-[11px] font-bold text-slate-800 leading-tight">{{ frm.name }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Elige tus 3 Recuerdos Destacados para la Vitrina -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-[13px] font-black uppercase tracking-wider text-slate-700 m-0 flex items-center gap-1.5">
+                <span>🖼️ Vitrina de Recuerdos ({{ pinnedDateIds.length }}/3)</span>
+              </h4>
+              <button v-if="pinnedDateIds.length > 0" @click="pinnedDateIds = []" class="text-[10px] font-bold text-rose-500 hover:underline">
+                Limpiar todo
+              </button>
+            </div>
+            <p class="text-[11px] text-slate-500 mb-3">Selecciona hasta 3 momentos icónicos de su bitácora para inmortalizarlos en el expositor del perfil.</p>
+            
+            <div v-if="datesList && datesList.length > 0" class="space-y-2 max-h-52 overflow-y-auto pr-1">
+              <div v-for="dt in datesList" :key="dt.id"
+                   @click="(() => {
+                     if (pinnedDateIds.includes(dt.id)) {
+                       pinnedDateIds = pinnedDateIds.filter(id => id !== dt.id);
+                     } else if (pinnedDateIds.length < 3) {
+                       pinnedDateIds.push(dt.id);
+                     } else {
+                       showPopup('Solo puedes fijar un máximo de 3 recuerdos en la vitrina.');
+                     }
+                   })()"
+                   :class="pinnedDateIds.includes(dt.id) ? 'bg-pink-50/90 border-pink-400 ring-1 ring-pink-400 shadow-sm' : 'bg-white/60 border-black/10 hover:bg-white/90'"
+                   class="cursor-pointer rounded-xl p-2.5 border transition-all flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <img v-if="dt.photo_url" :src="dt.photo_url" class="w-10 h-10 rounded-lg object-cover shrink-0" />
+                  <div v-else class="w-10 h-10 rounded-lg bg-pink-100 flex items-center justify-center text-pink-500 shrink-0">💖</div>
+                  <div class="min-w-0">
+                    <div class="text-[12px] font-bold text-slate-800 truncate">{{ dt.location || 'Recuerdo sin título' }}</div>
+                    <div class="text-[10px] text-slate-500">📅 {{ dt.date }}</div>
+                  </div>
+                </div>
+                <div class="shrink-0">
+                  <span v-if="pinnedDateIds.includes(dt.id)" class="bg-pink-500 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-sm flex items-center gap-1">
+                    <span>★ Fijado</span>
+                  </span>
+                  <span v-else class="text-[11px] font-bold text-slate-400 hover:text-slate-700 px-2 py-1">
+                    + Fijar
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-center py-6 border rounded-2xl bg-white/40 text-[12px] text-slate-500 font-semibold">
+              No tienen recuerdos registrados aún. ¡Anoten su primera cita para fijarla aquí!
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Admin Dashboard Modal -->
     <AdminModal v-if="showAdminModal"
       :user-couple-id="userCoupleId"
@@ -960,6 +1171,128 @@ const showTriviaTooltip = ref(false);
 const unpairState = ref('idle');
 const unpairRequestedBy = ref(null);
 const unpairDaysLeft = ref(0);
+
+// Steam Profile Sanctuary State & Computed
+const profileTheme = ref('default');
+const profileFrame = ref('none');
+const pinnedDateIds = ref([]);
+const totalDatesCount = ref(0);
+const showSanctuaryModal = ref(false);
+
+const coupleXp = computed(() => {
+  return (totalDatesCount.value * 100) + (loveStreak.value * 25) + (maxSlots.value * 50) + (unclaimedStreakRewards.value * 30);
+});
+const coupleLevel = computed(() => {
+  return Math.floor(Math.sqrt(coupleXp.value / 100)) + 1;
+});
+const nextLevelXp = computed(() => {
+  const nextLvl = coupleLevel.value;
+  return Math.pow(nextLvl, 2) * 100;
+});
+const currentLevelBaseXp = computed(() => {
+  const currLvl = coupleLevel.value - 1;
+  return Math.pow(currLvl, 2) * 100;
+});
+const levelProgressPercent = computed(() => {
+  const range = nextLevelXp.value - currentLevelBaseXp.value;
+  if (range <= 0) return 100;
+  const gained = coupleXp.value - currentLevelBaseXp.value;
+  return Math.min(100, Math.max(0, Math.round((gained / range) * 100)));
+});
+const coupleRankTitle = computed(() => {
+  const lvl = coupleLevel.value;
+  if (lvl >= 50) return 'Dioses del Amor Eterno';
+  if (lvl >= 30) return 'Leyendas del Destino';
+  if (lvl >= 20) return 'Almas Gemelas de Élite';
+  if (lvl >= 10) return 'Coleccionistas de Recuerdos';
+  if (lvl >= 5) return 'Cómplices de Aventuras';
+  if (lvl >= 3) return 'Novios Exploradores';
+  return 'Enamorados Novatos';
+});
+
+const steamAchievements = computed(() => [
+  {
+    id: 'first_step',
+    title: 'Primeros Pasos',
+    desc: 'Su primer recuerdo registrado en la bitácora.',
+    icon: '🌱',
+    unlocked: totalDatesCount.value >= 1 || datesList.value.length >= 1,
+    rarity: 'Común'
+  },
+  {
+    id: 'streak_7',
+    title: 'Llama Imparable',
+    desc: 'Mantener una racha activa superior a 7 días.',
+    icon: '🔥',
+    unlocked: loveStreak.value >= 7 || previousStreak.value >= 7,
+    rarity: 'Raro'
+  },
+  {
+    id: 'collector_10',
+    title: 'Coleccionistas de Amor',
+    desc: 'Atesorar 10 o más recuerdos en su historia.',
+    icon: '📸',
+    unlocked: totalDatesCount.value >= 10 || datesList.value.length >= 10,
+    rarity: 'Épico'
+  },
+  {
+    id: 'streak_30',
+    title: 'Guardianes del Tiempo',
+    desc: 'Llegar a una racha legendaria de 30 días o más.',
+    icon: '💎',
+    unlocked: loveStreak.value >= 30 || previousStreak.value >= 30,
+    rarity: 'Legendario'
+  },
+  {
+    id: 'piggy_bank_master',
+    title: 'Ahorro Cómplice',
+    desc: 'Acumular 5 o más recompensas en su alcancía.',
+    icon: '🐷',
+    unlocked: unclaimedStreakRewards.value >= 5,
+    rarity: 'Raro'
+  },
+  {
+    id: 'high_roller',
+    title: 'Amor sin Límites',
+    desc: 'Alcanzar una capacidad mensual superior a 15 cupos.',
+    icon: '⭐',
+    unlocked: maxSlots.value >= 15,
+    rarity: 'Épico'
+  }
+]);
+
+const pinnedDatesList = computed(() => {
+  if (!pinnedDateIds.value || !pinnedDateIds.value.length) return [];
+  return datesList.value.filter(d => pinnedDateIds.value.includes(d.id)).slice(0, 3);
+});
+
+const availableThemes = [
+  { id: 'default', name: 'Liquid Glass (Clásico)', border: 'border-white/50', bgStyle: 'background: rgba(255, 255, 255, 0.65);' },
+  { id: 'ruby', name: 'Atardecer Rubí', border: 'border-rose-400/70', bgStyle: 'background: linear-gradient(135deg, rgba(244,63,94,0.18) 0%, rgba(190,18,60,0.30) 100%);' },
+  { id: 'cyber', name: 'Neón Cyberpunk', border: 'border-cyan-400/80', bgStyle: 'background: linear-gradient(135deg, rgba(6,182,212,0.18) 0%, rgba(59,130,246,0.30) 100%);' },
+  { id: 'gold', name: 'Oro Imperial (Élite)', border: 'border-amber-400/80', bgStyle: 'background: linear-gradient(135deg, rgba(245,158,11,0.22) 0%, rgba(217,119,6,0.34) 100%);' }
+];
+
+const availableFrames = [
+  { id: 'none', name: 'Sin Marco', class: '' },
+  { id: 'sakura', name: '🌸 Flores Sakura', class: 'ring-4 ring-pink-400 ring-offset-2 ring-offset-rose-50 shadow-[0_0_15px_rgba(244,114,182,0.6)]' },
+  { id: 'ice', name: '❄️ Corona Glacial', class: 'ring-4 ring-cyan-400 ring-offset-2 ring-offset-slate-900 shadow-[0_0_15px_rgba(34,211,238,0.7)] animate-pulse' },
+  { id: 'gold', name: '👑 Aureola Dorada', class: 'ring-4 ring-amber-400 ring-offset-2 ring-offset-amber-50 shadow-[0_0_20px_rgba(251,191,36,0.8)]' }
+];
+
+const saveSanctuaryCustomization = async (theme, frame, pinned) => {
+  try {
+    profileTheme.value = theme;
+    profileFrame.value = frame;
+    pinnedDateIds.value = pinned;
+    await api.updateSteamSanctuary(theme, frame, pinned);
+    showPopup('🎨 ¡Santuario de Perfil y Vitrinas actualizados!');
+    showSanctuaryModal.value = false;
+  } catch (err) {
+    showPopup('Error al guardar personalización');
+  }
+};
+
 const availableTags = ['Comida', 'Baile', 'Paseo', 'Cine', 'Naturaleza', 'Playa', 'Cafecito', 'En Casa'];
 
 // Admin Panel state & opening logic (modal component is lazy loaded via AdminModal.vue)
@@ -1792,6 +2125,10 @@ const fetchProfile = async () => {
     if (profile.streakFrozenSecondsLeft !== undefined) streakFrozenSecondsLeft.value = profile.streakFrozenSecondsLeft || 0;
     if (profile.lastStreakDate !== undefined) lastStreakDate.value = profile.lastStreakDate || null;
     if (profile.unclaimedStreakRewards !== undefined) unclaimedStreakRewards.value = profile.unclaimedStreakRewards || 0;
+    if (profile.profileTheme !== undefined) profileTheme.value = profile.profileTheme || 'default';
+    if (profile.profileFrame !== undefined) profileFrame.value = profile.profileFrame || 'none';
+    if (profile.pinnedDates !== undefined) pinnedDateIds.value = profile.pinnedDates || [];
+    if (profile.totalDatesCount !== undefined) totalDatesCount.value = profile.totalDatesCount || 0;
   }
   partnerName.value = profile.partnerName || 'Pareja';
   partnerId.value = profile.partnerId || null;

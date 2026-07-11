@@ -274,7 +274,7 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
 
       // Ensure streak columns exist in production even if startup migrations were skipped
       try {
-        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS previous_streak_frozen_at TIMESTAMP DEFAULT NULL, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0;');
+        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS previous_streak_frozen_at TIMESTAMP DEFAULT NULL, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_theme VARCHAR(50) DEFAULT \'default\', ADD COLUMN IF NOT EXISTS profile_frame VARCHAR(50) DEFAULT \'none\', ADD COLUMN IF NOT EXISTS pinned_dates JSONB DEFAULT \'[]\'::jsonb;');
       } catch (migErr) {
         // Ignored if already exists or permissions
       }
@@ -292,6 +292,10 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
            c.last_streak_date::text AS last_streak_date,
            c.previous_streak,
            c.previous_streak_frozen_at,
+           COALESCE(c.profile_theme, 'default') AS profile_theme,
+           COALESCE(c.profile_frame, 'none') AS profile_frame,
+           COALESCE(c.pinned_dates, '[]'::jsonb) AS pinned_dates,
+           (SELECT COUNT(*)::int FROM dates WHERE couple_id = c.id) AS total_dates_count,
            COALESCE(
              (SELECT SUM(amount) FROM couple_extra_slots 
               WHERE couple_id = c.id 
@@ -351,6 +355,30 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
             );
           }
         }
+
+        res.json({
+          user,
+          partnerName,
+          partnerId,
+          maxSlots,
+          baseSlots,
+          extraSlots,
+          permanentSlots,
+          unclaimedStreakRewards,
+          lastRewardedStreak,
+          unpairState,
+          unpairRequestedBy,
+          unpairDaysLeft,
+          streakCount,
+          lastStreakDate,
+          previousStreak,
+          streakFrozenSecondsLeft: user.streakFrozenSecondsLeft || 0,
+          profileTheme: couple.profile_theme || 'default',
+          profileFrame: couple.profile_frame || 'none',
+          pinnedDates: couple.pinned_dates || [],
+          totalDatesCount: couple.total_dates_count || 0
+        });
+        return;
       }
     }
 
@@ -370,7 +398,11 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
       streakCount,
       lastStreakDate,
       previousStreak,
-      streakFrozenSecondsLeft: user.streakFrozenSecondsLeft || 0
+      streakFrozenSecondsLeft: user.streakFrozenSecondsLeft || 0,
+      profileTheme: 'default',
+      profileFrame: 'none',
+      pinnedDates: [],
+      totalDatesCount: 0
     });
   } catch (error) {
     console.error(error);
@@ -886,6 +918,26 @@ app.post('/api/profile/streak/rescue-slots', authenticateToken, async (req, res)
   } catch (error) {
     console.error('Error rescatando racha con cupos:', error);
     res.status(500).json({ error: 'Error del servidor al recuperar racha con cupos.' });
+  }
+});
+
+// Steam Sanctuary Profile Customization (save theme, frame, pinned dates)
+app.post('/api/profile/steam/customize', authenticateToken, async (req, res) => {
+  const { profileTheme = 'default', profileFrame = 'none', pinnedDates = [] } = req.body;
+  try {
+    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    const coupleId = userRes.rows[0]?.couple_id;
+    if (!coupleId) return res.status(400).json({ error: 'No tienes una pareja vinculada.' });
+
+    await pool.query(
+      'UPDATE couples SET profile_theme = $1, profile_frame = $2, pinned_dates = $3::jsonb WHERE id = $4',
+      [profileTheme, profileFrame, JSON.stringify(pinnedDates), coupleId]
+    );
+
+    res.json({ success: true, message: '¡Santuario de Perfil actualizado con éxito!' });
+  } catch (error) {
+    console.error('Error guardando santuario Steam:', error);
+    res.status(500).json({ error: 'Error al guardar personalización.' });
   }
 });
 

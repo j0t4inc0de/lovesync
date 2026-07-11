@@ -149,6 +149,7 @@ export const api = {
   claimStreakReward: (amount = 1) => request('/api/profile/streak/claim', { method: 'POST', body: JSON.stringify({ amount }) }),
   rescueStreakWithRewards: () => request('/api/profile/streak/rescue-rewards', { method: 'POST' }),
   rescueStreakWithSlots: () => request('/api/profile/streak/rescue-slots', { method: 'POST' }),
+  updateSteamSanctuary: (profileTheme, profileFrame, pinnedDates) => request('/api/profile/steam/customize', { method: 'POST', body: JSON.stringify({ profileTheme, profileFrame, pinnedDates }) }),
   
   createPaymentPreference: (packageId, streakRescue = false) => request('/api/payments/create-preference', { method: 'POST', body: JSON.stringify({ packageId, streakRescue }) }),
   
