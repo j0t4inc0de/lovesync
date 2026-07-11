@@ -1497,7 +1497,6 @@ const likeProfile = async () => {
     const res = await api.likeProfile();
     profileLikes.value = res.likes;
     userLikedProfile.value = res.liked;
-    showPopup(res.liked ? '💖 ¡Te gusta este perfil!' : '💔 Ya no te gusta este perfil.');
   } catch (err) {
     showPopup('Error al dar like al perfil.');
   }
