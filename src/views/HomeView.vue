@@ -385,10 +385,12 @@
               <div class="flex items-start gap-4 mb-5">
                 <!-- Avatar con marco -->
                 <div class="relative shrink-0">
-                  <div class="w-20 h-20 rounded-[1.4rem] flex items-center justify-center text-white text-2xl font-black shadow-lg"
-                       :class="availableFrames.find(f => f.id === profileFrame)?.class"
-                       style="background: linear-gradient(135deg, var(--accent) 0%, #ff7eb3 100%); box-shadow: 0 6px 20px var(--accent-glow);">
-                    <span>{{ (currentUser?.name || 'A')[0].toUpperCase() }}&{{ (partnerName || 'B')[0].toUpperCase() }}</span>
+                  <div class="w-20 h-20 rounded-[1.45rem] flex items-center justify-center p-[3px] transition-all duration-300 shadow-lg"
+                       :style="getFrameStyle(profileFrame)">
+                    <div class="w-full h-full rounded-[1.25rem] flex items-center justify-center text-white text-2xl font-black"
+                         style="background: linear-gradient(135deg, var(--accent) 0%, #ff7eb3 100%);">
+                      <span>{{ (currentUser?.name || 'A')[0].toUpperCase() }}&amp;{{ (partnerName || 'B')[0].toUpperCase() }}</span>
+                    </div>
                   </div>
                   <!-- Badge de nivel -->
                   <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[10px] font-black tracking-wide whitespace-nowrap"
@@ -408,10 +410,10 @@
                     <svg class="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                     {{ coupleRankTitle }}
                   </span>
-                  <!-- Dot activo + código -->
+                  <!-- Dot activo -->
                   <p class="text-[11px] font-medium flex items-center gap-1.5 truncate" style="color: var(--text-secondary);">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                    Vínculo activo · <span class="font-mono font-bold" style="color: var(--text-primary);">{{ currentUser?.invite_code }}</span>
+                    <span>Bitácora de recuerdos activa</span>
                   </p>
                 </div>
 
@@ -952,7 +954,7 @@
               </template>
             </div>
           </div>
-          <div>
+<div>
             <label class="text-[0.65rem] font-bold uppercase tracking-wider pl-1 mb-1.5 flex items-center justify-between" style="color: var(--text-muted);">
               <span>Descripción</span>
               <span class="text-[9px] lowercase font-normal italic text-[var(--text-muted)]">obligatoria</span>
@@ -976,21 +978,24 @@
 
         <div class="px-5 pb-3 flex justify-between items-center border-b border-black/10">
           <button @click="showSanctuaryModal = false" class="text-[14px] font-bold text-slate-500 hover:text-slate-800 transition-all">Cerrar</button>
-          <h3 class="text-[16px] font-black m-0 text-slate-900 flex items-center gap-1.5" style="font-family: 'Comfortaa', sans-serif;">
-            🎨 Personalizar Santuario
+          <h3 class="text-[16px] font-black m-0 text-slate-900" style="font-family: 'Comfortaa', sans-serif;">
+            Personalizar Santuario
           </h3>
-          <button @click="saveSanctuaryCustomization(profileTheme, profileFrame, pinnedDateIds)" class="text-[14px] font-bold text-rose-600 hover:text-rose-500 transition-all">Guardar</button>
+          <div class="w-12"></div> <!-- Spacer to balance the close button and center the title -->
         </div>
 
         <div class="p-5 overflow-y-auto space-y-6 flex-1">
           <!-- 1. Elige tu Tema / Fondo de Santuario -->
           <div>
             <h4 class="text-[13px] font-black uppercase tracking-wider text-slate-700 mb-2.5 flex items-center gap-1.5">
-              <span>🌈 Fondo y Estilo Visual</span>
+              <svg class="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122l9.156-9.156a1.5 1.5 0 112.122 2.122L11.65 18.244a2.416 2.416 0 01-1.702.705 2.415 2.415 0 01-.47-.046l-2.06-.342a.75.75 0 01-.607-.607l-.341-2.06a2.4 2.4 0 01.659-1.666L16.29 5.25a3 3 0 00-4.242 0L3.522 13.775a6 6 0 00-.73 8.358 6 6 0 008.358-.73l.73-.73" />
+              </svg>
+              <span>Fondo y Estilo Visual</span>
             </h4>
             <div class="grid grid-cols-2 gap-3">
               <div v-for="thm in availableThemes" :key="thm.id"
-                   @click="profileTheme = thm.id"
+                   @click="applyCustomization(thm.id, profileFrame, pinnedDateIds)"
                    :style="thm.bgStyle"
                    :class="profileTheme === thm.id ? 'ring-2 ring-rose-500 shadow-md scale-[1.02]' : 'opacity-70 hover:opacity-100'"
                    class="cursor-pointer rounded-2xl p-3 border border-white/60 transition-all text-center flex flex-col justify-center min-h-[70px]">
@@ -1003,16 +1008,22 @@
           <!-- 2. Elige tu Marco de Avatar -->
           <div>
             <h4 class="text-[13px] font-black uppercase tracking-wider text-slate-700 mb-2.5 flex items-center gap-1.5">
-              <span>👑 Marco de Avatar</span>
+              <svg class="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>Marco de Avatar</span>
             </h4>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div v-for="frm in availableFrames" :key="frm.id"
-                   @click="profileFrame = frm.id"
+                   @click="applyCustomization(profileTheme, frm.id, pinnedDateIds)"
                    :class="profileFrame === frm.id ? 'bg-white/80 ring-2 ring-rose-500 shadow-md' : 'bg-white/30 opacity-70 hover:opacity-100'"
                    class="cursor-pointer rounded-2xl p-3 border border-black/10 transition-all text-center flex flex-col items-center justify-center gap-2">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-pink-500 to-rose-400 flex items-center justify-center text-white text-xs font-black shadow"
-                     :class="frm.class">
-                  <span>{{ (currentUser?.name || 'A')[0].toUpperCase() }}&{{ (partnerName || 'B')[0].toUpperCase() }}</span>
+                <div class="w-10 h-10 rounded-[0.75rem] flex items-center justify-center p-[2px] transition-all duration-300 shadow"
+                     :style="getFrameStyle(frm.id)">
+                  <div class="w-full h-full rounded-[0.6rem] flex items-center justify-center text-white text-xs font-black"
+                       style="background: linear-gradient(135deg, var(--accent) 0%, #ff7eb3 100%);">
+                    <span>{{ (currentUser?.name || 'A')[0].toUpperCase() }}&amp;{{ (partnerName || 'B')[0].toUpperCase() }}</span>
+                  </div>
                 </div>
                 <span class="text-[11px] font-bold text-slate-800 leading-tight">{{ frm.name }}</span>
               </div>
@@ -1023,9 +1034,12 @@
           <div>
             <div class="flex items-center justify-between mb-2">
               <h4 class="text-[13px] font-black uppercase tracking-wider text-slate-700 m-0 flex items-center gap-1.5">
-                <span>🖼️ Vitrina de Recuerdos ({{ pinnedDateIds.length }}/3)</span>
+                <svg class="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                </svg>
+                <span>Vitrina de Recuerdos ({{ pinnedDateIds.length }}/3)</span>
               </h4>
-              <button v-if="pinnedDateIds.length > 0" @click="pinnedDateIds = []" class="text-[10px] font-bold text-rose-500 hover:underline">
+              <button v-if="pinnedDateIds.length > 0" @click="clearPinnedDates" class="text-[10px] font-bold text-rose-500 hover:underline">
                 Limpiar todo
               </button>
             </div>
@@ -1033,15 +1047,7 @@
             
             <div v-if="datesList && datesList.length > 0" class="space-y-2 max-h-52 overflow-y-auto pr-1">
               <div v-for="dt in datesList" :key="dt.id"
-                   @click="(() => {
-                     if (pinnedDateIds.includes(dt.id)) {
-                       pinnedDateIds = pinnedDateIds.filter(id => id !== dt.id);
-                     } else if (pinnedDateIds.length < 3) {
-                       pinnedDateIds.push(dt.id);
-                     } else {
-                       showPopup('Solo puedes fijar un máximo de 3 recuerdos en la vitrina.');
-                     }
-                   })()"
+                   @click="togglePinnedDate(dt.id)"
                    :class="pinnedDateIds.includes(dt.id) ? 'bg-pink-50/90 border-pink-400 ring-1 ring-pink-400 shadow-sm' : 'bg-white/60 border-black/10 hover:bg-white/90'"
                    class="cursor-pointer rounded-xl p-2.5 border transition-all flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2.5 min-w-0">
@@ -1387,23 +1393,51 @@ const availableThemes = [
 ];
 
 const availableFrames = [
-  { id: 'none', name: 'Sin Marco', class: '' },
-  { id: 'sakura', name: '🌸 Flores Sakura', class: 'ring-4 ring-pink-400 ring-offset-2 ring-offset-rose-50 shadow-[0_0_15px_rgba(244,114,182,0.6)]' },
-  { id: 'ice', name: '❄️ Corona Glacial', class: 'ring-4 ring-cyan-400 ring-offset-2 ring-offset-slate-900 shadow-[0_0_15px_rgba(34,211,238,0.7)] animate-pulse' },
-  { id: 'gold', name: '👑 Aureola Dorada', class: 'ring-4 ring-amber-400 ring-offset-2 ring-offset-amber-50 shadow-[0_0_20px_rgba(251,191,36,0.8)]' }
+  { id: 'none', name: 'Sin Marco' },
+  { id: 'sakura', name: 'Flores Sakura' },
+  { id: 'ice', name: 'Corona Glacial' },
+  { id: 'gold', name: 'Aureola Dorada' }
 ];
 
-const saveSanctuaryCustomization = async (theme, frame, pinned) => {
-  try {
-    profileTheme.value = theme;
-    profileFrame.value = frame;
-    pinnedDateIds.value = pinned;
-    await api.updateSteamSanctuary(theme, frame, pinned);
-    showPopup('🎨 ¡Santuario de Perfil y Vitrinas actualizados!');
-    showSanctuaryModal.value = false;
-  } catch (err) {
-    showPopup('Error al guardar personalización');
+const getFrameStyle = (frameId) => {
+  if (frameId === 'sakura') {
+    return 'background: linear-gradient(135deg, #f472b6, #f43f5e); padding: 3px; box-shadow: 0 0 15px rgba(244,63,94,0.5);';
   }
+  if (frameId === 'ice') {
+    return 'background: linear-gradient(135deg, #22d3ee, #0ea5e9); padding: 3px; box-shadow: 0 0 15px rgba(14,165,233,0.5);';
+  }
+  if (frameId === 'gold') {
+    return 'background: linear-gradient(135deg, #fbbf24, #d97706); padding: 3px; box-shadow: 0 0 18px rgba(217,119,6,0.6);';
+  }
+  return 'background: transparent; padding: 0;';
+};
+
+const applyCustomization = async (newTheme, newFrame, newPinned) => {
+  profileTheme.value = newTheme;
+  profileFrame.value = newFrame;
+  pinnedDateIds.value = [...newPinned];
+  try {
+    await api.updateSteamSanctuary(newTheme, newFrame, newPinned);
+  } catch (err) {
+    console.error('Error auto-guardando santuario:', err);
+  }
+};
+
+const togglePinnedDate = async (dateId) => {
+  let newPinned = [...pinnedDateIds.value];
+  if (newPinned.includes(dateId)) {
+    newPinned = newPinned.filter(id => id !== dateId);
+  } else if (newPinned.length < 3) {
+    newPinned.push(dateId);
+  } else {
+    showPopup('Solo puedes fijar un máximo de 3 recuerdos en la vitrina.');
+    return;
+  }
+  await applyCustomization(profileTheme.value, profileFrame.value, newPinned);
+};
+
+const clearPinnedDates = async () => {
+  await applyCustomization(profileTheme.value, profileFrame.value, []);
 };
 
 const availableTags = ['Comida', 'Baile', 'Paseo', 'Cine', 'Naturaleza', 'Playa', 'Cafecito', 'En Casa'];
