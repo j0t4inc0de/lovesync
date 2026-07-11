@@ -126,7 +126,7 @@ const initDatabase = async (retries = 10, delay = 3000) => {
       // Run schema
       await pool.query(schemaSql);
       try {
-        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_theme VARCHAR(50) DEFAULT \'default\', ADD COLUMN IF NOT EXISTS profile_frame VARCHAR(50) DEFAULT \'none\', ADD COLUMN IF NOT EXISTS pinned_dates JSONB DEFAULT \'[]\'::jsonb, ADD COLUMN IF NOT EXISTS profile_bio VARCHAR(300) DEFAULT \'\', ADD COLUMN IF NOT EXISTS profile_likes INT DEFAULT 0;');
+        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_theme VARCHAR(50) DEFAULT \'default\', ADD COLUMN IF NOT EXISTS profile_frame VARCHAR(50) DEFAULT \'none\', ADD COLUMN IF NOT EXISTS pinned_dates JSONB DEFAULT \'[]\'::jsonb, ADD COLUMN IF NOT EXISTS profile_bio VARCHAR(300) DEFAULT \'\', ADD COLUMN IF NOT EXISTS profile_likes INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_likes_by JSONB DEFAULT \'[]\'::jsonb;');
         await pool.query('ALTER TABLE dates ADD COLUMN IF NOT EXISTS reports_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS reported_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;');
       } catch (e) {
         console.warn('Advertencia ejecutando alter en initDatabase:', e.message);
@@ -274,7 +274,7 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
 
       // Ensure streak columns exist in production even if startup migrations were skipped
       try {
-        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS previous_streak_frozen_at TIMESTAMP DEFAULT NULL, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_theme VARCHAR(50) DEFAULT \'default\', ADD COLUMN IF NOT EXISTS profile_frame VARCHAR(50) DEFAULT \'none\', ADD COLUMN IF NOT EXISTS pinned_dates JSONB DEFAULT \'[]\'::jsonb, ADD COLUMN IF NOT EXISTS profile_bio VARCHAR(300) DEFAULT \'\', ADD COLUMN IF NOT EXISTS profile_likes INT DEFAULT 0;');
+        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS previous_streak_frozen_at TIMESTAMP DEFAULT NULL, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_theme VARCHAR(50) DEFAULT \'default\', ADD COLUMN IF NOT EXISTS profile_frame VARCHAR(50) DEFAULT \'none\', ADD COLUMN IF NOT EXISTS pinned_dates JSONB DEFAULT \'[]\'::jsonb, ADD COLUMN IF NOT EXISTS profile_bio VARCHAR(300) DEFAULT \'\', ADD COLUMN IF NOT EXISTS profile_likes INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_likes_by JSONB DEFAULT \'[]\'::jsonb;');
       } catch (migErr) {
         // Ignored if already exists or permissions
       }
@@ -297,6 +297,7 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
            COALESCE(c.pinned_dates, '[]'::jsonb) AS pinned_dates,
            COALESCE(c.profile_bio, '') AS profile_bio,
            COALESCE(c.profile_likes, 0) AS profile_likes,
+           COALESCE(c.profile_likes_by, '[]'::jsonb) AS profile_likes_by,
            (SELECT COUNT(*)::int FROM dates WHERE couple_id = c.id) AS total_dates_count,
            COALESCE(
              (SELECT SUM(amount) FROM couple_extra_slots 
@@ -380,7 +381,8 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
           pinnedDates: couple.pinned_dates || [],
           totalDatesCount: couple.total_dates_count || 0,
           profileBio: couple.profile_bio || '',
-          profileLikes: couple.profile_likes || 0
+          profileLikes: couple.profile_likes || 0,
+          userLikedProfile: Array.isArray(couple.profile_likes_by) ? couple.profile_likes_by.includes(req.user.id) : false
         });
         return;
       }
@@ -968,19 +970,34 @@ app.post('/api/profile/steam/bio', authenticateToken, async (req, res) => {
   }
 });
 
-// Steam Sanctuary Profile Like Increment
+// Steam Sanctuary Profile Like (Toggle Like: 1 like per user max)
 app.post('/api/profile/steam/like', authenticateToken, async (req, res) => {
   try {
     const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
     const coupleId = userRes.rows[0]?.couple_id;
     if (!coupleId) return res.status(400).json({ error: 'No tienes una pareja vinculada.' });
 
-    const likeRes = await pool.query(
-      'UPDATE couples SET profile_likes = COALESCE(profile_likes, 0) + 1 WHERE id = $1 RETURNING profile_likes',
-      [coupleId]
+    // Retrieve current list of user IDs who liked this profile
+    const coupleRes = await pool.query('SELECT COALESCE(profile_likes_by, \'[]\'::jsonb) AS liked_by FROM couples WHERE id = $1', [coupleId]);
+    let likedBy = coupleRes.rows[0].liked_by;
+    if (!Array.isArray(likedBy)) likedBy = [];
+
+    const userId = req.user.id;
+    let liked = false;
+
+    if (likedBy.includes(userId)) {
+      likedBy = likedBy.filter(id => id !== userId);
+    } else {
+      likedBy.push(userId);
+      liked = true;
+    }
+
+    const updateRes = await pool.query(
+      'UPDATE couples SET profile_likes_by = $1, profile_likes = $2 WHERE id = $3 RETURNING profile_likes',
+      [JSON.stringify(likedBy), likedBy.length, coupleId]
     );
 
-    res.json({ success: true, likes: likeRes.rows[0].profile_likes });
+    res.json({ success: true, likes: updateRes.rows[0].profile_likes, liked });
   } catch (error) {
     console.error('Error registrando like al perfil:', error);
     res.status(500).json({ error: 'Error al registrar like.' });

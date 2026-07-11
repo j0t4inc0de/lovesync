@@ -460,7 +460,13 @@
                 <div @click="likeProfile" class="rounded-2xl p-3 text-center cursor-pointer active:scale-95 transition-all select-none hover:bg-white/70 group" style="background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.7);">
                   <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--text-muted);">Likes</p>
                   <p class="text-[17px] font-black flex items-center justify-center gap-1" style="color: var(--accent);">
-                    <svg class="w-4 h-4 fill-current group-hover:scale-110 transition-transform duration-300" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    <svg class="w-4 h-4 transition-all duration-300 group-hover:scale-110" 
+                         :class="userLikedProfile ? 'fill-current' : 'fill-none'" 
+                         stroke="currentColor" 
+                         stroke-width="2.2" 
+                         viewBox="0 0 24 24">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
                     {{ profileLikes }}
                   </p>
                 </div>
@@ -1330,6 +1336,7 @@ const profileBio = ref('');
 const profileBioInput = ref('');
 const isEditingBio = ref(false);
 const profileLikes = ref(0);
+const userLikedProfile = ref(false);
 const showSanctuaryModal = ref(false);
 
 const coupleXp = computed(() => {
@@ -1489,7 +1496,8 @@ const likeProfile = async () => {
   try {
     const res = await api.likeProfile();
     profileLikes.value = res.likes;
-    showPopup('💖 ¡Te gusta este perfil!');
+    userLikedProfile.value = res.liked;
+    showPopup(res.liked ? '💖 ¡Te gusta este perfil!' : '💔 Ya no te gusta este perfil.');
   } catch (err) {
     showPopup('Error al dar like al perfil.');
   }
@@ -2336,6 +2344,7 @@ const fetchProfile = async () => {
       profileBioInput.value = profile.profileBio || '';
     }
     if (profile.profileLikes !== undefined) profileLikes.value = profile.profileLikes || 0;
+    if (profile.userLikedProfile !== undefined) userLikedProfile.value = profile.userLikedProfile || false;
   }
   partnerName.value = profile.partnerName || 'Pareja';
   partnerId.value = profile.partnerId || null;
