@@ -367,249 +367,225 @@
           </div>
         </div>
 
-        <!-- ═══ PERFIL / STEAM COMMUNITY SHOWCASE ═══ -->
-        <div v-if="currentTab === 'profile'" class="space-y-6 pb-12 animate-fade-in">
-          
-          <!-- BANNER HERO ESTILO STEAM COMMUNITY -->
-          <div :style="availableThemes.find(t => t.id === profileTheme)?.bgStyle || 'background: rgba(255, 255, 255, 0.65);'"
-               :class="availableThemes.find(t => t.id === profileTheme)?.border || 'border-white/50'"
-               class="rounded-[2.5rem] p-6 sm:p-8 border-2 shadow-2xl backdrop-blur-2xl relative overflow-hidden transition-all group">
-            
-            <!-- Resplandor / Decoraciones de fondo -->
-            <div class="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-gradient-to-br from-pink-500/20 via-rose-500/10 to-transparent blur-3xl pointer-events-none"></div>
-            <div class="absolute -left-20 -bottom-20 w-64 h-64 rounded-full bg-gradient-to-tr from-cyan-500/20 via-sky-500/10 to-transparent blur-3xl pointer-events-none"></div>
+        <!-- ═══ PERFIL / SANTUARIO DE PAREJA ═══ -->
+        <div v-if="currentTab === 'profile'" class="space-y-4 pb-12 animate-fade-in">
 
-            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-black/10">
-              
-              <!-- Left side: Avatars & Steam Shield Level -->
-              <div class="flex flex-col sm:flex-row sm:items-center gap-5">
-                <div class="relative mx-auto sm:mx-0">
-                  <!-- Doble Avatar con Marco -->
-                  <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-[2rem] bg-gradient-to-tr from-pink-500 via-rose-400 to-amber-300 flex items-center justify-center text-white text-3xl font-black shadow-2xl transition-transform duration-500 group-hover:scale-105"
-                       :class="availableFrames.find(f => f.id === profileFrame)?.class">
+          <!-- ── HERO BANNER ─────────────────────────────── -->
+          <!-- Usa el tema elegido pero siempre respeta el acento de la app -->
+          <div class="rounded-[2rem] overflow-hidden relative"
+               :style="availableThemes.find(t => t.id === profileTheme)?.bgStyle || 'background: rgba(255,255,255,0.68)'"
+               style="border: 1px solid rgba(255,255,255,0.55); box-shadow: 0 8px 32px rgba(255,55,95,0.07), 0 1px 2px rgba(0,0,0,0.02); backdrop-filter: blur(30px) saturate(190%); -webkit-backdrop-filter: blur(30px) saturate(190%);">
+            
+            <!-- Orbes decorativos internos coherentes con el fondo de la app -->
+            <div class="absolute -top-12 -right-12 w-44 h-44 rounded-full pointer-events-none" style="background: radial-gradient(circle, rgba(255,55,95,0.18) 0%, transparent 70%); filter: blur(20px);"></div>
+            <div class="absolute -bottom-10 -left-10 w-40 h-40 rounded-full pointer-events-none" style="background: radial-gradient(circle, rgba(200,100,255,0.14) 0%, transparent 70%); filter: blur(20px);"></div>
+
+            <div class="relative z-10 p-5">
+              <!-- Fila superior: Avatar + Info + Botón personalizar -->
+              <div class="flex items-start gap-4 mb-5">
+                <!-- Avatar con marco -->
+                <div class="relative shrink-0">
+                  <div class="w-20 h-20 rounded-[1.4rem] flex items-center justify-center text-white text-2xl font-black shadow-lg"
+                       :class="availableFrames.find(f => f.id === profileFrame)?.class"
+                       style="background: linear-gradient(135deg, var(--accent) 0%, #ff7eb3 100%); box-shadow: 0 6px 20px var(--accent-glow);">
                     <span>{{ (currentUser?.name || 'A')[0].toUpperCase() }}&{{ (partnerName || 'B')[0].toUpperCase() }}</span>
                   </div>
-                  <!-- Corona / Insignia flotante de nivel -->
-                  <div class="absolute -bottom-2 -right-2 bg-slate-950 text-amber-300 border-2 border-amber-400/80 px-2.5 py-1 rounded-xl shadow-xl flex items-center gap-1">
-                    <svg class="w-3.5 h-3.5 text-amber-400 fill-current animate-bounce" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                    <span class="text-[12px] font-black tracking-wider">Lvl {{ coupleLevel }}</span>
+                  <!-- Badge de nivel -->
+                  <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[10px] font-black tracking-wide whitespace-nowrap"
+                       style="background: var(--text-primary); color: #fbbf24; border: 1.5px solid rgba(251,191,36,0.5);">
+                    ★ Lvl {{ coupleLevel }}
                   </div>
                 </div>
 
-                <div class="text-center sm:text-left">
-                  <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 mb-1.5">
-                    <h2 class="text-[24px] sm:text-[28px] font-black text-slate-900 tracking-tight leading-none" style="font-family: 'Comfortaa', sans-serif;">
-                      {{ currentUser?.name }} & {{ partnerName }}
-                    </h2>
-                    <span class="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-slate-900 text-white shadow-md border border-white/20">
-                      ✨ {{ coupleRankTitle }}
-                    </span>
-                  </div>
-                  
-                  <p class="text-[13px] text-slate-600 font-medium mb-3 flex items-center justify-center sm:justify-start gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>Bitácora activa · Código de vínculo: <span class="font-mono font-bold text-slate-900">{{ currentUser?.invite_code }}</span></span>
+                <!-- Texto info -->
+                <div class="flex-1 min-w-0 pt-1">
+                  <h2 class="text-[20px] font-black leading-tight mb-1 truncate" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">
+                    {{ currentUser?.name }} &amp; {{ partnerName }}
+                  </h2>
+                  <!-- Rango con acento de la app -->
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide mb-2"
+                        style="background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(255,55,95,0.15);">
+                    <svg class="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    {{ coupleRankTitle }}
+                  </span>
+                  <!-- Dot activo + código -->
+                  <p class="text-[11px] font-medium flex items-center gap-1.5 truncate" style="color: var(--text-secondary);">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                    Vínculo activo · <span class="font-mono font-bold" style="color: var(--text-primary);">{{ currentUser?.invite_code }}</span>
                   </p>
-
-                  <!-- Steam XP Progress Bar -->
-                  <div class="max-w-xs mx-auto sm:mx-0">
-                    <div class="flex items-center justify-between text-[11px] font-bold text-slate-700 mb-1">
-                      <span>Progreso al Nivel {{ coupleLevel + 1 }}</span>
-                      <span class="font-mono">{{ coupleXp }} / {{ nextLevelXp }} XP</span>
-                    </div>
-                    <div class="h-3.5 bg-black/10 rounded-full overflow-hidden p-0.5 shadow-inner">
-                      <div class="h-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-400 rounded-full transition-all duration-1000 relative overflow-hidden"
-                           :style="{ width: levelProgressPercent + '%' }">
-                        <div class="absolute inset-0 bg-white/30 animate-pulse"></div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
-              </div>
 
-              <!-- Right side: Customization Button (Steam Points Store / Showcase Editor) -->
-              <div class="flex justify-center sm:justify-end">
+                <!-- Botón personalizar (esquina) -->
                 <button @click="showSanctuaryModal = true"
-                        class="btn rounded-2xl px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-[13px] shadow-xl hover:shadow-2xl transition-all flex items-center gap-2 active:scale-95 border border-white/15">
-                  <svg class="w-4 h-4 text-amber-300 animate-spin" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
-                  </svg>
-                  <span>Personalizar Santuario</span>
+                        class="shrink-0 btn-ghost btn-sm flex items-center gap-1.5 !rounded-xl !py-1.5 !px-2.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                  <span class="text-[11px] font-bold">Editar</span>
                 </button>
               </div>
-            </div>
 
-            <!-- Quick Steam Stats Strip right inside the Banner -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-5">
-              <div class="bg-white/40 backdrop-blur-md rounded-2xl p-3 border border-white/60 text-center shadow-sm hover:bg-white/60 transition-colors">
-                <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-0.5">Racha Actual</span>
-                <span class="text-[18px] font-black text-rose-600 flex items-center justify-center gap-1">
-                  <span>🔥 {{ loveStreak }}</span>
-                  <span class="text-[11px] font-normal text-slate-600">días</span>
-                </span>
-              </div>
-              <div class="bg-white/40 backdrop-blur-md rounded-2xl p-3 border border-white/60 text-center shadow-sm hover:bg-white/60 transition-colors">
-                <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-0.5">Recuerdos Subidos</span>
-                <span class="text-[18px] font-black text-slate-900 flex items-center justify-center gap-1">
-                  <span>📸 {{ totalDatesCount || datesList.length }}</span>
-                  <span class="text-[11px] font-normal text-slate-600">citas</span>
-                </span>
-              </div>
-              <div class="bg-white/40 backdrop-blur-md rounded-2xl p-3 border border-white/60 text-center shadow-sm hover:bg-white/60 transition-colors">
-                <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-0.5">Capacidad Mes</span>
-                <span class="text-[18px] font-black text-emerald-600 flex items-center justify-center gap-1">
-                  <span>⭐ {{ maxSlots }}</span>
-                  <span class="text-[11px] font-normal text-slate-600">cupos</span>
-                </span>
-              </div>
-              <div class="bg-white/40 backdrop-blur-md rounded-2xl p-3 border border-white/60 text-center shadow-sm hover:bg-white/60 transition-colors">
-                <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-0.5">Alcancía Racha</span>
-                <span class="text-[18px] font-black text-pink-600 flex items-center justify-center gap-1">
-                  <span>🐷 {{ unclaimedStreakRewards }}</span>
-                  <span class="text-[11px] font-normal text-slate-600">ahorrados</span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- LAYOUT EN 2 COLUMNAS (Estilo Steam Profile Layout) -->
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- COLUMNA IZQUIERDA: Medallas & Nivel -->
-            <div class="lg:col-span-1 space-y-6">
-              
-              <!-- Resumen de Insignias -->
-              <div class="glass rounded-3xl p-6 border border-white/60 shadow-xl relative overflow-hidden">
-                <div class="flex items-center justify-between pb-3 mb-4 border-b border-black/10">
-                  <h3 class="text-[16px] font-black text-slate-900 flex items-center gap-2 m-0" style="font-family: 'Comfortaa', sans-serif;">
-                    <span>🎖️ Insignias Steam</span>
-                  </h3>
-                  <span class="text-[12px] font-bold text-rose-600 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200">
-                    {{ steamAchievements.filter(a => a.unlocked).length }} / {{ steamAchievements.length }}
-                  </span>
+              <!-- Barra de XP -->
+              <div class="mb-5">
+                <div class="flex items-center justify-between text-[10px] font-bold mb-1.5" style="color: var(--text-secondary);">
+                  <span>Nivel {{ coupleLevel }} → {{ coupleLevel + 1 }}</span>
+                  <span class="font-mono" style="color: var(--accent);">{{ coupleXp }} / {{ nextLevelXp }} XP</span>
                 </div>
-                <p class="text-[12px] text-slate-600 mb-4 font-medium leading-relaxed">
-                  Coleccionen medallas alcanzando hitos legendarios en su bitácora. ¡Haz clic para ver la rareza de cada una!
-                </p>
-
-                <div class="grid grid-cols-3 gap-2.5">
-                  <div v-for="ach in steamAchievements" :key="ach.id"
-                       @click="showPopup(`${ach.icon} ${ach.title} [${ach.rarity}]: ${ach.desc}`)"
-                       :class="ach.unlocked 
-                         ? 'bg-gradient-to-br from-white to-pink-50/60 border-pink-300 shadow-sm hover:scale-105 cursor-pointer' 
-                         : 'bg-black/5 border-black/10 opacity-35 grayscale cursor-not-allowed'"
-                       class="p-3 rounded-2xl border flex flex-col items-center justify-center text-center transition-all">
-                    <div class="text-3xl mb-1.5">{{ ach.icon }}</div>
-                    <div class="text-[11px] font-bold text-slate-800 line-clamp-1 w-full">{{ ach.title }}</div>
-                    <div class="text-[9px] font-black uppercase mt-0.5" :class="ach.unlocked ? 'text-rose-600' : 'text-slate-500'">
-                      {{ ach.unlocked ? ach.rarity : 'Bloqueado' }}
-                    </div>
+                <div class="h-2.5 rounded-full overflow-hidden" style="background: rgba(0,0,0,0.06);">
+                  <div class="h-full rounded-full transition-all duration-1000 relative overflow-hidden"
+                       :style="{ width: levelProgressPercent + '%', background: 'linear-gradient(90deg, var(--accent), #ff7eb3, #fbbf24)' }">
+                    <div class="absolute inset-0 bg-white/25 animate-pulse"></div>
                   </div>
                 </div>
               </div>
 
-              <!-- Nivel y Detalles de Experiencia -->
-              <div class="glass rounded-3xl p-6 border border-white/60 shadow-xl">
-                <h3 class="text-[16px] font-black text-slate-900 pb-3 mb-4 border-b border-black/10 flex items-center gap-2 m-0" style="font-family: 'Comfortaa', sans-serif;">
-                  <span>⚡ Motores de XP</span>
-                </h3>
-                <div class="space-y-3 text-[13px] font-semibold text-slate-700">
-                  <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/50 border border-white/80">
-                    <span class="flex items-center gap-2">📸 Recuerdos</span>
-                    <span class="font-mono font-black text-slate-900">+{{ (totalDatesCount || datesList.length) * 100 }} XP</span>
-                  </div>
-                  <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/50 border border-white/80">
-                    <span class="flex items-center gap-2">🔥 Días de Racha</span>
-                    <span class="font-mono font-black text-rose-600">+{{ loveStreak * 25 }} XP</span>
-                  </div>
-                  <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/50 border border-white/80">
-                    <span class="flex items-center gap-2">⭐ Capacidad Bitácora</span>
-                    <span class="font-mono font-black text-emerald-600">+{{ maxSlots * 50 }} XP</span>
-                  </div>
-                  <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/50 border border-white/80">
-                    <span class="flex items-center gap-2">🐷 Cupos en Alcancía</span>
-                    <span class="font-mono font-black text-pink-600">+{{ unclaimedStreakRewards * 30 }} XP</span>
-                  </div>
+              <!-- Stats 2×2 dentro del hero -->
+              <div class="grid grid-cols-2 gap-2.5">
+                <div class="rounded-2xl p-3 text-center" style="background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.7);">
+                  <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--text-muted);">Racha</p>
+                  <p class="text-[17px] font-black flex items-center justify-center gap-1" style="color: var(--accent);">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M17.55 11.2c-.23-.3-.5-.56-.8-.77-.45-.33-1-.54-1.55-.66-.45-.1-.9-.13-1.35-.1-.45.03-.9.13-1.33.28-.43.15-.83.37-1.2.65-.73.55-1.35 1.25-1.8 2.05-.18-.28-.38-.55-.6-.8-.43-.5-.94-.94-1.52-1.3-.57-.36-1.18-.63-1.82-.8-.64-.17-1.3-.23-1.96-.18-.66.05-1.3.2-1.92.45-.62.25-1.2.6-1.7 1.03C1.65 13.06 3.03 16.5 5.14 18.6 7.25 20.7 10.7 22.08 14.15 21c3.45-1.08 6.03-4.08 6.85-7.53.2-1.02.14-2.07-.15-3.07-.3-1-.8-1.92-1.48-2.72z"/></svg>
+                    {{ loveStreak }}<span class="text-[11px] font-medium ml-0.5" style="color: var(--text-secondary);">días</span>
+                  </p>
                 </div>
-              </div>
-
-            </div>
-
-            <!-- COLUMNA DERECHA/CENTRAL: Vitrina de Recuerdos Destacados (Steam Item Showcase) -->
-            <div class="lg:col-span-2 space-y-6">
-              
-              <!-- Vitrina Principal de Recuerdos -->
-              <div class="glass rounded-[2.5rem] p-6 sm:p-8 border border-white/60 shadow-2xl relative overflow-hidden">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-6 border-b border-black/10">
-                  <div>
-                    <h3 class="text-[20px] font-black text-slate-900 flex items-center gap-2 m-0" style="font-family: 'Comfortaa', sans-serif;">
-                      <span>🖼️ Vitrina de Recuerdos Destacados</span>
-                    </h3>
-                    <p class="text-[13px] text-slate-500 font-medium mt-1">
-                      El expositor principal donde atesoran sus momentos más inolvidables ({{ pinnedDatesList.length }}/3).
-                    </p>
-                  </div>
-                  <button @click="showSanctuaryModal = true" class="btn rounded-2xl !py-2 !px-4 bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-[12px] shadow-lg shrink-0 transition-all flex items-center gap-1.5 self-start sm:self-center">
-                    <span>+ Fijar en Vitrina</span>
-                  </button>
+                <div class="rounded-2xl p-3 text-center" style="background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.7);">
+                  <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--text-muted);">Citas</p>
+                  <p class="text-[17px] font-black flex items-center justify-center gap-1" style="color: var(--text-primary);">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5a2.5 2.5 0 01-2.5-2.5V4.5z"/></svg>
+                    {{ totalDatesCount || datesList.length }}<span class="text-[11px] font-medium ml-0.5" style="color: var(--text-secondary);">fotos</span>
+                  </p>
                 </div>
-
-                <div v-if="pinnedDatesList.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                  <div v-for="pDate in pinnedDatesList" :key="pDate.id"
-                       @click="openDateModal(pDate)"
-                       class="cursor-pointer group rounded-3xl overflow-hidden border-2 border-white/80 bg-white/70 hover:bg-white transition-all shadow-lg hover:shadow-2xl flex flex-col active:scale-[0.98]">
-                    
-                    <div class="relative w-full aspect-square overflow-hidden bg-slate-100">
-                      <img v-if="pDate.photo_url" :src="pDate.photo_url" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                      <div v-else class="w-full h-full flex items-center justify-center text-5xl bg-gradient-to-tr from-pink-100 to-rose-50">💖</div>
-                      <div class="absolute top-3 right-3 bg-slate-900/80 backdrop-blur-md text-amber-300 font-bold text-[11px] px-2.5 py-1 rounded-xl shadow border border-white/20">
-                        ⭐ Pinned
-                      </div>
-                    </div>
-
-                    <div class="p-4 flex-1 flex flex-col justify-between">
-                      <div>
-                        <h4 class="text-[15px] font-bold text-slate-900 line-clamp-1 m-0 group-hover:text-rose-600 transition-colors">
-                          {{ pDate.location || 'Recuerdo Especial' }}
-                        </h4>
-                        <p class="text-[12px] text-slate-500 line-clamp-2 mt-1 font-normal leading-snug">
-                          {{ pDate.description || 'Sin descripción...' }}
-                        </p>
-                      </div>
-                      <div class="mt-3 pt-3 border-t border-black/5 flex items-center justify-between text-[11px] font-bold text-slate-500">
-                        <span>📅 {{ pDate.date }}</span>
-                        <span v-if="pDate.rating1" class="text-amber-500">⭐ {{ pDate.rating1 }}</span>
-                      </div>
-                    </div>
-                  </div>
+                <div class="rounded-2xl p-3 text-center" style="background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.7);">
+                  <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--text-muted);">Cupos</p>
+                  <p class="text-[17px] font-black flex items-center justify-center gap-1 text-emerald-600">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    {{ maxSlots }}<span class="text-[11px] font-medium ml-0.5" style="color: var(--text-secondary);">mes</span>
+                  </p>
                 </div>
-
-                <!-- Estado vacío si aún no fijaron nada -->
-                <div v-else @click="showSanctuaryModal = true"
-                     class="border-2 border-dashed border-black/20 rounded-3xl p-10 text-center cursor-pointer hover:border-rose-400 hover:bg-rose-50/40 transition-all group">
-                  <div class="w-16 h-16 rounded-3xl bg-pink-100 text-pink-500 flex items-center justify-center text-3xl mx-auto mb-3 group-hover:scale-110 transition-transform shadow-md">
-                    🖼️
-                  </div>
-                  <h4 class="text-[17px] font-black text-slate-800 mb-1">Tu Vitrina está esperando sus mejores fotos</h4>
-                  <p class="text-[13px] text-slate-500 max-w-md mx-auto leading-relaxed">
-                    Al igual que en un perfil de Steam, haz clic aquí para elegir sus 3 recuerdos favoritos e inmortalizarlos en esta vitrina.
+                <div class="rounded-2xl p-3 text-center" style="background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.7);">
+                  <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--text-muted);">Alcancía</p>
+                  <p class="text-[17px] font-black flex items-center justify-center gap-1" style="color: #ec4899;">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
+                    {{ unclaimedStreakRewards }}<span class="text-[11px] font-medium ml-0.5" style="color: var(--text-secondary);">cupos</span>
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
 
-              <!-- Dedicatoria de Pareja / Steam Bio Block -->
-              <div class="glass rounded-3xl p-6 border border-white/60 shadow-xl">
-                <h3 class="text-[16px] font-black text-slate-900 pb-3 mb-3 border-b border-black/10 flex items-center gap-2 m-0" style="font-family: 'Comfortaa', sans-serif;">
-                  <span>💬 Manifiesto de la Relación</span>
-                </h3>
-                <div class="p-4 rounded-2xl bg-white/50 border border-white/80 italic text-[14px] text-slate-700 font-medium leading-relaxed">
-                  "Una historia escrita recuerdo a recuerdo, protegiendo cada cita en nuestra bitácora digital de OurStory. Vínculo activo y respaldado en la nube."
-                </div>
+          <!-- ── VITRINA DE RECUERDOS ─────────────────────────── -->
+          <div class="glass rounded-[1.75rem] overflow-hidden">
+            <!-- Header -->
+            <div class="flex items-center justify-between px-5 pt-5 pb-4" style="border-bottom: 1px solid var(--border-subtle);">
+              <div>
+                <h3 class="text-[16px] font-black m-0" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Vitrina de Recuerdos</h3>
+                <p class="text-[11px] font-medium mt-0.5 m-0" style="color: var(--text-secondary);">Sus 3 momentos más especiales — fijados para siempre</p>
               </div>
-
+              <button @click="showSanctuaryModal = true"
+                      class="btn-primary btn-sm flex items-center gap-1 !rounded-xl !py-1.5 !px-3 !text-[11px]">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                Fijar
+              </button>
             </div>
 
+            <!-- Cards horizontales de recuerdos fijados -->
+            <div v-if="pinnedDatesList.length > 0" class="p-4 space-y-3">
+              <div v-for="(pDate, idx) in pinnedDatesList" :key="pDate.id"
+                   @click="openDateModal(pDate)"
+                   class="flex items-stretch gap-3 rounded-2xl overflow-hidden cursor-pointer active:scale-[0.985] transition-transform group"
+                   style="background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.8);">
+                <!-- Foto cuadrada -->
+                <div class="w-[72px] shrink-0 relative overflow-hidden bg-pink-50">
+                  <img v-if="pDate.photo_url" :src="pDate.photo_url" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div v-else class="w-full h-full min-h-[72px] flex items-center justify-center text-2xl" style="background: var(--accent-soft);">
+                    <svg class="w-7 h-7" style="color: var(--accent);" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                  </div>
+                  <!-- # badge -->
+                  <div class="absolute top-1.5 left-1.5 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black text-white"
+                       style="background: var(--accent); box-shadow: 0 2px 6px var(--accent-glow);">{{ idx + 1 }}</div>
+                </div>
+                <!-- Info -->
+                <div class="flex-1 py-3 pr-4 flex flex-col justify-center min-w-0">
+                  <h4 class="text-[13px] font-bold truncate m-0 group-hover:text-[var(--accent)] transition-colors" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">
+                    {{ pDate.location || 'Recuerdo Especial' }}
+                  </h4>
+                  <p class="text-[11px] line-clamp-1 mt-0.5 m-0" style="color: var(--text-secondary);">{{ pDate.description || '...' }}</p>
+                  <div class="flex items-center gap-2 mt-1.5 text-[10px] font-semibold" style="color: var(--text-muted);">
+                    <span>📅 {{ pDate.date }}</span>
+                    <span v-if="pDate.rating1" class="text-amber-500">★ {{ pDate.rating1 }}</span>
+                    <span class="ml-auto px-1.5 py-0.5 rounded-md font-black" style="background: rgba(255,55,95,0.08); color: var(--accent);">★ Fijado</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Estado vacío -->
+            <div v-else @click="showSanctuaryModal = true"
+                 class="m-4 border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all group"
+                 style="border-color: rgba(255,55,95,0.2);"
+                 @mouseenter="$event.currentTarget.style.borderColor='rgba(255,55,95,0.45)'"
+                 @mouseleave="$event.currentTarget.style.borderColor='rgba(255,55,95,0.2)'">
+              <div class="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center group-hover:scale-110 transition-transform"
+                   style="background: var(--accent-soft);">
+                <svg class="w-7 h-7" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
+              </div>
+              <p class="text-[13px] font-bold m-0" style="color: var(--text-primary);">Fija sus 3 recuerdos favoritos</p>
+              <p class="text-[11px] mt-1 m-0" style="color: var(--text-secondary);">Toca aquí para seleccionarlos desde tu bitácora</p>
+            </div>
           </div>
+
+          <!-- ── INSIGNIAS / LOGROS ──────────────────────────── -->
+          <div class="glass rounded-[1.75rem] p-5">
+            <div class="flex items-center justify-between mb-4" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 14px;">
+              <div>
+                <h3 class="text-[16px] font-black m-0" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Colección de Insignias</h3>
+                <p class="text-[11px] font-medium mt-0.5 m-0" style="color: var(--text-secondary);">{{ steamAchievements.filter(a => a.unlocked).length }} de {{ steamAchievements.length }} desbloqueadas</p>
+              </div>
+              <div class="px-2.5 py-1 rounded-full text-[11px] font-black"
+                   style="background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(255,55,95,0.15);">
+                {{ steamAchievements.filter(a => a.unlocked).length }}/{{ steamAchievements.length }}
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2.5">
+              <div v-for="ach in steamAchievements" :key="ach.id"
+                   @click="ach.unlocked && showPopup(`${ach.title} · ${ach.rarity}\n${ach.desc}`)"
+                   :class="ach.unlocked ? 'cursor-pointer hover:scale-[1.04]' : 'opacity-40 grayscale cursor-not-allowed'"
+                   class="rounded-2xl p-3 flex flex-col items-center text-center transition-all"
+                   :style="ach.unlocked ? 'background: rgba(255,255,255,0.7); border: 1px solid rgba(255,55,95,0.2); box-shadow: 0 2px 8px rgba(255,55,95,0.06);' : 'background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.08);'">
+                <div class="text-[28px] mb-1.5 leading-none">{{ ach.icon }}</div>
+                <div class="text-[10px] font-bold leading-snug mb-0.5" style="color: var(--text-primary);">{{ ach.title }}</div>
+                <div class="text-[9px] font-extrabold uppercase tracking-wide"
+                     :style="ach.unlocked ? 'color: var(--accent)' : 'color: var(--text-muted)'">
+                  {{ ach.unlocked ? ach.rarity : 'Bloqueado' }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── MOTORES DE XP ─────────────────────────────── -->
+          <div class="glass rounded-[1.75rem] p-5">
+            <h3 class="text-[16px] font-black mb-4 m-0" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">
+              Fuentes de Experiencia
+            </h3>
+            <div class="space-y-2">
+              <div v-for="row in [
+                { label: 'Recuerdos en bitácora', icon: 'M4 19.5A2.5 2.5 0 016.5 17H20M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5a2.5 2.5 0 01-2.5-2.5V4.5z', xp: (totalDatesCount || datesList.length) * 100, color: 'var(--text-primary)' },
+                { label: 'Días de racha activa', icon: 'M17.55 11.2c-.23-.3-.5-.56-.8-.77-.45-.33-1-.54-1.55-.66-.45-.1-.9-.13-1.35-.1-.45.03-.9.13-1.33.28-.43.15-.83.37-1.2.65-.73.55-1.35 1.25-1.8 2.05-.18-.28-.38-.55-.6-.8-.43-.5-.94-.94-1.52-1.3-.57-.36-1.18-.63-1.82-.8-.64-.17-1.3-.23-1.96-.18-.66.05-1.3.2-1.92.45-.62.25-1.2.6-1.7 1.03C1.65 13.06 3.03 16.5 5.14 18.6 7.25 20.7 10.7 22.08 14.15 21c3.45-1.08 6.03-4.08 6.85-7.53.2-1.02.14-2.07-.15-3.07-.3-1-.8-1.92-1.48-2.72z', xp: loveStreak * 25, color: 'var(--accent)' },
+                { label: 'Capacidad de bitácora', icon: 'M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z', xp: maxSlots * 50, color: '#10b981' },
+                { label: 'Recompensas en alcancía', icon: 'M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7', xp: unclaimedStreakRewards * 30, color: '#ec4899' }
+              ]" :key="row.label"
+                   class="flex items-center justify-between p-3 rounded-xl"
+                   style="background: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.7);">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" :style="`background: rgba(0,0,0,0.04)`">
+                    <svg class="w-3.5 h-3.5" :style="`color: ${row.color}`" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" v-html="`<path stroke-linecap='round' stroke-linejoin='round' d='${row.icon}'/>`"></svg>
+                  </div>
+                  <span class="text-[12px] font-semibold" style="color: var(--text-primary);">{{ row.label }}</span>
+                </div>
+                <span class="text-[12px] font-black font-mono" :style="`color: ${row.color}`">+{{ row.xp }} XP</span>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <!-- ═══ SETTINGS ═══ -->
