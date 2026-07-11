@@ -126,7 +126,7 @@ const initDatabase = async (retries = 10, delay = 3000) => {
       // Run schema
       await pool.query(schemaSql);
       try {
-        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0;');
+        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_theme VARCHAR(50) DEFAULT \'default\', ADD COLUMN IF NOT EXISTS profile_frame VARCHAR(50) DEFAULT \'none\', ADD COLUMN IF NOT EXISTS pinned_dates JSONB DEFAULT \'[]\'::jsonb, ADD COLUMN IF NOT EXISTS profile_bio VARCHAR(300) DEFAULT \'\', ADD COLUMN IF NOT EXISTS profile_likes INT DEFAULT 0;');
         await pool.query('ALTER TABLE dates ADD COLUMN IF NOT EXISTS reports_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS reported_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;');
       } catch (e) {
         console.warn('Advertencia ejecutando alter en initDatabase:', e.message);
