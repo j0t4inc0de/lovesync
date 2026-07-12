@@ -1976,7 +1976,7 @@ app.get('/api/profile/my-cosmetics', authenticateToken, async (req, res) => {
     const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
     const coupleId = userRes.rows[0]?.couple_id;
     if (!coupleId) {
-      return res.status(400).json({ error: 'No tienes una pareja vinculada.' });
+      return res.json([]); // Sin pareja = sin cosméticos comprados, retornar vacío en lugar de error
     }
 
     const result = await pool.query(

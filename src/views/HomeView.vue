@@ -1669,8 +1669,12 @@ const activeProfileTheme = computed(() => {
   return isProductPreviewActive.value && previewBackground.value !== 'default' ? previewBackground.value : profileTheme.value;
 });
 
+const CSS_FRAMES = ['sakura', '/frames/sakura_frame.png', 'ice', 'gold'];
+
 const isPreviewFrameImage = (frameVal) => {
   if (!frameVal || frameVal === 'none') return false;
+  // CSS-based frames (no image file needed)
+  if (CSS_FRAMES.includes(frameVal)) return false;
   const known = BASE_FRAMES.find(f => f.id === frameVal);
   if (known && known.imageUrl) return true;
   return frameVal.includes('/') || frameVal.includes('.') || frameVal.startsWith('http');
@@ -1678,6 +1682,7 @@ const isPreviewFrameImage = (frameVal) => {
 
 const getPreviewFrameImageUrl = (frameVal) => {
   if (!frameVal || frameVal === 'none') return null;
+  if (CSS_FRAMES.includes(frameVal)) return null;
   const known = BASE_FRAMES.find(f => f.id === frameVal);
   if (known && known.imageUrl) return known.imageUrl;
   return frameVal;
@@ -1685,7 +1690,7 @@ const getPreviewFrameImageUrl = (frameVal) => {
 
 const getPreviewFrameStyle = (frameVal) => {
   if (!frameVal || frameVal === 'none') return 'background: transparent; padding: 0;';
-  if (frameVal === 'sakura') {
+  if (frameVal === 'sakura' || frameVal === '/frames/sakura_frame.png') {
     return 'background: linear-gradient(135deg, #f472b6, #f43f5e); padding: 3px; box-shadow: 0 0 15px rgba(244,63,94,0.5);';
   }
   if (frameVal === 'ice') {
@@ -1728,15 +1733,18 @@ const activeBackgroundStyle = computed(() => {
 const loadStoreData = async () => {
   loadingStore.value = true;
   try {
-    const [storeRes, myRes] = await Promise.all([
+    const [storeResult, myResult] = await Promise.allSettled([
       api.getStoreCosmetics(),
       api.getMyCosmetics()
     ]);
-    storeCosmetics.value = storeRes || [];
-    if (Array.isArray(myRes)) {
-      myCosmetics.value = myRes.map(c => typeof c === 'object' ? c.id : c);
+    storeCosmetics.value = storeResult.status === 'fulfilled' ? (storeResult.value || []) : [];
+    if (myResult.status === 'fulfilled' && Array.isArray(myResult.value)) {
+      myCosmetics.value = myResult.value.map(c => typeof c === 'object' ? c.id : c);
     } else {
       myCosmetics.value = [];
+    }
+    if (storeResult.status === 'rejected') {
+      console.error('Error al cargar catálogo de tienda:', storeResult.reason);
     }
   } catch (err) {
     console.error('Error al cargar la tienda:', err);
@@ -1889,7 +1897,11 @@ const avatarInput = ref(null);
 const uploadingAvatar = ref(false);
 
 const isDarkTheme = computed(() => {
-  return ['cosmic', 'animated'].includes(profileTheme.value);
+  const t = profileTheme.value;
+  return ['cosmic', 'animated'].includes(t) ||
+    t.includes('cosmic_love') ||
+    t.includes('glowing_hearts') ||
+    t.includes('glowing_hearts.svg');
 });
 
 const triggerAvatarUpload = () => {
