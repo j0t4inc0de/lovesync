@@ -1588,7 +1588,7 @@ const availableThemes = [
   { id: 'cyber', name: 'Neón Cyberpunk', border: 'border-cyan-400/80', bgStyle: 'background: linear-gradient(135deg, rgba(6,182,212,0.18) 0%, rgba(59,130,246,0.30) 100%);' },
   { id: 'gold', name: 'Oro Imperial (Élite)', border: 'border-amber-400/80', bgStyle: 'background: linear-gradient(135deg, rgba(245,158,11,0.22) 0%, rgba(217,119,6,0.34) 100%);' },
   { id: 'cosmic', name: 'Fondo Cósmico (Estático)', border: 'border-purple-400/70', bgStyle: 'background: url(\'/backgrounds/cosmic_love.jpg\') center/cover no-repeat;' },
-  { id: 'animated', name: 'Flujo de Corazones (Animado)', border: 'border-pink-500/80', bgStyle: 'background: linear-gradient(135deg, rgba(244,63,94,0.10) 0%, rgba(190,18,60,0.20) 100%), url(\'/backgrounds/glowing_hearts.jpg\'); background-size: cover, 120px 120px; animation: heartsMove 20s linear infinite;' }
+  { id: 'animated', name: 'Flujo de Corazones (Animado)', border: 'border-pink-500/80', bgStyle: 'background: linear-gradient(135deg, rgba(244,63,94,0.10) 0%, rgba(190,18,60,0.20) 100%), url(\'/backgrounds/glowing_hearts.svg\'); background-size: cover, 120px 120px; animation: heartsMove 20s linear infinite;' }
 ];
 
 const availableFrames = [
