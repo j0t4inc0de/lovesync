@@ -373,8 +373,13 @@
           <!-- ── HERO BANNER ─────────────────────────────── -->
           <!-- Usa el tema elegido pero siempre respeta el acento de la app -->
           <div class="rounded-[2rem] overflow-hidden relative"
-               :style="availableThemes.find(t => t.id === profileTheme)?.bgStyle || 'background: rgba(255,255,255,0.68)'"
-               style="border: 1px solid rgba(255,255,255,0.55); box-shadow: 0 8px 32px rgba(255,55,95,0.07), 0 1px 2px rgba(0,0,0,0.02); backdrop-filter: blur(30px) saturate(190%); -webkit-backdrop-filter: blur(30px) saturate(190%);">
+               :style="isDarkTheme ? 'color: #ffffff; --text-primary: #ffffff; --text-secondary: rgba(255,255,255,0.85); --text-muted: rgba(255,255,255,0.65); --border-subtle: rgba(255,255,255,0.2);' : ''"
+               style="background: #ffffff; border: 1px solid rgba(255,255,255,0.55); box-shadow: 0 8px 32px rgba(255,55,95,0.07), 0 1px 2px rgba(0,0,0,0.02); backdrop-filter: blur(30px) saturate(190%); -webkit-backdrop-filter: blur(30px) saturate(190%);">
+            
+            <!-- Capa de fondo del tema montada sobre el contenedor blanco (opacidad 0.85) -->
+            <div class="absolute inset-0 z-0 pointer-events-none transition-all duration-500"
+                 :style="availableThemes.find(t => t.id === profileTheme)?.bgStyle || 'background: rgba(255,255,255,0.68);'"
+                 style="opacity: 0.85;"></div>
             
             <!-- Orbes decorativos internos coherentes con el fondo de la app -->
             <div class="absolute -top-12 -right-12 w-44 h-44 rounded-full pointer-events-none" style="background: radial-gradient(circle, rgba(255,55,95,0.18) 0%, transparent 70%); filter: blur(20px);"></div>
@@ -385,16 +390,24 @@
               <div class="flex items-start gap-4 mb-5">
                 <!-- Avatar con marco -->
                 <div class="relative shrink-0">
-                  <div class="w-20 h-20 rounded-[1.45rem] flex items-center justify-center p-[3px] transition-all duration-300 shadow-lg"
-                       :style="getFrameStyle(profileFrame)">
-                    <div class="w-full h-full rounded-[1.25rem] flex items-center justify-center text-white text-2xl font-black"
-                         style="background: linear-gradient(135deg, var(--accent) 0%, #ff7eb3 100%);">
-                      <span>{{ (currentUser?.name || 'A')[0].toUpperCase() }}&amp;{{ (partnerName || 'B')[0].toUpperCase() }}</span>
+                  <div class="w-20 h-20 rounded-[1.45rem] flex items-center justify-center p-[3px] transition-all duration-300 shadow-lg relative"
+                       :style="getFrameImageUrl(profileFrame) ? 'background: transparent; padding: 0;' : getFrameStyle(profileFrame)">
+                    <div class="w-full h-full rounded-[1.25rem] overflow-hidden flex items-center justify-center bg-slate-100 relative z-0">
+                      <img v-if="profileAvatarUrl" :src="profileAvatarUrl" class="w-full h-full object-cover" />
+                      <div v-else class="w-full h-full flex items-center justify-center text-white text-2xl font-black"
+                           style="background: linear-gradient(135deg, var(--accent) 0%, #ff7eb3 100%);">
+                        <span>{{ (currentUser?.name || 'A')[0].toUpperCase() }}&amp;{{ (partnerName || 'B')[0].toUpperCase() }}</span>
+                      </div>
                     </div>
+                    <!-- Image-based Frame Overlay -->
+                    <img v-if="getFrameImageUrl(profileFrame)" 
+                         :src="getFrameImageUrl(profileFrame)" 
+                         class="absolute pointer-events-none scale-[1.12] z-10" 
+                         style="inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px); max-width: none;" />
                   </div>
                   <!-- Badge de nivel -->
                   <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[10px] font-black tracking-wide whitespace-nowrap"
-                       style="background: var(--text-primary); color: #fbbf24; border: 1.5px solid rgba(251,191,36,0.5);">
+                       style="background: var(--text-primary); color: #fbbf24; border: 1.5px solid rgba(251,191,36,0.5); z-index: 15;">
                     ★ Lvl {{ coupleLevel }}
                   </div>
                 </div>
@@ -436,28 +449,28 @@
 
               <!-- Stats 2×2 dentro del hero -->
               <div class="grid grid-cols-2 gap-2.5">
-                <div class="rounded-2xl p-3 text-center" style="background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.7);">
+                <div class="rounded-2xl p-3 text-center" style="background: rgba(255,255,255,0.78); border: 1px solid rgba(255,255,255,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
                   <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--text-muted);">Racha</p>
                   <p class="text-[17px] font-black flex items-center justify-center gap-1" style="color: var(--accent);">
                     <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M17.55 11.2c-.23-.3-.5-.56-.8-.77-.45-.33-1-.54-1.55-.66-.45-.1-.9-.13-1.35-.1-.45.03-.9.13-1.33.28-.43.15-.83.37-1.2.65-.73.55-1.35 1.25-1.8 2.05-.18-.28-.38-.55-.6-.8-.43-.5-.94-.94-1.52-1.3-.57-.36-1.18-.63-1.82-.8-.64-.17-1.3-.23-1.96-.18-.66.05-1.3.2-1.92.45-.62.25-1.2.6-1.7 1.03C1.65 13.06 3.03 16.5 5.14 18.6 7.25 20.7 10.7 22.08 14.15 21c3.45-1.08 6.03-4.08 6.85-7.53.2-1.02.14-2.07-.15-3.07-.3-1-.8-1.92-1.48-2.72z"/></svg>
                     {{ loveStreak }}<span class="text-[11px] font-medium ml-0.5" style="color: var(--text-secondary);">días</span>
                   </p>
                 </div>
-                <div class="rounded-2xl p-3 text-center" style="background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.7);">
+                <div class="rounded-2xl p-3 text-center" style="background: rgba(255,255,255,0.78); border: 1px solid rgba(255,255,255,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
                   <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--text-muted);">Citas</p>
                   <p class="text-[17px] font-black flex items-center justify-center gap-1" style="color: var(--text-primary);">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5a2.5 2.5 0 01-2.5-2.5V4.5z"/></svg>
                     {{ totalDatesCount || datesList.length }}<span class="text-[11px] font-medium ml-0.5" style="color: var(--text-secondary);">fotos</span>
                   </p>
                 </div>
-                <div class="rounded-2xl p-3 text-center" style="background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.7);">
+                <div class="rounded-2xl p-3 text-center" style="background: rgba(255,255,255,0.78); border: 1px solid rgba(255,255,255,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
                   <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--text-muted);">Cupos</p>
                   <p class="text-[17px] font-black flex items-center justify-center gap-1 text-emerald-600">
                     <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                     {{ maxSlots }}<span class="text-[11px] font-medium ml-0.5" style="color: var(--text-secondary);">mes</span>
                   </p>
                 </div>
-                <div @click="likeProfile" class="rounded-2xl p-3 text-center cursor-pointer active:scale-95 transition-all select-none hover:bg-white/70 group" style="background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.7);">
+                <div @click="likeProfile" class="rounded-2xl p-3 text-center cursor-pointer active:scale-95 transition-all select-none hover:bg-white/70 group" style="background: rgba(255,255,255,0.78); border: 1px solid rgba(255,255,255,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
                   <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--text-muted);">Likes</p>
                   <p class="text-[17px] font-black flex items-center justify-center gap-1" style="color: var(--accent);">
                     <svg class="w-4 h-4 transition-all duration-300 group-hover:scale-110" 
@@ -585,10 +598,10 @@
 
             <div class="grid grid-cols-3 gap-2.5">
               <div v-for="ach in steamAchievements" :key="ach.id"
-                   @click="ach.unlocked && showPopup(`${ach.title} · ${ach.rarity}\n${ach.desc}`)"
-                   :class="ach.unlocked ? 'cursor-pointer hover:scale-[1.04]' : 'opacity-40 grayscale cursor-not-allowed'"
-                   class="rounded-2xl p-3 flex flex-col items-center text-center transition-all"
-                   :style="ach.unlocked ? 'background: rgba(255,255,255,0.7); border: 1px solid rgba(255,55,95,0.2); box-shadow: 0 2px 8px rgba(255,55,95,0.06);' : 'background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.08);'">
+                   @click="selectedAchievement = ach"
+                   :class="ach.unlocked ? 'hover:scale-[1.04]' : 'opacity-60 grayscale hover:scale-[1.04]'"
+                   class="cursor-pointer rounded-2xl p-3 flex flex-col items-center text-center transition-all"
+                   :style="ach.unlocked ? 'background: rgba(255,255,255,0.7); border: 1px solid rgba(255,55,95,0.2); box-shadow: 0 2px 8px rgba(255,55,95,0.06);' : 'background: rgba(255,255,255,0.3); border: 1px solid rgba(0,0,0,0.08);'">
                 <div class="text-[28px] mb-1.5 leading-none">{{ ach.icon }}</div>
                 <div class="text-[10px] font-bold leading-snug mb-0.5" style="color: var(--text-primary);">{{ ach.title }}</div>
                 <div class="text-[9px] font-extrabold uppercase tracking-wide"
@@ -1007,6 +1020,69 @@
     </div>
 
     <!-- Steam Sanctuary Customization Modal -->
+    <!-- Achievement Details Modal -->
+    <div v-if="selectedAchievement" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div @click="selectedAchievement = null" class="absolute inset-0 bg-black/40 backdrop-blur-md animate-fade-in"></div>
+      <div class="relative w-full max-w-xs glass-modal rounded-3xl p-6 shadow-2xl border border-white/50 text-center animate-scale-up"
+           style="background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);">
+        
+        <!-- Glowing background aura based on rarity -->
+        <div class="absolute inset-0 rounded-3xl opacity-10 pointer-events-none"
+             :style="{
+               background: selectedAchievement.rarity === 'Legendario' ? 'radial-gradient(circle, #fbbf24 0%, transparent 70%)' :
+                           selectedAchievement.rarity === 'Épico' ? 'radial-gradient(circle, #a855f7 0%, transparent 70%)' :
+                           selectedAchievement.rarity === 'Raro' ? 'radial-gradient(circle, #3b82f6 0%, transparent 70%)' :
+                           'radial-gradient(circle, var(--accent) 0%, transparent 70%)'
+             }">
+        </div>
+
+        <!-- Achievement Icon -->
+        <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-[40px] shadow-lg relative z-10"
+             :class="selectedAchievement.unlocked ? 'animate-bounce' : 'opacity-50'"
+             :style="{
+               background: selectedAchievement.unlocked ? 'var(--accent-soft)' : 'rgba(0,0,0,0.05)',
+               border: selectedAchievement.unlocked ? '2px solid var(--accent)' : '2px dashed rgba(0,0,0,0.15)'
+             }">
+          {{ selectedAchievement.icon }}
+        </div>
+
+        <!-- Title -->
+        <h3 class="text-[18px] font-black m-0 mb-1.5 text-slate-800" style="font-family: 'Comfortaa', sans-serif;">
+          {{ selectedAchievement.title }}
+        </h3>
+
+        <!-- Rarity Badge -->
+        <span class="inline-block px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider mb-3 shadow-sm text-white"
+              :style="{
+                background: selectedAchievement.unlocked ? 'var(--accent)' : 'rgba(0,0,0,0.3)'
+              }">
+          {{ selectedAchievement.unlocked ? selectedAchievement.rarity : 'Bloqueado' }}
+        </span>
+
+        <!-- Description -->
+        <p class="text-[12.5px] font-medium leading-relaxed mb-5 text-slate-600">
+          {{ selectedAchievement.desc }}
+        </p>
+
+        <!-- Status Tag -->
+        <div class="flex items-center justify-center gap-1.5 text-[11px] font-bold py-2 px-4 rounded-xl mb-5 bg-slate-50 border border-black/5">
+          <span v-if="selectedAchievement.unlocked" class="text-emerald-600 flex items-center gap-1">
+            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
+            ¡Desbloqueada!
+          </span>
+          <span v-else class="text-slate-500 flex items-center gap-1">
+            <svg class="w-3.5 h-3.5 fill-none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+            Bloqueado por ahora
+          </span>
+        </div>
+
+        <!-- Close Button -->
+        <button @click="selectedAchievement = null" class="w-full btn btn-primary text-[13px] font-bold py-2.5 rounded-2xl active:scale-95 transition-transform">
+          Entendido
+        </button>
+      </div>
+    </div>
+
     <div v-if="showSanctuaryModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
       <div @click="showSanctuaryModal = false" class="absolute inset-0 bg-black/40 backdrop-blur-md"></div>
       <div class="relative w-full max-w-lg glass-modal sm:rounded-3xl rounded-t-[2.2rem] shadow-2xl overflow-hidden animate-slide-up max-h-[90vh] flex flex-col border border-white/40">
@@ -1021,6 +1097,36 @@
         </div>
 
         <div class="p-5 overflow-y-auto space-y-6 flex-1">
+          <!-- 0. Foto de Perfil de Pareja -->
+          <div class="pb-4 border-b border-black/5">
+            <h4 class="text-[13px] font-black uppercase tracking-wider text-slate-700 mb-2.5 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15a2.25 2.25 0 002.25-2.25V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+              </svg>
+              <span>Foto de Perfil Compartida</span>
+            </h4>
+            <div class="flex items-center gap-4">
+              <!-- Preview of Current Avatar -->
+              <div class="w-16 h-16 rounded-[1.1rem] overflow-hidden bg-slate-100 flex items-center justify-center border border-black/10 shrink-0">
+                <img v-if="profileAvatarUrl" :src="profileAvatarUrl" class="w-full h-full object-cover" />
+                <div v-else class="w-full h-full flex items-center justify-center text-white text-[18px] font-black"
+                     style="background: linear-gradient(135deg, var(--accent) 0%, #ff7eb3 100%);">
+                  <span>{{ (currentUser?.name || 'A')[0].toUpperCase() }}&amp;{{ (partnerName || 'B')[0].toUpperCase() }}</span>
+                </div>
+              </div>
+              <!-- Upload Action -->
+              <div class="flex-1">
+                <input type="file" ref="avatarInput" accept="image/*" class="hidden" @change="onAvatarFileSelected" />
+                <button @click="triggerAvatarUpload" :disabled="uploadingAvatar" class="btn btn-soft btn-sm flex items-center gap-1.5">
+                  <svg v-if="uploadingAvatar" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
+                  <span>{{ uploadingAvatar ? 'Subiendo...' : 'Cambiar Foto' }}</span>
+                </button>
+                <p class="text-[10px] text-slate-500 mt-1">Guarda una foto especial de ustedes. Se almacena en Cloudflare R2.</p>
+              </div>
+            </div>
+          </div>
+
           <!-- 1. Elige tu Tema / Fondo de Santuario -->
           <div>
             <h4 class="text-[13px] font-black uppercase tracking-wider text-slate-700 mb-2.5 flex items-center gap-1.5">
@@ -1054,12 +1160,20 @@
                    @click="applyCustomization(profileTheme, frm.id, pinnedDateIds)"
                    :class="profileFrame === frm.id ? 'bg-white/80 ring-2 ring-rose-500 shadow-md' : 'bg-white/30 opacity-70 hover:opacity-100'"
                    class="cursor-pointer rounded-2xl p-3 border border-black/10 transition-all text-center flex flex-col items-center justify-center gap-2">
-                <div class="w-10 h-10 rounded-[0.75rem] flex items-center justify-center p-[2px] transition-all duration-300 shadow"
-                     :style="getFrameStyle(frm.id)">
-                  <div class="w-full h-full rounded-[0.6rem] flex items-center justify-center text-white text-xs font-black"
-                       style="background: linear-gradient(135deg, var(--accent) 0%, #ff7eb3 100%);">
-                    <span>{{ (currentUser?.name || 'A')[0].toUpperCase() }}&amp;{{ (partnerName || 'B')[0].toUpperCase() }}</span>
+                <div class="w-10 h-10 rounded-[0.75rem] flex items-center justify-center p-[2px] transition-all duration-300 shadow relative"
+                     :style="getFrameImageUrl(frm.id) ? 'background: transparent; padding: 0;' : getFrameStyle(frm.id)">
+                  <div class="w-full h-full rounded-[0.6rem] overflow-hidden flex items-center justify-center bg-slate-100">
+                    <img v-if="profileAvatarUrl" :src="profileAvatarUrl" class="w-full h-full object-cover" />
+                    <div v-else class="w-full h-full flex items-center justify-center text-white text-[10px] font-black"
+                         style="background: linear-gradient(135deg, var(--accent) 0%, #ff7eb3 100%);">
+                      <span>{{ (currentUser?.name || 'A')[0].toUpperCase() }}&amp;{{ (partnerName || 'B')[0].toUpperCase() }}</span>
+                    </div>
                   </div>
+                  <!-- PNG Frame Overlay for the preview -->
+                  <img v-if="getFrameImageUrl(frm.id)" 
+                       :src="getFrameImageUrl(frm.id)" 
+                       class="absolute pointer-events-none scale-[1.12] z-10" 
+                       style="inset: -2px; width: calc(100% + 4px); height: calc(100% + 4px); max-width: none;" />
                 </div>
                 <span class="text-[11px] font-bold text-slate-800 leading-tight">{{ frm.name }}</span>
               </div>
@@ -1339,6 +1453,54 @@ const profileLikes = ref(0);
 const userLikedProfile = ref(false);
 const showSanctuaryModal = ref(false);
 
+// ponytail: Added reactive states and upload handlers for profile avatar and achievement popups
+const profileAvatarUrl = ref(null);
+const selectedAchievement = ref(null);
+const avatarInput = ref(null);
+const uploadingAvatar = ref(false);
+
+const isDarkTheme = computed(() => {
+  return ['cosmic', 'animated'].includes(profileTheme.value);
+});
+
+const triggerAvatarUpload = () => {
+  if (avatarInput.value) {
+    avatarInput.value.click();
+  }
+};
+
+const onAvatarFileSelected = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    showPopup('La imagen es demasiado grande. Máximo 5MB.');
+    return;
+  }
+  uploadingAvatar.value = true;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const base64Str = e.target.result;
+      const res = await api.updateCoupleAvatar(base64Str);
+      if (res && res.avatarUrl) {
+        profileAvatarUrl.value = res.avatarUrl;
+        showPopup('¡Foto de perfil de pareja actualizada con éxito!');
+      }
+    } catch (err) {
+      console.error('Error al subir avatar:', err);
+      showPopup(err.message || 'Error al actualizar foto de perfil.');
+    } finally {
+      uploadingAvatar.value = false;
+      if (avatarInput.value) avatarInput.value.value = '';
+    }
+  };
+  reader.onerror = () => {
+    showPopup('Error al leer el archivo.');
+    uploadingAvatar.value = false;
+  };
+  reader.readAsDataURL(file);
+};
+
 const coupleXp = computed(() => {
   return (totalDatesCount.value * 100) + (loveStreak.value * 25) + (maxSlots.value * 50) + (unclaimedStreakRewards.value * 30);
 });
@@ -1430,14 +1592,17 @@ const availableThemes = [
   { id: 'default', name: 'Liquid Glass (Clásico)', border: 'border-white/50', bgStyle: 'background: rgba(255, 255, 255, 0.65);' },
   { id: 'ruby', name: 'Atardecer Rubí', border: 'border-rose-400/70', bgStyle: 'background: linear-gradient(135deg, rgba(244,63,94,0.18) 0%, rgba(190,18,60,0.30) 100%);' },
   { id: 'cyber', name: 'Neón Cyberpunk', border: 'border-cyan-400/80', bgStyle: 'background: linear-gradient(135deg, rgba(6,182,212,0.18) 0%, rgba(59,130,246,0.30) 100%);' },
-  { id: 'gold', name: 'Oro Imperial (Élite)', border: 'border-amber-400/80', bgStyle: 'background: linear-gradient(135deg, rgba(245,158,11,0.22) 0%, rgba(217,119,6,0.34) 100%);' }
+  { id: 'gold', name: 'Oro Imperial (Élite)', border: 'border-amber-400/80', bgStyle: 'background: linear-gradient(135deg, rgba(245,158,11,0.22) 0%, rgba(217,119,6,0.34) 100%);' },
+  { id: 'cosmic', name: 'Fondo Cósmico (Estático)', border: 'border-purple-400/70', bgStyle: 'background: url(\'/backgrounds/cosmic_love.jpg\') center/cover no-repeat;' },
+  { id: 'animated', name: 'Flujo de Corazones (Animado)', border: 'border-pink-500/80', bgStyle: 'background: linear-gradient(135deg, rgba(244,63,94,0.10) 0%, rgba(190,18,60,0.20) 100%), url(\'/backgrounds/glowing_hearts.jpg\'); background-size: cover, 120px 120px; animation: heartsMove 20s linear infinite;' }
 ];
 
 const availableFrames = [
   { id: 'none', name: 'Sin Marco' },
   { id: 'sakura', name: 'Flores Sakura' },
   { id: 'ice', name: 'Corona Glacial' },
-  { id: 'gold', name: 'Aureola Dorada' }
+  { id: 'gold', name: 'Aureola Dorada' },
+  { id: 'neon_heart', name: 'Corazón Neón (Imagen)', imageUrl: '/frames/cyber_frame.png' }
 ];
 
 const getFrameStyle = (frameId) => {
@@ -1451,6 +1616,11 @@ const getFrameStyle = (frameId) => {
     return 'background: linear-gradient(135deg, #fbbf24, #d97706); padding: 3px; box-shadow: 0 0 18px rgba(217,119,6,0.6);';
   }
   return 'background: transparent; padding: 0;';
+};
+
+const getFrameImageUrl = (frameId) => {
+  const frame = availableFrames.find(f => f.id === frameId);
+  return frame?.imageUrl || null;
 };
 
 const applyCustomization = async (newTheme, newFrame, newPinned) => {
@@ -2344,6 +2514,7 @@ const fetchProfile = async () => {
     }
     if (profile.profileLikes !== undefined) profileLikes.value = profile.profileLikes || 0;
     if (profile.userLikedProfile !== undefined) userLikedProfile.value = profile.userLikedProfile || false;
+    if (profile.profileAvatarUrl !== undefined) profileAvatarUrl.value = profile.profileAvatarUrl || null;
   }
   partnerName.value = profile.partnerName || 'Pareja';
   partnerId.value = profile.partnerId || null;
@@ -2466,4 +2637,14 @@ onUnmounted(() => {
 ion-toolbar { --background: transparent; --border-width: 0; }
 .scrollbar-none::-webkit-scrollbar { display: none; }
 .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ponytail: css animation for sliding animated heart background theme */
+@keyframes heartsMove {
+  0% {
+    background-position: center, 0 0;
+  }
+  100% {
+    background-position: center, 120px 120px;
+  }
+}
 </style>

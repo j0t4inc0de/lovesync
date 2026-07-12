@@ -7,7 +7,8 @@
 CREATE TABLE public.couples (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
-    slots INT DEFAULT 10 NOT NULL
+    slots INT DEFAULT 10 NOT NULL,
+    profile_avatar_url VARCHAR(500) DEFAULT NULL
 );
 
 -- 2. Create Profiles Table (Linked to Supabase Auth)

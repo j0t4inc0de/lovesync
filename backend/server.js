@@ -126,7 +126,7 @@ const initDatabase = async (retries = 10, delay = 3000) => {
       // Run schema
       await pool.query(schemaSql);
       try {
-        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_theme VARCHAR(50) DEFAULT \'default\', ADD COLUMN IF NOT EXISTS profile_frame VARCHAR(50) DEFAULT \'none\', ADD COLUMN IF NOT EXISTS pinned_dates JSONB DEFAULT \'[]\'::jsonb, ADD COLUMN IF NOT EXISTS profile_bio VARCHAR(300) DEFAULT \'\', ADD COLUMN IF NOT EXISTS profile_likes INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_likes_by JSONB DEFAULT \'[]\'::jsonb;');
+        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_theme VARCHAR(50) DEFAULT \'default\', ADD COLUMN IF NOT EXISTS profile_frame VARCHAR(50) DEFAULT \'none\', ADD COLUMN IF NOT EXISTS pinned_dates JSONB DEFAULT \'[]\'::jsonb, ADD COLUMN IF NOT EXISTS profile_bio VARCHAR(300) DEFAULT \'\', ADD COLUMN IF NOT EXISTS profile_likes INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_likes_by JSONB DEFAULT \'[]\'::jsonb, ADD COLUMN IF NOT EXISTS profile_avatar_url VARCHAR(500) DEFAULT NULL;');
         await pool.query('ALTER TABLE dates ADD COLUMN IF NOT EXISTS reports_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS reported_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;');
       } catch (e) {
         console.warn('Advertencia ejecutando alter en initDatabase:', e.message);
@@ -272,9 +272,8 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
         partnerId = partnerRes.rows[0].id;
       }
 
-      // Ensure streak columns exist in production even if startup migrations were skipped
       try {
-        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS previous_streak_frozen_at TIMESTAMP DEFAULT NULL, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_theme VARCHAR(50) DEFAULT \'default\', ADD COLUMN IF NOT EXISTS profile_frame VARCHAR(50) DEFAULT \'none\', ADD COLUMN IF NOT EXISTS pinned_dates JSONB DEFAULT \'[]\'::jsonb, ADD COLUMN IF NOT EXISTS profile_bio VARCHAR(300) DEFAULT \'\', ADD COLUMN IF NOT EXISTS profile_likes INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_likes_by JSONB DEFAULT \'[]\'::jsonb;');
+        await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS previous_streak_frozen_at TIMESTAMP DEFAULT NULL, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_theme VARCHAR(50) DEFAULT \'default\', ADD COLUMN IF NOT EXISTS profile_frame VARCHAR(50) DEFAULT \'none\', ADD COLUMN IF NOT EXISTS pinned_dates JSONB DEFAULT \'[]\'::jsonb, ADD COLUMN IF NOT EXISTS profile_bio VARCHAR(300) DEFAULT \'\', ADD COLUMN IF NOT EXISTS profile_likes INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_likes_by JSONB DEFAULT \'[]\'::jsonb, ADD COLUMN IF NOT EXISTS profile_avatar_url VARCHAR(500) DEFAULT NULL;');
       } catch (migErr) {
         // Ignored if already exists or permissions
       }
@@ -298,6 +297,7 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
            COALESCE(c.profile_bio, '') AS profile_bio,
            COALESCE(c.profile_likes, 0) AS profile_likes,
            COALESCE(c.profile_likes_by, '[]'::jsonb) AS profile_likes_by,
+           c.profile_avatar_url,
            (SELECT COUNT(*)::int FROM dates WHERE couple_id = c.id) AS total_dates_count,
            COALESCE(
              (SELECT SUM(amount) FROM couple_extra_slots 
@@ -382,7 +382,8 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
           totalDatesCount: couple.total_dates_count || 0,
           profileBio: couple.profile_bio || '',
           profileLikes: couple.profile_likes || 0,
-          userLikedProfile: Array.isArray(couple.profile_likes_by) ? couple.profile_likes_by.includes(req.user.id) : false
+          userLikedProfile: Array.isArray(couple.profile_likes_by) ? couple.profile_likes_by.includes(req.user.id) : false,
+          profileAvatarUrl: couple.profile_avatar_url || null
         });
         return;
       }
@@ -408,7 +409,8 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
       profileTheme: 'default',
       profileFrame: 'none',
       pinnedDates: [],
-      totalDatesCount: 0
+      totalDatesCount: 0,
+      profileAvatarUrl: null
     });
   } catch (error) {
     console.error(error);
@@ -1001,6 +1003,30 @@ app.post('/api/profile/steam/like', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error registrando like al perfil:', error);
     res.status(500).json({ error: 'Error al registrar like.' });
+  }
+});
+
+// Steam Sanctuary Profile Avatar Upload
+app.post('/api/profile/steam/avatar', authenticateToken, async (req, res) => {
+  const { avatar } = req.body;
+  if (!avatar) return res.status(400).json({ error: 'La imagen de avatar es requerida.' });
+
+  try {
+    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    const coupleId = userRes.rows[0]?.couple_id;
+    if (!coupleId) return res.status(400).json({ error: 'No tienes una pareja vinculada.' });
+
+    const avatarUrl = await uploadToR2IfBase64(avatar, coupleId);
+
+    await pool.query(
+      'UPDATE couples SET profile_avatar_url = $1 WHERE id = $2',
+      [avatarUrl, coupleId]
+    );
+
+    res.json({ success: true, avatarUrl });
+  } catch (error) {
+    console.error('Error guardando avatar de perfil:', error);
+    res.status(500).json({ error: 'Error al guardar avatar del perfil.' });
   }
 });
 
