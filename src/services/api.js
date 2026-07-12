@@ -214,6 +214,8 @@ export const api = {
     });
   },
 
+  adminSeedCosmetics: () => request('/api/admin/seed-cosmetics', { method: 'POST' }),
+
   getStoreCosmetics: () => request('/api/store/cosmetics'),
   getMyCosmetics: () => request('/api/profile/my-cosmetics'),
   buyCosmetic: (cosmeticId) => request('/api/store/cosmetics/buy', { method: 'POST', body: JSON.stringify({ cosmeticId }) }),

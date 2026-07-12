@@ -128,8 +128,12 @@ const initDatabase = async (retries = 10, delay = 3000) => {
       try {
         await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_theme VARCHAR(50) DEFAULT \'default\', ADD COLUMN IF NOT EXISTS profile_frame VARCHAR(50) DEFAULT \'none\', ADD COLUMN IF NOT EXISTS pinned_dates JSONB DEFAULT \'[]\'::jsonb, ADD COLUMN IF NOT EXISTS profile_bio VARCHAR(300) DEFAULT \'\', ADD COLUMN IF NOT EXISTS profile_likes INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_likes_by JSONB DEFAULT \'[]\'::jsonb, ADD COLUMN IF NOT EXISTS profile_avatar_url VARCHAR(500) DEFAULT NULL;');
         await pool.query('ALTER TABLE dates ADD COLUMN IF NOT EXISTS reports_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS reported_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;');
-        
-        // Seed initial approved cosmetics
+      } catch (e) {
+        console.warn('Advertencia ejecutando alter en initDatabase (no crítico):', e.message);
+      }
+
+      // Seed de cosméticos: bloque independiente para que nunca falle silenciosamente
+      try {
         await pool.query(`
           INSERT INTO cosmetics (type, name, description, price_in_slots, resource_url, extra_styles, approved)
           SELECT 'frame', 'Sakura', 'Un hermoso marco de flores de cerezo para tu perfil', 20, '/frames/sakura_frame.png', '{"borderColor": "#ffb7c5"}'::jsonb, true
@@ -145,8 +149,9 @@ const initDatabase = async (retries = 10, delay = 3000) => {
           SELECT 'background', 'Animated Hearts', 'Un fondo animado con corazones flotantes', 40, '/backgrounds/glowing_hearts.svg', '{"animation": "float 10s infinite"}'::jsonb, true
           WHERE NOT EXISTS (SELECT 1 FROM cosmetics WHERE name = 'Animated Hearts');
         `);
+        console.log('Cosmetics seed verificado correctamente.');
       } catch (e) {
-        console.warn('Advertencia ejecutando alter/seed en initDatabase:', e.message);
+        console.error('ERROR al sembrar cosméticos iniciales:', e.message);
       }
       console.log('PostgreSQL database schemas verified/created successfully.');
       return;
@@ -1956,6 +1961,36 @@ io.on('connection', (socket) => {
 });
 
 // ── Cosmetics Store Endpoints ──
+
+// POST /api/admin/seed-cosmetics: Manually seed cosmetics (admin only, for production use)
+app.post('/api/admin/seed-cosmetics', authenticateToken, async (req, res) => {
+  try {
+    const userRes = await pool.query('SELECT is_admin FROM users WHERE id = $1', [req.user.id]);
+    if (!userRes.rows[0]?.is_admin) {
+      return res.status(403).json({ error: 'Acceso denegado. Solo administradores.' });
+    }
+    const results = [];
+    const seeds = [
+      { type: 'frame', name: 'Sakura', description: 'Un hermoso marco de flores de cerezo para tu perfil', price: 20, url: '/frames/sakura_frame.png', styles: '{"borderColor": "#ffb7c5"}' },
+      { type: 'background', name: 'Cosmic', description: 'Un fondo interestelar lleno de estrellas y nebulosas', price: 30, url: '/backgrounds/cosmic_love.jpg', styles: '{"backgroundSize": "cover"}' },
+      { type: 'background', name: 'Animated Hearts', description: 'Un fondo animado con corazones flotantes', price: 40, url: '/backgrounds/glowing_hearts.svg', styles: '{"animation": "float 10s infinite"}' },
+    ];
+    for (const s of seeds) {
+      const r = await pool.query(
+        `INSERT INTO cosmetics (type, name, description, price_in_slots, resource_url, extra_styles, approved)
+         SELECT $1, $2, $3, $4, $5, $6::jsonb, true
+         WHERE NOT EXISTS (SELECT 1 FROM cosmetics WHERE name = $2)
+         RETURNING id, name`,
+        [s.type, s.name, s.description, s.price, s.url, s.styles]
+      );
+      results.push(r.rows[0] ? `Insertado: ${s.name}` : `Ya existe: ${s.name}`);
+    }
+    res.json({ ok: true, results });
+  } catch (error) {
+    console.error('Error en seed-cosmetics:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // GET /api/store/cosmetics: Catalog of approved cosmetics
 app.get('/api/store/cosmetics', authenticateToken, async (req, res) => {

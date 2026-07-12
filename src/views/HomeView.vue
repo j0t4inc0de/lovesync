@@ -952,7 +952,12 @@
             <p class="text-[0.65rem] font-bold uppercase tracking-widest mb-3 text-white/40">Administrador</p>
             <h3 class="text-[17px] font-bold mb-1" style="font-family: 'Comfortaa', sans-serif;">Panel de Control</h3>
             <p class="text-[13px] mb-4 leading-relaxed text-white/60">Gestiona parejas, asigna planes de prueba o actualiza cupos mensuales.</p>
-            <button @click="openAdminModal" class="btn w-full text-[15px] font-bold" style="background: #1a1a2e; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.25);">Abrir Panel Admin</button>
+            <div class="flex flex-col gap-2">
+              <button @click="openAdminModal" class="btn w-full text-[15px] font-bold" style="background: #1a1a2e; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.25);">Abrir Panel Admin</button>
+              <button @click="runSeedCosmetics" class="btn w-full text-[13px] font-semibold" style="background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                🎨 Sembrar Cosméticos en DB
+              </button>
+            </div>
           </div>
 
           <!-- Cerrar Sesión -->
@@ -2159,6 +2164,16 @@ const openAdminModal = () => {
 
 const closeAdminModal = () => {
   showAdminModal.value = false;
+};
+
+const runSeedCosmetics = async () => {
+  try {
+    const res = await api.adminSeedCosmetics();
+    showPopup('✅ ' + (res.results?.join(' · ') || 'Cosméticos sembrados correctamente.'));
+    await loadStoreData();
+  } catch (err) {
+    showPopup('❌ Error al sembrar: ' + (err.message || err));
+  }
 };
 
 const currentUser = ref(null);
