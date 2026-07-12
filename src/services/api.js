@@ -213,6 +213,10 @@ export const api = {
       method: 'DELETE'
     });
   },
+
+  getStoreCosmetics: () => request('/api/store/cosmetics'),
+  getMyCosmetics: () => request('/api/profile/my-cosmetics'),
+  buyCosmetic: (cosmeticId) => request('/api/store/cosmetics/buy', { method: 'POST', body: JSON.stringify({ cosmeticId }) }),
   
   logout: () => {
     removeToken();

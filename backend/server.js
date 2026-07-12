@@ -128,8 +128,25 @@ const initDatabase = async (retries = 10, delay = 3000) => {
       try {
         await pool.query('ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL, ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS permanent_slots INT DEFAULT 0, ADD COLUMN IF NOT EXISTS unclaimed_streak_rewards INT DEFAULT 0, ADD COLUMN IF NOT EXISTS last_rewarded_streak INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_theme VARCHAR(50) DEFAULT \'default\', ADD COLUMN IF NOT EXISTS profile_frame VARCHAR(50) DEFAULT \'none\', ADD COLUMN IF NOT EXISTS pinned_dates JSONB DEFAULT \'[]\'::jsonb, ADD COLUMN IF NOT EXISTS profile_bio VARCHAR(300) DEFAULT \'\', ADD COLUMN IF NOT EXISTS profile_likes INT DEFAULT 0, ADD COLUMN IF NOT EXISTS profile_likes_by JSONB DEFAULT \'[]\'::jsonb, ADD COLUMN IF NOT EXISTS profile_avatar_url VARCHAR(500) DEFAULT NULL;');
         await pool.query('ALTER TABLE dates ADD COLUMN IF NOT EXISTS reports_count INT DEFAULT 0, ADD COLUMN IF NOT EXISTS reported_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;');
+        
+        // Seed initial approved cosmetics
+        await pool.query(`
+          INSERT INTO cosmetics (type, name, description, price_in_slots, resource_url, extra_styles, approved)
+          SELECT 'frame', 'Sakura', 'Un hermoso marco de flores de cerezo para tu perfil', 20, '/frames/sakura_frame.png', '{"borderColor": "#ffb7c5"}'::jsonb, true
+          WHERE NOT EXISTS (SELECT 1 FROM cosmetics WHERE name = 'Sakura');
+        `);
+        await pool.query(`
+          INSERT INTO cosmetics (type, name, description, price_in_slots, resource_url, extra_styles, approved)
+          SELECT 'background', 'Cosmic', 'Un fondo interestelar lleno de estrellas y nebulosas', 30, '/backgrounds/cosmic_love.jpg', '{"backgroundSize": "cover"}'::jsonb, true
+          WHERE NOT EXISTS (SELECT 1 FROM cosmetics WHERE name = 'Cosmic');
+        `);
+        await pool.query(`
+          INSERT INTO cosmetics (type, name, description, price_in_slots, resource_url, extra_styles, approved)
+          SELECT 'background', 'Animated Hearts', 'Un fondo animado con corazones flotantes', 40, '/backgrounds/glowing_hearts.svg', '{"animation": "float 10s infinite"}'::jsonb, true
+          WHERE NOT EXISTS (SELECT 1 FROM cosmetics WHERE name = 'Animated Hearts');
+        `);
       } catch (e) {
-        console.warn('Advertencia ejecutando alter en initDatabase:', e.message);
+        console.warn('Advertencia ejecutando alter/seed en initDatabase:', e.message);
       }
       console.log('PostgreSQL database schemas verified/created successfully.');
       return;
@@ -864,7 +881,7 @@ app.post('/api/profile/streak/rescue-rewards', authenticateToken, async (req, re
 
     const restoredStreak = cp.previous_streak > 0 ? cp.previous_streak : (cp.streak_count || 1);
     await pool.query(
-      'UPDATE couples SET streak_count = $1, last_streak_date = CURRENT_DATE, previous_streak = 0, unclaimed_streak_rewards = 0 WHERE id = $2',
+      'UPDATE couples SET streak_count = $1, last_streak_date = CURRENT_DATE, previous_streak = 0, unclaimed_streak_rewards = unclaimed_streak_rewards - 10 WHERE id = $2',
       [restoredStreak, coupleId]
     );
 
@@ -1936,6 +1953,200 @@ io.on('connection', (socket) => {
       }
     }
   });
+});
+
+// ── Cosmetics Store Endpoints ──
+
+// GET /api/store/cosmetics: Catalog of approved cosmetics
+app.get('/api/store/cosmetics', authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, type, name, description, price_in_slots, resource_url, extra_styles, creator_id, approved, created_at FROM cosmetics WHERE approved = true ORDER BY id DESC'
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching store cosmetics:', error);
+    res.status(500).json({ error: 'Error al obtener el catálogo de cosméticos.' });
+  }
+});
+
+// GET /api/profile/my-cosmetics: List of purchased cosmetic IDs for the current couple
+app.get('/api/profile/my-cosmetics', authenticateToken, async (req, res) => {
+  try {
+    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    const coupleId = userRes.rows[0]?.couple_id;
+    if (!coupleId) {
+      return res.status(400).json({ error: 'No tienes una pareja vinculada.' });
+    }
+
+    const result = await pool.query(
+      'SELECT cosmetic_id FROM couple_cosmetics WHERE couple_id = $1',
+      [coupleId]
+    );
+    const cosmeticIds = result.rows.map(row => row.cosmetic_id);
+    res.json(cosmeticIds);
+  } catch (error) {
+    console.error('Error fetching couple cosmetics:', error);
+    res.status(500).json({ error: 'Error al obtener tus cosméticos adquiridos.' });
+  }
+});
+
+// POST /api/store/cosmetics/buy: Purchase a cosmetic using a hybrid slot spending system
+app.post('/api/store/cosmetics/buy', authenticateToken, async (req, res) => {
+  const cosmeticId = Number(req.body.cosmeticId);
+  if (!cosmeticId || isNaN(cosmeticId)) {
+    return res.status(400).json({ error: 'ID de cosmético inválido.' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // 1. Get user couple ID
+    const userRes = await client.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    const coupleId = userRes.rows[0]?.couple_id;
+    if (!coupleId) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'No tienes una pareja vinculada.' });
+    }
+
+    // 2. Validate cosmetic existence and approval status
+    const cosmeticRes = await client.query('SELECT * FROM cosmetics WHERE id = $1 AND approved = true', [cosmeticId]);
+    if (cosmeticRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'El cosmético no existe o no está aprobado.' });
+    }
+    const cosmetic = cosmeticRes.rows[0];
+
+    // 3. Validate that couple doesn't already own the cosmetic
+    const ownedRes = await client.query(
+      'SELECT 1 FROM couple_cosmetics WHERE couple_id = $1 AND cosmetic_id = $2',
+      [coupleId, cosmeticId]
+    );
+    if (ownedRes.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Tu pareja ya ha adquirido este cosmético.' });
+    }
+
+    // 4. Lock couple row to prevent slot double-spending
+    const coupleInfoRes = await client.query(
+      'SELECT slots AS base_slots, COALESCE(permanent_slots, 0) AS permanent_slots FROM couples WHERE id = $1 FOR UPDATE',
+      [coupleId]
+    );
+    if (coupleInfoRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'No se encontró la información de la pareja.' });
+    }
+    const coupleInfo = coupleInfoRes.rows[0];
+    const base_slots = coupleInfo.base_slots || 10;
+    const permanent_slots = coupleInfo.permanent_slots || 0;
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    // 5. Get extra slots for current month
+    const extraSlotsRes = await client.query(
+      'SELECT COALESCE(SUM(amount), 0)::int AS extra_slots FROM couple_extra_slots WHERE couple_id = $1 AND year = $2 AND month = $3',
+      [coupleId, currentYear, currentMonth]
+    );
+    const extra_slots = extraSlotsRes.rows[0]?.extra_slots || 0;
+
+    // 6. Get dates registered this month
+    const datesRes = await client.query(
+      'SELECT COUNT(*)::int AS used_slots FROM dates WHERE couple_id = $1 AND EXTRACT(YEAR FROM created_at)::int = $2 AND EXTRACT(MONTH FROM created_at)::int = $3',
+      [coupleId, currentYear, currentMonth]
+    );
+    const dates_this_month = datesRes.rows[0]?.used_slots || 0;
+
+    // 7. Calculate hybrid slots balance
+    const free_slots = Math.max(0, (base_slots + extra_slots) - dates_this_month);
+    const purchased_slots = permanent_slots;
+
+    const price_in_slots = cosmetic.price_in_slots;
+    if (free_slots + purchased_slots < price_in_slots) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({
+        error: `Cupos insuficientes. Este cosmético requiere ${price_in_slots} cupos, pero solo dispones de ${free_slots + purchased_slots} (${free_slots} gratuitos y ${purchased_slots} permanentes).`
+      });
+    }
+
+    // 8. Apply hybrid discount
+    let freeSlotsConsumed = 0;
+    let permanentSlotsConsumed = 0;
+
+    if (free_slots > 0) {
+      if (free_slots >= price_in_slots) {
+        freeSlotsConsumed = price_in_slots;
+      } else {
+        freeSlotsConsumed = free_slots;
+        permanentSlotsConsumed = price_in_slots - free_slots;
+      }
+    } else {
+      permanentSlotsConsumed = price_in_slots;
+    }
+
+    // Consume free slots (negative entry in couple_extra_slots)
+    if (freeSlotsConsumed > 0) {
+      await client.query(
+        'INSERT INTO couple_extra_slots (couple_id, amount, year, month) VALUES ($1, $2, $3, $4)',
+        [coupleId, -freeSlotsConsumed, currentYear, currentMonth]
+      );
+    }
+
+    // Consume permanent slots (subtract directly from permanent_slots)
+    if (permanentSlotsConsumed > 0) {
+      await client.query(
+        'UPDATE couples SET permanent_slots = permanent_slots - $1 WHERE id = $2',
+        [permanentSlotsConsumed, coupleId]
+      );
+    }
+
+    // 9. Register purchase in couple_cosmetics
+    await client.query(
+      'INSERT INTO couple_cosmetics (couple_id, cosmetic_id) VALUES ($1, $2)',
+      [coupleId, cosmeticId]
+    );
+
+    // 10. Calculate creator payout commission
+    // $150 CLP per purchased slot spent, $15 CLP per free slot spent
+    const creator_payout_clp = (freeSlotsConsumed * 15) + (permanentSlotsConsumed * 150);
+
+    // 11. Log cosmetic purchase
+    await client.query(
+      `INSERT INTO cosmetic_purchases_log (couple_id, cosmetic_id, creator_id, slots_spent, creator_payout_clp)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [coupleId, cosmeticId, cosmetic.creator_id, price_in_slots, creator_payout_clp]
+    );
+
+    // 12. Add payout to creator's earnings (if applicable)
+    if (cosmetic.creator_id) {
+      await client.query(
+        'UPDATE creators SET total_earned_clp = total_earned_clp + $1 WHERE id = $2',
+        [creator_payout_clp, cosmetic.creator_id]
+      );
+    }
+
+    await client.query('COMMIT');
+
+    res.json({
+      success: true,
+      message: `¡Cosmético "${cosmetic.name}" adquirido con éxito!`,
+      details: {
+        price: price_in_slots,
+        freeSlotsConsumed,
+        permanentSlotsConsumed,
+        creatorPayoutClp: creator_payout_clp
+      }
+    });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error in POST /api/store/cosmetics/buy:', error);
+    res.status(500).json({ error: 'Error interno del servidor al procesar la compra.' });
+  } finally {
+    client.release();
+  }
 });
 
 // Start Server and Initialize Database

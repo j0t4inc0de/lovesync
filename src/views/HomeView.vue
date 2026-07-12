@@ -380,10 +380,32 @@
         <!-- ═══ PERFIL / SANTUARIO DE PAREJA ═══ -->
         <div v-if="currentTab === 'profile'" class="space-y-4 pb-12 animate-fade-in">
 
+          <!-- Barra flotante de previsualización en vivo -->
+          <div v-if="isProductPreviewActive" 
+               class="sticky top-2 z-[100] p-4 rounded-2xl flex items-center justify-between border border-rose-300 shadow-lg animate-fade-in transition-all duration-300"
+               style="background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 10px 30px -10px rgba(244,63,94,0.2);">
+            <div class="flex flex-col">
+              <span class="text-[11px] font-black text-rose-500 uppercase tracking-wider">Previsualizando Santuario</span>
+              <span class="text-[13px] font-black text-slate-800" style="font-family: 'Comfortaa', sans-serif;">
+                {{ previewedCosmetic?.name }}
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button @click="buyCosmeticFromPreview" 
+                      class="btn-primary !rounded-xl !py-2 !px-3 text-[11px] font-bold shadow-sm whitespace-nowrap active:scale-95 transition-all">
+                Canjear por {{ previewedCosmetic?.price_in_slots }} cupos
+              </button>
+              <button @click="exitPreview" 
+                      class="btn-ghost !rounded-xl !py-2 !px-3 text-[11px] font-bold border border-black/10 whitespace-nowrap active:scale-95 transition-all">
+                Salir
+              </button>
+            </div>
+          </div>
+
           <!-- ── HERO BANNER ─────────────────────────────── -->
           <!-- Usa el tema elegido pero siempre respeta el acento de la app -->
           <div class="rounded-[2rem] overflow-hidden relative transition-all duration-500"
-               :style="(availableThemes.find(t => t.id === profileTheme)?.bgStyle || 'background: rgba(255,255,255,0.68);') + (isDarkTheme ? 'color: #ffffff; --text-primary: #ffffff; --text-secondary: rgba(255,255,255,0.85); --text-muted: rgba(255,255,255,0.65); --border-subtle: rgba(255,255,255,0.2);' : '')"
+               :style="activeBackgroundStyle + (isDarkTheme ? 'color: #ffffff; --text-primary: #ffffff; --text-secondary: rgba(255,255,255,0.85); --text-muted: rgba(255,255,255,0.65); --border-subtle: rgba(255,255,255,0.2);' : '')"
                style="border: 1px solid rgba(255,255,255,0.55); box-shadow: 0 8px 32px rgba(255,55,95,0.07), 0 1px 2px rgba(0,0,0,0.02);">
             
             <!-- Orbes decorativos internos coherentes con el fondo de la app -->
@@ -396,7 +418,7 @@
                 <!-- Avatar con marco -->
                 <div class="relative shrink-0">
                   <div class="w-20 h-20 rounded-[1.45rem] flex items-center justify-center p-[3px] transition-all duration-300 shadow-lg relative"
-                       :style="getFrameImageUrl(profileFrame) ? 'background: transparent; padding: 0;' : getFrameStyle(profileFrame)">
+                       :style="activeFrameIsImage ? 'background: transparent; padding: 0;' : activeFrameStyle">
                     <div class="w-full h-full rounded-[1.25rem] overflow-hidden flex items-center justify-center bg-slate-100 relative z-0">
                       <img v-if="profileAvatarUrl" :src="profileAvatarUrl" class="w-full h-full object-cover" />
                       <div v-else class="w-full h-full flex items-center justify-center text-white text-2xl font-black"
@@ -405,8 +427,8 @@
                       </div>
                     </div>
                     <!-- Image-based Frame Overlay -->
-                    <img v-if="getFrameImageUrl(profileFrame)" 
-                         :src="getFrameImageUrl(profileFrame)" 
+                    <img v-if="activeFrameIsImage" 
+                         :src="activeFrameImageUrl" 
                          class="absolute pointer-events-none scale-[1.12] z-10" 
                          style="inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px); max-width: none;" />
                   </div>
@@ -659,15 +681,178 @@
             </div>
           </div>
 
-          <!-- Pestañas de la Tienda (Marcos, Fondos, Animaciones) -->
-          <div class="glass rounded-2xl p-6 text-center border border-white/50 shadow-sm" style="background: rgba(255,255,255,0.45);">
-            <div class="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center mx-auto mb-3" style="color: var(--accent);">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-              </svg>
+          <!-- Slot Balance Header -->
+          <div class="glass rounded-2xl p-4 border border-white/50 flex justify-between items-center" style="background: rgba(255,255,255,0.45);">
+            <div>
+              <p class="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-wider">Tus cupos disponibles</p>
+              <p class="text-[16px] font-black text-rose-500 flex items-center gap-1.5 mt-0.5">
+                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                {{ Math.max(0, (baseSlots + extraSlots) - dateSlots) + permanentSlots }} cupos
+              </p>
             </div>
-            <p class="text-[14px] font-black" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Tienda Próximamente Disponible</p>
-            <p class="text-[11px] mt-1.5 leading-relaxed" style="color: var(--text-secondary);">Aquí podrás canjear marcos de avatar y fondos de santuario exclusivos diseñados por creadores independientes usando tus cupos de citas acumulados.</p>
+            <div class="text-right text-[10px] font-semibold text-[var(--text-secondary)]">
+              <div>Gratuitos: {{ Math.max(0, (baseSlots + extraSlots) - dateSlots) }}</div>
+              <div>Permanentes: {{ permanentSlots }}</div>
+            </div>
+          </div>
+
+          <!-- Sub-Tab Category Selector -->
+          <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            <button 
+              v-for="sub in [
+                { id: 'all', name: 'Todos' },
+                { id: 'frame', name: 'Marcos' },
+                { id: 'background', name: 'Fondos' },
+                { id: 'animation', name: 'Animaciones' }
+              ]" 
+              :key="sub.id"
+              @click="storeSubTab = sub.id"
+              class="px-4 py-2 rounded-2xl text-[12px] font-bold whitespace-nowrap transition-all duration-300 border"
+              :style="storeSubTab === sub.id 
+                ? 'background: var(--accent); color: white; border-color: var(--accent);' 
+                : 'background: rgba(255,255,255,0.45); color: var(--text-secondary); border-color: rgba(255,255,255,0.5);'"
+            >
+              {{ sub.name }}
+            </button>
+          </div>
+
+          <!-- Loading State -->
+          <div v-if="loadingStore" class="flex flex-col items-center justify-center py-12 gap-3">
+            <svg class="w-8 h-8 text-rose-500 animate-spin" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="32" stroke-dashoffset="10"/>
+            </svg>
+            <span class="text-[12px] font-bold text-[var(--text-secondary)]">Cargando catálogo de cosméticos...</span>
+          </div>
+
+          <!-- Empty State -->
+          <div v-else-if="filteredStoreCosmetics.length === 0" class="glass rounded-2xl p-6 text-center border border-white/50 shadow-sm" style="background: rgba(255,255,255,0.45);">
+            <p class="text-[13px] font-bold text-[var(--text-secondary)]">No hay cosméticos disponibles en esta categoría por el momento.</p>
+          </div>
+
+          <!-- Cosmetics Catalog Grid -->
+          <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div v-for="cosmetic in filteredStoreCosmetics" :key="cosmetic.id"
+                 class="glass rounded-3xl p-5 border border-white/50 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md flex flex-col justify-between"
+                 style="background: rgba(255,255,255,0.45);">
+              
+              <div>
+                <!-- Badge de tipo o estado -->
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full"
+                        :class="{
+                          'bg-pink-100 text-pink-600': cosmetic.type === 'frame',
+                          'bg-blue-100 text-blue-600': cosmetic.type === 'background',
+                          'bg-purple-100 text-purple-600': cosmetic.type === 'animation'
+                        }">
+                    {{ cosmetic.type === 'frame' ? 'Marco' : cosmetic.type === 'background' ? 'Fondo' : 'Animación' }}
+                  </span>
+                  
+                  <span v-if="myCosmetics.includes(cosmetic.id)" 
+                        class="text-[9px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full">
+                    Adquirido
+                  </span>
+                </div>
+                
+                <!-- Preview Visual del cosmético en la tarjeta -->
+                <div class="w-full aspect-[4/3] rounded-2xl mb-4 bg-slate-100/50 border border-white/40 flex items-center justify-center relative overflow-hidden">
+                  <!-- Si es Marco -->
+                  <template v-if="cosmetic.type === 'frame'">
+                    <div class="relative w-16 h-16 rounded-[1.2rem] flex items-center justify-center p-[2px]"
+                         :style="isPreviewFrameImage(cosmetic.resource_url) ? 'background: transparent; padding: 0;' : getPreviewFrameStyle(cosmetic.resource_url)">
+                      <div class="w-full h-full rounded-[1.1rem] overflow-hidden bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-xs">
+                        Mock
+                      </div>
+                      <img v-if="isPreviewFrameImage(cosmetic.resource_url)" 
+                           :src="getPreviewFrameImageUrl(cosmetic.resource_url)" 
+                           class="absolute pointer-events-none scale-[1.12] z-10" 
+                           style="inset: -3px; width: calc(100% + 6px); height: calc(100% + 6px); max-width: none;" />
+                    </div>
+                  </template>
+                  
+                  <!-- Si es Fondo -->
+                  <template v-else-if="cosmetic.type === 'background'">
+                    <div class="w-full h-full absolute inset-0"
+                         :style="cosmetic.resource_url.startsWith('background') || cosmetic.resource_url.startsWith('url(') || cosmetic.resource_url.startsWith('linear-gradient') ? (cosmetic.resource_url.startsWith('background') ? cosmetic.resource_url : `background: ${cosmetic.resource_url}`) : `background: url('${cosmetic.resource_url}') center/cover no-repeat`" />
+                    <div class="absolute inset-0 bg-black/10 flex items-center justify-center">
+                      <span class="text-white text-[10px] font-bold uppercase tracking-wider bg-black/30 px-2.5 py-1 rounded-full backdrop-blur-sm">Santuario</span>
+                    </div>
+                  </template>
+                  
+                  <!-- Si es Animación -->
+                  <template v-else>
+                    <div class="flex flex-col items-center gap-1.5">
+                      <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 animate-bounce">
+                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                      </div>
+                      <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Match FX</span>
+                    </div>
+                  </template>
+                </div>
+                
+                <!-- Nombre y descripción -->
+                <h3 class="text-[14px] font-black leading-tight mb-1" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">
+                  {{ cosmetic.name }}
+                </h3>
+                <p class="text-[11px] text-[var(--text-secondary)] leading-relaxed mb-3">
+                  {{ cosmetic.description || 'Sin descripción disponible.' }}
+                </p>
+                
+                <!-- Información del Creador -->
+                <div v-if="cosmetic.creator_id" class="flex items-center gap-1.5 mb-4 text-[10px] text-[var(--text-secondary)] font-semibold">
+                  <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                  </svg>
+                  <span>Creador: #{{ cosmetic.creator_id }}</span>
+                </div>
+              </div>
+              
+              <!-- Sección de Precio y Botones -->
+              <div>
+                <div class="flex items-center justify-between border-t border-white/30 pt-3 mt-1">
+                  <div class="flex flex-col">
+                    <span class="text-[9px] font-black uppercase text-[var(--text-muted)] tracking-wider">Precio</span>
+                    <span class="text-[14px] font-black text-rose-500 flex items-center gap-1">
+                      <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                      {{ cosmetic.price_in_slots }} cupos
+                    </span>
+                  </div>
+                  
+                  <!-- Botones de Acción -->
+                  <div class="flex items-center gap-1.5">
+                    <!-- Previsualizar si no está adquirido y es frame/background -->
+                    <button v-if="!myCosmetics.includes(cosmetic.id) && ['frame', 'background'].includes(cosmetic.type)"
+                            @click="startPreview(cosmetic)"
+                            class="btn-ghost !rounded-xl !py-1.5 !px-3 text-[11px] font-bold border border-black/10 transition-all duration-300 active:scale-95">
+                      Previsualizar
+                    </button>
+                    
+                    <!-- Canjear -->
+                    <button v-if="!myCosmetics.includes(cosmetic.id)"
+                            @click="executePurchase(cosmetic)"
+                            class="btn-primary !rounded-xl !py-1.5 !px-3 text-[11px] font-bold transition-all duration-300 active:scale-95">
+                      Canjear
+                    </button>
+                    
+                    <!-- Botón de aplicar si ya está adquirido -->
+                    <button v-else
+                            @click="applyOwnedCosmetic(cosmetic)"
+                            class="btn-ghost !rounded-xl !py-1.5 !px-3 text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200/50 transition-all duration-300 active:scale-95">
+                      Aplicar
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Breakdown de Cupos en la tarjeta -->
+                <div v-if="!myCosmetics.includes(cosmetic.id)" class="text-[9px] text-[var(--text-muted)] font-medium mt-2 flex justify-between items-center bg-white/20 px-2.5 py-1 rounded-lg">
+                  <span>Consumirá:</span>
+                  <span>
+                    {{ calculatePurchaseBreakdown(cosmetic.price_in_slots).freeConsumed }} gratis, 
+                    {{ calculatePurchaseBreakdown(cosmetic.price_in_slots).permanentConsumed }} comprados
+                  </span>
+                </div>
+              </div>
+              
+            </div>
           </div>
         </div>
 
@@ -1430,6 +1615,219 @@ const dateSlots = computed(() => {
     return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
   }).length;
 });
+
+// Store reactive variables
+const storeCosmetics = ref([]);
+const myCosmetics = ref([]);
+const loadingStore = ref(false);
+
+const baseSlots = ref(10);
+const extraSlots = ref(0);
+const permanentSlots = ref(0);
+
+const previewFrame = ref('none');
+const previewBackground = ref('default');
+const isProductPreviewActive = ref(false);
+const previewedCosmetic = ref(null);
+
+const storeSubTab = ref('all');
+
+const filteredStoreCosmetics = computed(() => {
+  if (storeSubTab.value === 'all') return storeCosmetics.value;
+  return storeCosmetics.value.filter(c => c.type === storeSubTab.value);
+});
+
+const calculatePurchaseBreakdown = (priceInSlots) => {
+  const freeSlotsAvailable = Math.max(0, (baseSlots.value + extraSlots.value) - dateSlots.value);
+  const purchasedSlotsAvailable = permanentSlots.value;
+  
+  let freeConsumed = 0;
+  let permanentConsumed = 0;
+  
+  if (freeSlotsAvailable >= priceInSlots) {
+    freeConsumed = priceInSlots;
+  } else {
+    freeConsumed = freeSlotsAvailable;
+    permanentConsumed = priceInSlots - freeSlotsAvailable;
+  }
+  
+  const canAfford = (freeSlotsAvailable + purchasedSlotsAvailable) >= priceInSlots;
+  
+  return {
+    freeConsumed,
+    permanentConsumed,
+    canAfford,
+    totalAvailable: freeSlotsAvailable + purchasedSlotsAvailable
+  };
+};
+
+const activeProfileFrame = computed(() => {
+  return isProductPreviewActive.value && previewFrame.value !== 'none' ? previewFrame.value : profileFrame.value;
+});
+
+const activeProfileTheme = computed(() => {
+  return isProductPreviewActive.value && previewBackground.value !== 'default' ? previewBackground.value : profileTheme.value;
+});
+
+const isPreviewFrameImage = (frameVal) => {
+  if (!frameVal || frameVal === 'none') return false;
+  const known = BASE_FRAMES.find(f => f.id === frameVal);
+  if (known && known.imageUrl) return true;
+  return frameVal.includes('/') || frameVal.includes('.') || frameVal.startsWith('http');
+};
+
+const getPreviewFrameImageUrl = (frameVal) => {
+  if (!frameVal || frameVal === 'none') return null;
+  const known = BASE_FRAMES.find(f => f.id === frameVal);
+  if (known && known.imageUrl) return known.imageUrl;
+  return frameVal;
+};
+
+const getPreviewFrameStyle = (frameVal) => {
+  if (!frameVal || frameVal === 'none') return 'background: transparent; padding: 0;';
+  if (frameVal === 'sakura') {
+    return 'background: linear-gradient(135deg, #f472b6, #f43f5e); padding: 3px; box-shadow: 0 0 15px rgba(244,63,94,0.5);';
+  }
+  if (frameVal === 'ice') {
+    return 'background: linear-gradient(135deg, #22d3ee, #0ea5e9); padding: 3px; box-shadow: 0 0 15px rgba(14,165,233,0.5);';
+  }
+  if (frameVal === 'gold') {
+    return 'background: linear-gradient(135deg, #fbbf24, #d97706); padding: 3px; box-shadow: 0 0 18px rgba(217,119,6,0.6);';
+  }
+  if (!isPreviewFrameImage(frameVal)) {
+    if (frameVal.startsWith('background') || frameVal.includes('gradient')) {
+      return frameVal.startsWith('background') ? frameVal : `background: ${frameVal};`;
+    }
+  }
+  return 'background: transparent; padding: 0;';
+};
+
+const activeFrameIsImage = computed(() => {
+  return isPreviewFrameImage(activeProfileFrame.value);
+});
+
+const activeFrameImageUrl = computed(() => {
+  return getPreviewFrameImageUrl(activeProfileFrame.value);
+});
+
+const activeFrameStyle = computed(() => {
+  return getPreviewFrameStyle(activeProfileFrame.value);
+});
+
+const activeBackgroundStyle = computed(() => {
+  if (isProductPreviewActive.value && previewBackground.value && previewBackground.value !== 'default') {
+    const val = previewBackground.value;
+    if (val.startsWith('background') || val.startsWith('linear-gradient') || val.startsWith('url(')) {
+      return val.startsWith('background') ? val : `background: ${val};`;
+    }
+    return `background: url('${val}') center/cover no-repeat;`;
+  }
+  return availableThemes.value.find(t => t.id === profileTheme.value)?.bgStyle || 'background: rgba(255,255,255,0.65);';
+});
+
+const loadStoreData = async () => {
+  loadingStore.value = true;
+  try {
+    const [storeRes, myRes] = await Promise.all([
+      api.getStoreCosmetics(),
+      api.getMyCosmetics()
+    ]);
+    storeCosmetics.value = storeRes || [];
+    if (Array.isArray(myRes)) {
+      myCosmetics.value = myRes.map(c => typeof c === 'object' ? c.id : c);
+    } else {
+      myCosmetics.value = [];
+    }
+  } catch (err) {
+    console.error('Error al cargar la tienda:', err);
+    storeCosmetics.value = [];
+    myCosmetics.value = [];
+  } finally {
+    loadingStore.value = false;
+  }
+};
+
+const startPreview = (cosmetic) => {
+  previewedCosmetic.value = cosmetic;
+  if (cosmetic.type === 'frame') {
+    previewFrame.value = cosmetic.resource_url;
+    previewBackground.value = 'default';
+  } else if (cosmetic.type === 'background') {
+    previewBackground.value = cosmetic.resource_url;
+    previewFrame.value = 'none';
+  } else {
+    previewFrame.value = 'none';
+    previewBackground.value = 'default';
+  }
+  isProductPreviewActive.value = true;
+  currentTab.value = 'profile';
+};
+
+const exitPreview = () => {
+  previewFrame.value = 'none';
+  previewBackground.value = 'default';
+  isProductPreviewActive.value = false;
+  previewedCosmetic.value = null;
+  currentTab.value = 'store';
+};
+
+const executePurchase = async (cosmetic) => {
+  if (!cosmetic) return;
+  const breakdown = calculatePurchaseBreakdown(cosmetic.price_in_slots);
+  if (!breakdown.canAfford) {
+    showPopup(`Cupos insuficientes. Este cosmético requiere ${cosmetic.price_in_slots} cupos, pero solo dispones de ${breakdown.totalAvailable}.`);
+    return;
+  }
+  try {
+    await api.buyCosmetic(cosmetic.id);
+    if (cosmetic.type === 'frame') {
+      profileFrame.value = cosmetic.resource_url;
+      await api.updateSteamSanctuary(profileTheme.value, cosmetic.resource_url, pinnedDateIds.value);
+    } else if (cosmetic.type === 'background') {
+      profileTheme.value = cosmetic.resource_url;
+      await api.updateSteamSanctuary(cosmetic.resource_url, profileFrame.value, pinnedDateIds.value);
+    }
+    showPopup(`¡Felicidades! Has canjeado "${cosmetic.name}" con éxito.`);
+    await fetchProfile();
+    await loadStoreData();
+    if (isProductPreviewActive.value) {
+      exitPreview();
+    }
+  } catch (err) {
+    console.error('Error al realizar canje:', err);
+    showPopup(err.message || 'Ocurrió un error al procesar la compra.');
+  }
+};
+
+const buyCosmeticFromPreview = async () => {
+  if (previewedCosmetic.value) {
+    await executePurchase(previewedCosmetic.value);
+  }
+};
+
+const applyOwnedCosmetic = async (cosmetic) => {
+  try {
+    if (cosmetic.type === 'frame') {
+      profileFrame.value = cosmetic.resource_url;
+    } else if (cosmetic.type === 'background') {
+      profileTheme.value = cosmetic.resource_url;
+    } else {
+      return;
+    }
+    await api.updateSteamSanctuary(profileTheme.value, profileFrame.value, pinnedDateIds.value);
+    showPopup(`Cosmético "${cosmetic.name}" aplicado con éxito a tu santuario.`);
+    await fetchProfile();
+  } catch (err) {
+    console.error('Error al aplicar cosmético:', err);
+    showPopup(err.message || 'Error al aplicar el cosmético.');
+  }
+};
+
+watch(currentTab, async (newTab) => {
+  if (newTab === 'store') {
+    await loadStoreData();
+  }
+});
 const maxSlots = ref(10);
 const loveStreak = ref(0);
 const previousStreak = ref(0);
@@ -1618,25 +2016,55 @@ const pinnedDatesList = computed(() => {
   if (!pinnedDateIds.value || !pinnedDateIds.value.length) return [];
   return datesList.value.filter(d => pinnedDateIds.value.includes(d.id)).slice(0, 3);
 });
-
-const availableThemes = [
+const BASE_THEMES = [
   { id: 'default', name: 'Liquid Glass (Clásico)', border: 'border-white/50', bgStyle: 'background: rgba(255, 255, 255, 0.65);' },
   { id: 'ruby', name: 'Atardecer Rubí', border: 'border-rose-400/70', bgStyle: 'background: linear-gradient(135deg, rgba(244,63,94,0.18) 0%, rgba(190,18,60,0.30) 100%);' },
   { id: 'cyber', name: 'Neón Cyberpunk', border: 'border-cyan-400/80', bgStyle: 'background: linear-gradient(135deg, rgba(6,182,212,0.18) 0%, rgba(59,130,246,0.30) 100%);' },
-  { id: 'gold', name: 'Oro Imperial (Élite)', border: 'border-amber-400/80', bgStyle: 'background: linear-gradient(135deg, rgba(245,158,11,0.22) 0%, rgba(217,119,6,0.34) 100%);' },
-  { id: 'cosmic', name: 'Fondo Cósmico (Estático)', border: 'border-purple-400/70', bgStyle: 'background: url(\'/backgrounds/cosmic_love.jpg\') center/cover no-repeat;' },
-  { id: 'animated', name: 'Flujo de Corazones (Animado)', border: 'border-pink-500/80', bgStyle: 'background: linear-gradient(135deg, rgba(244,63,94,0.10) 0%, rgba(190,18,60,0.20) 100%), url(\'/backgrounds/glowing_hearts.svg\'); background-size: cover, 120px 120px; animation: heartsMove 20s linear infinite;' }
+  { id: 'gold', name: 'Oro Imperial (Élite)', border: 'border-amber-400/80', bgStyle: 'background: linear-gradient(135deg, rgba(245,158,11,0.22) 0%, rgba(217,119,6,0.34) 100%);' }
 ];
 
-const availableFrames = [
+const BASE_FRAMES = [
   { id: 'none', name: 'Sin Marco' },
-  { id: 'sakura', name: 'Flores Sakura' },
   { id: 'ice', name: 'Corona Glacial' },
   { id: 'gold', name: 'Aureola Dorada' }
 ];
 
+const availableThemes = computed(() => {
+  const list = [...BASE_THEMES];
+  storeCosmetics.value.forEach(c => {
+    if (c.type === 'background' && myCosmetics.value.includes(c.id)) {
+      if (!list.some(item => item.id === c.resource_url)) {
+        list.push({
+          id: c.resource_url,
+          name: c.name,
+          border: 'border-rose-300',
+          bgStyle: c.resource_url.startsWith('background') || c.resource_url.startsWith('linear-gradient') || c.resource_url.startsWith('url(')
+            ? (c.resource_url.startsWith('background') ? c.resource_url : `background: ${c.resource_url};`)
+            : `background: url('${c.resource_url}') center/cover no-repeat;`
+        });
+      }
+    }
+  });
+  return list;
+});
+
+const availableFrames = computed(() => {
+  const list = [...BASE_FRAMES];
+  storeCosmetics.value.forEach(c => {
+    if (c.type === 'frame' && myCosmetics.value.includes(c.id)) {
+      if (!list.some(item => item.id === c.resource_url)) {
+        list.push({
+          id: c.resource_url,
+          name: c.name
+        });
+      }
+    }
+  });
+  return list;
+});
+
 const getFrameStyle = (frameId) => {
-  if (frameId === 'sakura') {
+  if (frameId === 'sakura' || frameId === '/frames/sakura_frame.png') {
     return 'background: linear-gradient(135deg, #f472b6, #f43f5e); padding: 3px; box-shadow: 0 0 15px rgba(244,63,94,0.5);';
   }
   if (frameId === 'ice') {
@@ -1649,9 +2077,15 @@ const getFrameStyle = (frameId) => {
 };
 
 const getFrameImageUrl = (frameId) => {
-  const frame = availableFrames.find(f => f.id === frameId);
-  return frame?.imageUrl || null;
+  if (frameId === 'sakura' || frameId === '/frames/sakura_frame.png') return null;
+  const frame = availableFrames.value.find(f => f.id === frameId);
+  if (frame && frame.imageUrl) return frame.imageUrl;
+  if (frameId && (frameId.includes('/') || frameId.includes('.') || frameId.startsWith('http'))) {
+    return frameId;
+  }
+  return null;
 };
+
 
 const applyCustomization = async (newTheme, newFrame, newPinned) => {
   profileTheme.value = newTheme;
@@ -2529,6 +2963,9 @@ const fetchProfile = async () => {
   userCoupleId.value = profile.user.couple_id;
   if (profile) {
     maxSlots.value = profile.maxSlots;
+    if (profile.baseSlots !== undefined) baseSlots.value = profile.baseSlots || 10;
+    if (profile.extraSlots !== undefined) extraSlots.value = profile.extraSlots || 0;
+    if (profile.permanentSlots !== undefined) permanentSlots.value = profile.permanentSlots || 0;
     if (profile.streakCount !== undefined) loveStreak.value = profile.streakCount || 0;
     if (profile.previousStreak !== undefined) previousStreak.value = profile.previousStreak || 0;
     if (profile.streakFrozenSecondsLeft !== undefined) streakFrozenSecondsLeft.value = profile.streakFrozenSecondsLeft || 0;
@@ -2645,6 +3082,9 @@ onMounted(async () => {
       loadExploreDates();
     });
 
+    if (currentTab.value === 'store') {
+      await loadStoreData();
+    }
   } catch (err) {
     console.error('Initialization error:', err);
     router.push('/login');

@@ -89,3 +89,48 @@ CREATE TABLE IF NOT EXISTS processed_payments (
 ALTER TABLE couples ADD COLUMN IF NOT EXISTS streak_count INT DEFAULT 0;
 ALTER TABLE couples ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL;
 ALTER TABLE couples ADD COLUMN IF NOT EXISTS previous_streak INT DEFAULT 0;
+
+-- Create Creators Table
+CREATE TABLE IF NOT EXISTS creators (
+    id SERIAL PRIMARY KEY,
+    user_id INT UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    portfolio_name VARCHAR(255) NOT NULL,
+    payout_info TEXT,
+    total_earned_clp INT DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create Cosmetics Table
+CREATE TABLE IF NOT EXISTS cosmetics (
+    id SERIAL PRIMARY KEY,
+    type VARCHAR(50) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    price_in_slots INT NOT NULL,
+    resource_url TEXT NOT NULL,
+    extra_styles JSONB DEFAULT '{}'::jsonb,
+    creator_id INT REFERENCES creators(id) ON DELETE SET NULL,
+    approved BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create Couple Cosmetics Table
+CREATE TABLE IF NOT EXISTS couple_cosmetics (
+    couple_id INT NOT NULL REFERENCES couples(id) ON DELETE CASCADE,
+    cosmetic_id INT NOT NULL REFERENCES cosmetics(id) ON DELETE CASCADE,
+    purchased_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (couple_id, cosmetic_id)
+);
+
+-- Create Cosmetic Purchases Log Table
+CREATE TABLE IF NOT EXISTS cosmetic_purchases_log (
+    id SERIAL PRIMARY KEY,
+    couple_id INT NOT NULL REFERENCES couples(id) ON DELETE CASCADE,
+    cosmetic_id INT NOT NULL REFERENCES cosmetics(id) ON DELETE CASCADE,
+    creator_id INT REFERENCES creators(id) ON DELETE SET NULL,
+    slots_spent INT NOT NULL,
+    creator_payout_clp INT NOT NULL,
+    paid_to_creator BOOLEAN DEFAULT FALSE,
+    payout_marked_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
