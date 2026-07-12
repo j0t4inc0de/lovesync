@@ -20,7 +20,7 @@
             </div>
             <!-- Slots pill -->
             <div @click="toggleSlotsTooltip" class="px-3 py-1 rounded-full text-[12px] font-bold border cursor-pointer select-none active:scale-95 transition-transform" style="background: rgba(255, 55, 95, 0.06); border-color: rgba(255, 55, 95, 0.12); color: var(--accent);">
-              {{ datesList.length }}/{{ maxSlots }} citas
+              {{ dateSlots }}/{{ maxSlots }} citas
             </div>
             <!-- Botón Ajustes (Gear sin contornos cuadrados) -->
             <button @click="currentTab = 'settings'" 
@@ -1502,7 +1502,7 @@
       </div>
 
       <!-- Streak At Risk Section (Only shown if can rescue within 2 hours) -->
-      <div v-if="isStreakAtRisk && (unclaimedStreakRewards >= 10 || (maxSlots - datesList.length) >= 20)" class="pt-2 border-t border-black/5 space-y-2 text-center">
+      <div v-if="isStreakAtRisk && (unclaimedStreakRewards >= 10 || (maxSlots - dateSlots) >= 20)" class="pt-2 border-t border-black/5 space-y-2 text-center">
         <p class="text-[11px] text-red-600 font-bold leading-tight m-1">
           ¡Tu racha anterior de {{ previousStreak }} días está congelada! <span class="text-cyan-700 block text-[10px] font-extrabold mt-0.5">⏱️ Expira en: {{ formattedFrozenCountdown }}</span>
         </p>
@@ -1510,7 +1510,7 @@
           <svg v-if="rescuingWithRewards" class="w-3.5 h-3.5 animate-spin shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
           <span>{{ rescuingWithRewards ? 'Salvando...' : `Salvar Racha (Usar ${unclaimedStreakRewards} recompensas)` }}</span>
         </button>
-        <button v-else-if="(maxSlots - datesList.length) >= 20" @click="rescueStreakWithSlots" :disabled="rescuingWithSlots" class="btn rounded-full !px-3.5 !py-1.5 !min-h-0 !h-auto mx-auto !bg-gradient-to-r !from-cyan-500 !to-sky-500 hover:!from-cyan-400 hover:!to-sky-400 text-white text-[12px] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-cyan-200/70 animate-pulse scale-95 origin-center">
+        <button v-else-if="(maxSlots - dateSlots) >= 20" @click="rescueStreakWithSlots" :disabled="rescuingWithSlots" class="btn rounded-full !px-3.5 !py-1.5 !min-h-0 !h-auto mx-auto !bg-gradient-to-r !from-cyan-500 !to-sky-500 hover:!from-cyan-400 hover:!to-sky-400 text-white text-[12px] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1.5 border border-cyan-200/70 animate-pulse scale-95 origin-center">
           <svg v-if="rescuingWithSlots" class="w-3.5 h-3.5 animate-spin shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
           <span>{{ rescuingWithSlots ? 'Salvando...' : 'Salvar Racha (Pagar 20 cupos de cita)' }}</span>
         </button>
