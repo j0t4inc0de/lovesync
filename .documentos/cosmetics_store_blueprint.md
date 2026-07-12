@@ -220,18 +220,40 @@ Cláusulas necesarias para actualizar el documento de términos de la app móvil
 ## ❤️ Explicación Simple para tu Novia (¡Para mostrársela de forma tierna!)
 
 > *"¡Hola! Te cuento cómo va a funcionar la Tienda del Santuario de Parejas de OurStory. La idea es súper linda porque ayuda a que la app se mantenga solita y sea interactiva para todos:*
->
-> 1. **¿Cómo se compra en la tienda?**
->    La moneda de la tienda son los **cupos de citas** de las parejas. En vez de pagar con dinero directo por un fondo lindo o un marco de flores para la foto de perfil, las parejas usan los cupos que tienen guardados. 
-> 2. **¿De dónde salen estos cupos?**
->    * O los ganan **gratis** esforzándose juntos: respondiendo la trivia diaria y manteniendo su racha de amor encendida.
->    * O los **compran** con dinero real si quieren subir muchas fotos de un viaje o si quieren un cosmético exclusivo rápido. Los cupos que compran nunca vencen, pero los gratis sí expiran al mes para que jueguen seguido.
-> 3. **¿Cómo apoyamos a los diseñadores gráficos?**
->    Queremos que diseñadores independientes suban marcos hermosos y fondos mágicos a OurStory. Cuando una pareja gasta cupos en el diseño de alguien, nosotros le pagamos dinero real a ese creador:
->    * Si la pareja pagó con **cupos comprados**, el creador recibe una recompensa grande de **$150 pesos**.
->    * Si la pareja usó **cupos gratis** que ahorró jugando, el creador recibe una recompensa simbólica de **$15 pesos** para valorar su esfuerzo.
->
-> *Así, logramos tres cosas mágicas: las parejas juegan más para ganarse sus marcos, la app gana dinero con quienes compran cupos de urgencia, los creadores de arte ganan dinero real por su talento, ¡y OurStory se auto-sostiene con seguridad!"*
+
+1. **¿Cómo se compra en la tienda?**
+La moneda de la tienda son los **cupos de citas** de las parejas. En vez de pagar con dinero directo por un fondo lindo o un marco de flores para la foto de perfil, las parejas usan los cupos que tienen guardados.
+
+2. **¿De dónde salen estos cupos?**
+A: los ganan **gratis** esforzándose juntos: respondiendo la trivia diaria y manteniendo su racha de amor encendida.
+B: los **compran** con dinero real si quieren subir muchas fotos de un viaje o si quieren un cosmético exclusivo rápido. Los cupos que compran nunca vencen, pero los gratis sí expiran al mes para que jueguen seguido.
+
+3. **¿Cómo apoyamos a los diseñadores gráficos?**
+Queremos que diseñadores independientes suban marcos hermosos y fondos mágicos a OurStory. Cuando una pareja gasta cupos en el diseño de alguien, nosotros le pagamos dinero real a ese creador:
+A: Si la pareja pagó con **cupos comprados**, el creador recibe una recompensa grande de **$150 pesos** por cupo.
+B: Si la pareja usó **cupos gratis** que ahorró jugando, el creador recibe una recompensa simbólica de **$15 pesos** por cupo para valorar su esfuerzo.
+
+Así, logramos tres cosas mágicas: las parejas juegan más para ganarse sus marcos, la app gana dinero con quienes compran cupos de urgencia, los creadores de arte ganan dinero real por su talento, ¡y OurStory se auto-sostiene con seguridad!"
+
+---
+
+## 💻 Consideraciones para la Implementación Futura (Panel Admin y Operaciones)
+
+Esta sección detalla los aspectos operativos del lado del administrador para gestionar los pagos a los creadores cuando la app se desarrolle:
+
+### 1. Panel de Administración de Liquidaciones:
+* **Dashboard del Administrador:** El panel web administrativo consultará la tabla `cosmetic_purchases_log` agrupando por creadores (`creator_id`).
+* **Visualización de Estados:**
+  * **Saldo Acumulado en Holding:** Transacciones menores a 10 días de antigüedad (aún no retirables).
+  * **Saldo Disponible para Retiro:** Transacciones auditadas mayores a 10 días de antigüedad cuyo balance total supere los $10.000 CLP.
+* **Flujo de Pago:**
+  * Al realizar la transferencia bancaria de forma manual al creador, el administrador contará con un botón de **"Marcar como Liquidado"**.
+  * Al presionarlo, el sistema marcará `paid_to_creator = TRUE` en todas las compras pagadas, registrará la fecha en `payout_marked_at` y actualizará el balance acumulado de ese creador a $0 CLP.
+
+### 2. Gestión Tributaria y Formalidad (Chile):
+* Al inicio de la plataforma, las transferencias manuales son suficientes para validar el modelo.
+* **Escalabilidad Tributaria:** Cuando el volumen aumente, se agregará en los términos de creadores que para solicitar el retiro de fondos, el diseñador deberá emitir una **Boleta de Honorarios por Prestación de Servicios de Terceros** a nombre del titular de OurStory, la cual podrá adjuntar directamente en la web de creadores antes de que se libere el dinero.
+
 
 
 
