@@ -1595,8 +1595,7 @@ const availableFrames = [
   { id: 'none', name: 'Sin Marco' },
   { id: 'sakura', name: 'Flores Sakura' },
   { id: 'ice', name: 'Corona Glacial' },
-  { id: 'gold', name: 'Aureola Dorada' },
-  { id: 'neon_heart', name: 'Corazón Neón (Imagen)', imageUrl: '/frames/cyber_frame.png' }
+  { id: 'gold', name: 'Aureola Dorada' }
 ];
 
 const getFrameStyle = (frameId) => {
