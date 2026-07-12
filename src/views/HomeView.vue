@@ -702,7 +702,7 @@
               v-for="sub in storeCategoryTabs"
               :key="sub.id"
               @click="storeSubTab = sub.id"
-              class="flex items-center gap-1.5 pl-3 pr-4 py-2 rounded-full text-[12px] font-bold whitespace-nowrap transition-all duration-300 active:scale-90 select-none shrink-0 border"
+              class="btn !rounded-full flex items-center gap-1.5 !pl-3 !pr-4 !py-2 text-[12px] !font-bold whitespace-nowrap shrink-0 !border"
               :style="storeSubTab === sub.id
                 ? 'background: linear-gradient(135deg, var(--accent), #ff7eb3); color: white; border-color: transparent; box-shadow: 0 4px 14px rgba(255,55,95,0.35);'
                 : 'background: rgba(255,255,255,0.55); color: var(--text-secondary); border-color: rgba(255,255,255,0.7); backdrop-filter: blur(12px);'"
