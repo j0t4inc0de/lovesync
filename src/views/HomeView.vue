@@ -372,14 +372,9 @@
 
           <!-- ── HERO BANNER ─────────────────────────────── -->
           <!-- Usa el tema elegido pero siempre respeta el acento de la app -->
-          <div class="rounded-[2rem] overflow-hidden relative"
-               :style="isDarkTheme ? 'color: #ffffff; --text-primary: #ffffff; --text-secondary: rgba(255,255,255,0.85); --text-muted: rgba(255,255,255,0.65); --border-subtle: rgba(255,255,255,0.2);' : ''"
-               style="background: #ffffff; border: 1px solid rgba(255,255,255,0.55); box-shadow: 0 8px 32px rgba(255,55,95,0.07), 0 1px 2px rgba(0,0,0,0.02); backdrop-filter: blur(30px) saturate(190%); -webkit-backdrop-filter: blur(30px) saturate(190%);">
-            
-            <!-- Capa de fondo del tema montada sobre el contenedor blanco (opacidad 0.85) -->
-            <div class="absolute inset-0 z-0 pointer-events-none transition-all duration-500"
-                 :style="availableThemes.find(t => t.id === profileTheme)?.bgStyle || 'background: rgba(255,255,255,0.68);'"
-                 style="opacity: 0.85;"></div>
+          <div class="rounded-[2rem] overflow-hidden relative transition-all duration-500"
+               :style="(availableThemes.find(t => t.id === profileTheme)?.bgStyle || 'background: rgba(255,255,255,0.68);') + (isDarkTheme ? 'color: #ffffff; --text-primary: #ffffff; --text-secondary: rgba(255,255,255,0.85); --text-muted: rgba(255,255,255,0.65); --border-subtle: rgba(255,255,255,0.2);' : '')"
+               style="border: 1px solid rgba(255,255,255,0.55); box-shadow: 0 8px 32px rgba(255,55,95,0.07), 0 1px 2px rgba(0,0,0,0.02);">
             
             <!-- Orbes decorativos internos coherentes con el fondo de la app -->
             <div class="absolute -top-12 -right-12 w-44 h-44 rounded-full pointer-events-none" style="background: radial-gradient(circle, rgba(255,55,95,0.18) 0%, transparent 70%); filter: blur(20px);"></div>
@@ -417,9 +412,9 @@
                   <h2 class="text-[20px] font-black leading-tight mb-1 truncate" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">
                     {{ currentUser?.name }} &amp; {{ partnerName }}
                   </h2>
-                  <!-- Rango con acento de la app -->
-                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide mb-2"
-                        style="background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(255,55,95,0.15);">
+                  <!-- Rango con acento de la app (burbuja sólida para legibilidad) -->
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide mb-2 shadow-sm"
+                        style="background: var(--accent); color: #ffffff; border: 1px solid var(--accent);">
                     <svg class="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                     {{ coupleRankTitle }}
                   </span>
@@ -437,7 +432,7 @@
               <div class="mb-5">
                 <div class="flex items-center justify-between text-[10px] font-bold mb-1.5" style="color: var(--text-secondary);">
                   <span>Nivel {{ coupleLevel }} → {{ coupleLevel + 1 }}</span>
-                  <span class="font-mono" style="color: var(--accent);">{{ coupleXp }} / {{ nextLevelXp }} XP</span>
+                  <span class="font-mono" tyle="color: var(--accent);">{{ coupleXp }} / {{ nextLevelXp }} XP</span>
                 </div>
                 <div class="h-2.5 rounded-full overflow-hidden" style="background: rgba(0,0,0,0.06);">
                   <div class="h-full rounded-full transition-all duration-1000 relative overflow-hidden"
@@ -450,28 +445,28 @@
               <!-- Stats 2×2 dentro del hero -->
               <div class="grid grid-cols-2 gap-2.5">
                 <div class="rounded-2xl p-3 text-center" style="background: rgba(255,255,255,0.78); border: 1px solid rgba(255,255,255,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
-                  <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--text-muted);">Racha</p>
+                  <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--accent);">Racha</p>
                   <p class="text-[17px] font-black flex items-center justify-center gap-1" style="color: var(--accent);">
                     <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M17.55 11.2c-.23-.3-.5-.56-.8-.77-.45-.33-1-.54-1.55-.66-.45-.1-.9-.13-1.35-.1-.45.03-.9.13-1.33.28-.43.15-.83.37-1.2.65-.73.55-1.35 1.25-1.8 2.05-.18-.28-.38-.55-.6-.8-.43-.5-.94-.94-1.52-1.3-.57-.36-1.18-.63-1.82-.8-.64-.17-1.3-.23-1.96-.18-.66.05-1.3.2-1.92.45-.62.25-1.2.6-1.7 1.03C1.65 13.06 3.03 16.5 5.14 18.6 7.25 20.7 10.7 22.08 14.15 21c3.45-1.08 6.03-4.08 6.85-7.53.2-1.02.14-2.07-.15-3.07-.3-1-.8-1.92-1.48-2.72z"/></svg>
-                    {{ loveStreak }}<span class="text-[11px] font-medium ml-0.5" style="color: var(--text-secondary);">días</span>
+                    {{ loveStreak }}<span class="text-[11px] font-medium ml-0.5" style="color: var(--accent); opacity: 0.85;">días</span>
                   </p>
                 </div>
                 <div class="rounded-2xl p-3 text-center" style="background: rgba(255,255,255,0.78); border: 1px solid rgba(255,255,255,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
-                  <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--text-muted);">Citas</p>
-                  <p class="text-[17px] font-black flex items-center justify-center gap-1" style="color: var(--text-primary);">
+                  <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--accent);">Citas</p>
+                  <p class="text-[17px] font-black flex items-center justify-center gap-1" style="color: var(--accent);">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5a2.5 2.5 0 01-2.5-2.5V4.5z"/></svg>
-                    {{ totalDatesCount || datesList.length }}<span class="text-[11px] font-medium ml-0.5" style="color: var(--text-secondary);">fotos</span>
+                    {{ totalDatesCount || datesList.length }}<span class="text-[11px] font-medium ml-0.5" style="color: var(--accent); opacity: 0.85;">citas</span>
                   </p>
                 </div>
                 <div class="rounded-2xl p-3 text-center" style="background: rgba(255,255,255,0.78); border: 1px solid rgba(255,255,255,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
-                  <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--text-muted);">Cupos</p>
-                  <p class="text-[17px] font-black flex items-center justify-center gap-1 text-emerald-600">
+                  <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--accent);">Cupos</p>
+                  <p class="text-[17px] font-black flex items-center justify-center gap-1" style="color: var(--accent);">
                     <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    {{ maxSlots }}<span class="text-[11px] font-medium ml-0.5" style="color: var(--text-secondary);">mes</span>
+                    {{ maxSlots }}<span class="text-[11px] font-medium ml-0.5" style="color: var(--accent); opacity: 0.85;">cupos</span>
                   </p>
                 </div>
                 <div @click="likeProfile" class="rounded-2xl p-3 text-center cursor-pointer active:scale-95 transition-all select-none hover:bg-white/70 group" style="background: rgba(255,255,255,0.78); border: 1px solid rgba(255,255,255,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
-                  <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--text-muted);">Likes</p>
+                  <p class="text-[9px] font-black uppercase tracking-wider mb-1" style="color: var(--accent);">Likes</p>
                   <p class="text-[17px] font-black flex items-center justify-center gap-1" style="color: var(--accent);">
                     <svg class="w-4 h-4 transition-all duration-300 group-hover:scale-110" 
                          :class="userLikedProfile ? 'fill-current' : 'fill-none'" 
