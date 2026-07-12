@@ -22,6 +22,16 @@
             <div @click="toggleSlotsTooltip" class="px-3 py-1 rounded-full text-[12px] font-bold border cursor-pointer select-none active:scale-95 transition-transform" style="background: rgba(255, 55, 95, 0.06); border-color: rgba(255, 55, 95, 0.12); color: var(--accent);">
               {{ datesList.length }}/{{ maxSlots }} citas
             </div>
+            <!-- Botón Ajustes (Gear sin contornos cuadrados) -->
+            <button @click="currentTab = 'settings'" 
+                    class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer select-none active:scale-95 transition-all duration-300 !bg-transparent !border-none" 
+                    :style="currentTab === 'settings' ? 'color: var(--accent);' : 'color: var(--text-secondary);'">
+              <svg class="w-5.5 h-5.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.43l-1.003.828c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .225c-.008.379.137.751.43.992l1.003.828a1.125 1.125 0 0 1 .26 1.43l-1.296 2.247a1.125 1.125 0 0 1-1.37.49l-1.216-.456a1.125 1.125 0 0 0-1.076.124c-.073.044-.146.087-.22.128-.332.183-.582.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281a1.125 1.125 0 0 0-.645-.87c-.074-.04-.147-.083-.22-.127a1.124 1.124 0 0 0-1.075-.124l-1.217.456a1.125 1.125 0 0 1-1.37-.49l-1.296-2.247a1.125 1.125 0 0 1 .26-1.43l1.003-.828c.293-.241.438-.613.43-.992a7.723 7.723 0 0 1 0-.225c.008-.379-.137-.751-.43-.992l-1.003-.828a1.125 1.125 0 0 1-.26-1.43l1.296-2.247a1.125 1.125 0 0 1 1.37-.49l1.216.456c.356.133.751.072 1.076-.124.072-.041.146-.084.218-.128.333-.183.582-.495.645-.869l.214-1.28Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              </svg>
+            </button>
+
           </div>
         </div>
       </ion-toolbar>
@@ -632,6 +642,33 @@
             </div>
           </div>
 
+        </div>
+
+        <!-- ═══ STORE (TIENDA DE COSMÉTICOS) ═══ -->
+        <div v-if="currentTab === 'store'" class="space-y-4 pb-12 animate-fade-in">
+          <h2 class="text-[22px] font-bold tracking-tight mb-5" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Tienda de Santuario</h2>
+
+          <!-- Banner de Bienvenida a la Tienda -->
+          <div class="rounded-3xl p-5 relative overflow-hidden mb-4" style="background: linear-gradient(135deg, var(--accent) 0%, #ff7eb3 100%);">
+            <div class="relative z-10 text-white">
+              <h3 class="text-[17px] font-black mb-1">¡Personaliza tu espacio de amor!</h3>
+              <p class="text-[12px] opacity-90 leading-relaxed">Usa tus cupos de cita acumulados para comprar marcos de perfil, fondos hermosos y animaciones interactivas creadas por la comunidad.</p>
+            </div>
+            <div class="absolute -right-6 -bottom-6 opacity-10 pointer-events-none">
+              <svg class="w-32 h-32 text-white fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            </div>
+          </div>
+
+          <!-- Pestañas de la Tienda (Marcos, Fondos, Animaciones) -->
+          <div class="glass rounded-2xl p-6 text-center border border-white/50 shadow-sm" style="background: rgba(255,255,255,0.45);">
+            <div class="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center mx-auto mb-3" style="color: var(--accent);">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+              </svg>
+            </div>
+            <p class="text-[14px] font-black" style="color: var(--text-primary); font-family: 'Comfortaa', sans-serif;">Tienda Próximamente Disponible</p>
+            <p class="text-[11px] mt-1.5 leading-relaxed" style="color: var(--text-secondary);">Aquí podrás canjear marcos de avatar y fondos de santuario exclusivos diseñados por creadores independientes usando tus cupos de citas acumulados.</p>
+          </div>
         </div>
 
         <!-- ═══ SETTINGS ═══ -->
@@ -1321,7 +1358,7 @@ const tabs = [
   { id: 'trivia', label: 'Trivia', icon: '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>' },
   { id: 'explore', label: 'Explorar', icon: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>' },
   { id: 'profile', label: 'Perfil', icon: '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>' },
-  { id: 'settings', label: 'Ajustes', icon: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 010 4h-.09c-.658.003-1.25.396-1.51 1z"/>' },
+  { id: 'store', label: 'Tienda', icon: '<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z\" />' }
 ];
 
 
