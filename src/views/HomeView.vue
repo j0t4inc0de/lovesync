@@ -2133,8 +2133,7 @@ const BASE_THEMES = [
 const BASE_FRAMES = [
   { id: 'none', name: 'Sin Marco' },
   { id: 'ice', name: 'Corona Glacial' },
-  { id: 'gold', name: 'Aureola Dorada' },
-  { id: 'black_elegance', name: 'Negro Elegante' }
+  { id: 'gold', name: 'Aureola Dorada' }
 ];
 
 const availableThemes = computed(() => {
