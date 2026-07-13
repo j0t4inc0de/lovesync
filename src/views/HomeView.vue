@@ -825,7 +825,7 @@
                     <span class="text-[9px] font-black uppercase text-[var(--text-muted)] tracking-wider">Precio</span>
                     <span class="text-[14px] font-black text-rose-500 flex items-center gap-1">
                       <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                      {{ cosmetic.price_in_slots }} cupos
+                      {{ cosmetic.price_in_slots }}
                     </span>
                   </div>
                   
@@ -834,21 +834,21 @@
                     <!-- Previsualizar si no está adquirido y es frame/background -->
                     <button v-if="!myCosmetics.includes(cosmetic.id) && ['frame', 'background'].includes(cosmetic.type)"
                             @click="startPreview(cosmetic)"
-                            class="btn-ghost !rounded-xl !py-1.5 !px-3 text-[11px] font-bold border border-black/10 transition-all duration-300 active:scale-95">
+                            class="btn-ghost !rounded-xl !py-1.5 !px-3 text-[10px] font-bold border border-black/10 transition-all duration-300 active:scale-95">
                       Previsualizar
                     </button>
                     
                     <!-- Canjear -->
                     <button v-if="!myCosmetics.includes(cosmetic.id)"
                             @click="executePurchase(cosmetic)"
-                            class="btn-primary !rounded-xl !py-1.5 !px-3 text-[11px] font-bold transition-all duration-300 active:scale-95">
+                            class="btn-primary !rounded-xl !py-1.5 !px-3 text-[10px] font-bold transition-all duration-300 active:scale-95">
                       Canjear
                     </button>
                     
                     <!-- Botón de aplicar si ya está adquirido -->
                     <button v-else
                             @click="applyOwnedCosmetic(cosmetic)"
-                            class="btn-ghost !rounded-xl !py-1.5 !px-3 text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200/50 transition-all duration-300 active:scale-95">
+                            class="btn-ghost !rounded-xl !py-1.5 !px-3 text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200/50 transition-all duration-300 active:scale-95">
                       Aplicar
                     </button>
                   </div>
