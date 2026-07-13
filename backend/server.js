@@ -1999,12 +1999,8 @@ io.on('connection', (socket) => {
 // ── Cosmetics Store Endpoints ──
 
 // POST /api/admin/seed-cosmetics: Manually seed cosmetics (admin only, for production use)
-app.post('/api/admin/seed-cosmetics', authenticateToken, async (req, res) => {
+app.post('/api/admin/seed-cosmetics', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const userRes = await pool.query('SELECT is_admin FROM users WHERE id = $1', [req.user.id]);
-    if (!userRes.rows[0]?.is_admin) {
-      return res.status(403).json({ error: 'Acceso denegado. Solo administradores.' });
-    }
     const results = [];
     const seeds = [
       { type: 'frame', name: 'Sakura', description: 'Un hermoso marco de flores de cerezo para tu perfil', price: 20, url: '/frames/sakura_frame.png', styles: '{"borderColor": "#ffb7c5"}' },
@@ -2308,8 +2304,7 @@ app.post('/api/creators/cosmetics', authenticateToken, async (req, res) => {
 // ── ADMIN MODERATION & PAYOUTS ENDPOINTS ──
 
 // GET all pending cosmetics (submitted by creators)
-app.get('/api/admin/cosmetics/pending', authenticateToken, async (req, res) => {
-  if (!isAdmin(req.user.email)) return res.status(403).json({ error: 'Acceso denegado. Solo administradores.' });
+app.get('/api/admin/cosmetics/pending', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT c.*, cr.portfolio_name, u.name AS creator_user_name, u.email AS creator_email
@@ -2327,8 +2322,7 @@ app.get('/api/admin/cosmetics/pending', authenticateToken, async (req, res) => {
 });
 
 // Approve or reject pending cosmetic
-app.put('/api/admin/cosmetics/:id/status', authenticateToken, async (req, res) => {
-  if (!isAdmin(req.user.email)) return res.status(403).json({ error: 'Acceso denegado. Solo administradores.' });
+app.put('/api/admin/cosmetics/:id/status', authenticateToken, requireAdmin, async (req, res) => {
   const { id } = req.params;
   const { approved } = req.body;
   try {
@@ -2349,8 +2343,7 @@ app.put('/api/admin/cosmetics/:id/status', authenticateToken, async (req, res) =
 });
 
 // GET creators payout dashboard
-app.get('/api/admin/payouts', authenticateToken, async (req, res) => {
-  if (!isAdmin(req.user.email)) return res.status(403).json({ error: 'Acceso denegado. Solo administradores.' });
+app.get('/api/admin/payouts', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT cr.id AS creator_id, cr.portfolio_name, cr.payout_info, cr.total_earned_clp, cr.created_at,
@@ -2370,8 +2363,7 @@ app.get('/api/admin/payouts', authenticateToken, async (req, res) => {
 });
 
 // Mark payouts as liquidated/paid to a creator
-app.post('/api/admin/payouts/:creatorId/liquidate', authenticateToken, async (req, res) => {
-  if (!isAdmin(req.user.email)) return res.status(403).json({ error: 'Acceso denegado. Solo administradores.' });
+app.post('/api/admin/payouts/:creatorId/liquidate', authenticateToken, requireAdmin, async (req, res) => {
   const { creatorId } = req.params;
   const { amount_clp } = req.body;
   try {
