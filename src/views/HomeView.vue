@@ -1532,8 +1532,8 @@
 
     <!-- Floating Store Slots Tooltip / Popup -->
     <div v-if="showStoreSlotsInfoModal" 
-         class="fixed z-[9999] w-72 p-4 rounded-2xl glass text-[11px] leading-relaxed font-medium text-left space-y-2.5 border border-white/60 animate-tooltip-in" 
-         style="top: 175px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.96); backdrop-filter: blur(25px); color: var(--text-primary); box-shadow: 0 10px 30px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.03);">
+         class="fixed z-[9999] w-72 max-w-[90vw] left-0 right-0 mx-auto p-4 rounded-2xl glass text-[11px] leading-relaxed font-medium text-left space-y-2.5 border border-white/60 animate-tooltip-in" 
+         style="top: 175px; background: rgba(255,255,255,0.96); backdrop-filter: blur(25px); color: var(--text-primary); box-shadow: 0 10px 30px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.03);">
       
       <div class="flex items-center justify-between border-b border-black/10 pb-2">
         <span class="font-black text-[13px] text-rose-600 flex items-center gap-1.5" style="font-family: 'Comfortaa', sans-serif;">
