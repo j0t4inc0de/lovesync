@@ -785,9 +785,6 @@
                   <template v-else-if="cosmetic.type === 'background'">
                     <div class="w-full h-full absolute inset-0"
                          :style="cosmetic.resource_url.startsWith('background') || cosmetic.resource_url.startsWith('url(') || cosmetic.resource_url.startsWith('linear-gradient') ? (cosmetic.resource_url.startsWith('background') ? cosmetic.resource_url : `background: ${cosmetic.resource_url}`) : `background: url('${cosmetic.resource_url}') center/cover no-repeat`" />
-                    <div class="absolute inset-0 bg-black/10 flex items-center justify-center">
-                      <span class="text-white text-[10px] font-bold uppercase tracking-wider bg-black/30 px-2.5 py-1 rounded-full backdrop-blur-sm">Santuario</span>
-                    </div>
                   </template>
                   
                   <!-- Si es Animación -->
@@ -908,7 +905,6 @@
           <!-- Tienda / Premium (Efecto Señuelo & Neuroventas) -->
           <div class="rounded-2xl p-5 mb-4 relative overflow-hidden text-white border border-white/20 shadow-xl" style="background-color: #ff4c70;">
             <div class="flex items-center justify-between mb-2">
-              <p class="text-[0.65rem] font-black uppercase tracking-widest text-white/80">Tienda de Recuerdos</p>
               <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider uppercase bg-white text-[#ff4c70] shadow-sm flex items-center gap-1">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <span>Oferta Cómplice</span>
@@ -1924,11 +1920,24 @@ const avatarInput = ref(null);
 const uploadingAvatar = ref(false);
 
 const isDarkTheme = computed(() => {
-  const t = profileTheme.value;
-  return ['cosmic', 'animated'].includes(t) ||
-    t.includes('cosmic_love') ||
-    t.includes('glowing_hearts') ||
-    t.includes('glowing_hearts.svg');
+  const t = isProductPreviewActive.value && previewBackground.value !== 'default'
+    ? previewBackground.value
+    : profileTheme.value;
+
+  if (!t || t === 'default') return false;
+
+  const darkKeywords = [
+    'cosmic', 'animated', 'cosmic_love', 'glowing_hearts', 'black', 'night', 'dark',
+    'stars', 'galaxy', 'neon', 'shadow', '#000', '#111', '#18181b', '#0f172a'
+  ];
+
+  if (typeof t === 'string') {
+    const lower = t.toLowerCase();
+    if (darkKeywords.some(kw => lower.includes(kw))) return true;
+    if (lower.includes('/backgrounds/') || lower.startsWith('http') || lower.startsWith('url(')) return true;
+    if (lower.startsWith('background: linear-gradient') && (lower.includes('rgba(0') || lower.includes('#00') || lower.includes('rgba(15,23,42') || lower.includes('rgba(17,24,39'))) return true;
+  }
+  return false;
 });
 
 const triggerAvatarUpload = () => {
