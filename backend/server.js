@@ -149,10 +149,11 @@ const initDatabase = async (retries = 10, delay = 3000) => {
           SELECT 'background', 'Animated Hearts', 'Un fondo animado con corazones flotantes', 40, '/backgrounds/glowing_hearts.svg', '{"animation": "float 10s infinite"}'::jsonb, true
           WHERE NOT EXISTS (SELECT 1 FROM cosmetics WHERE name = 'Animated Hearts');
         `);
+        await pool.query('DELETE FROM cosmetics WHERE name = $1', ['Cyberpunk']);
         await pool.query(`
           INSERT INTO cosmetics (type, name, description, price_in_slots, resource_url, extra_styles, approved)
-          SELECT 'frame', 'Cyberpunk', 'Un marco neón futurista con estética ciberpunk', 25, '/frames/cyber_frame.png', '{"borderColor": "#00ffcc"}'::jsonb, true
-          WHERE NOT EXISTS (SELECT 1 FROM cosmetics WHERE name = 'Cyberpunk');
+          SELECT 'frame', 'Black Elegance', 'Un marco simple pero elegante de color negro puro', 5, 'black_elegance', '{"borderColor": "#18181b", "borderWidth": "3px", "boxShadow": "0 4px 15px rgba(0,0,0,0.5)"}'::jsonb, true
+          WHERE NOT EXISTS (SELECT 1 FROM cosmetics WHERE name = 'Black Elegance');
         `);
         console.log('Cosmetics seed verificado correctamente.');
       } catch (e) {
@@ -2009,8 +2010,9 @@ app.post('/api/admin/seed-cosmetics', authenticateToken, async (req, res) => {
       { type: 'frame', name: 'Sakura', description: 'Un hermoso marco de flores de cerezo para tu perfil', price: 20, url: '/frames/sakura_frame.png', styles: '{"borderColor": "#ffb7c5"}' },
       { type: 'background', name: 'Cosmic', description: 'Un fondo interestelar lleno de estrellas y nebulosas', price: 30, url: '/backgrounds/cosmic_love.jpg', styles: '{"backgroundSize": "cover"}' },
       { type: 'background', name: 'Animated Hearts', description: 'Un fondo animado con corazones flotantes', price: 40, url: '/backgrounds/glowing_hearts.svg', styles: '{"animation": "float 10s infinite"}' },
-      { type: 'frame', name: 'Cyberpunk', description: 'Un marco neón futurista con estética ciberpunk', price: 25, url: '/frames/cyber_frame.png', styles: '{"borderColor": "#00ffcc"}' },
+      { type: 'frame', name: 'Black Elegance', description: 'Un marco simple pero elegante de color negro puro', price: 5, url: 'black_elegance', styles: '{"borderColor": "#18181b", "borderWidth": "3px", "boxShadow": "0 4px 15px rgba(0,0,0,0.5)"}' },
     ];
+    await pool.query('DELETE FROM cosmetics WHERE name = $1', ['Cyberpunk']);
     for (const s of seeds) {
       const r = await pool.query(
         `INSERT INTO cosmetics (type, name, description, price_in_slots, resource_url, extra_styles, approved)

@@ -1693,7 +1693,7 @@ const activeProfileTheme = computed(() => {
   return isProductPreviewActive.value && previewBackground.value !== 'default' ? previewBackground.value : profileTheme.value;
 });
 
-const CSS_FRAMES = ['sakura', '/frames/sakura_frame.png', 'ice', 'gold'];
+const CSS_FRAMES = ['sakura', '/frames/sakura_frame.png', 'ice', 'gold', 'black_elegance', 'Black Elegance'];
 
 const isPreviewFrameImage = (frameVal) => {
   if (!frameVal || frameVal === 'none') return false;
@@ -1722,6 +1722,9 @@ const getPreviewFrameStyle = (frameVal) => {
   }
   if (frameVal === 'gold') {
     return 'background: linear-gradient(135deg, #fbbf24, #d97706); padding: 3px; box-shadow: 0 0 18px rgba(217,119,6,0.6);';
+  }
+  if (frameVal === 'black_elegance' || frameVal === 'Black Elegance') {
+    return 'background: #18181b; padding: 4px; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 4px 15px rgba(0,0,0,0.6);';
   }
   if (!isPreviewFrameImage(frameVal)) {
     if (frameVal.startsWith('background') || frameVal.includes('gradient')) {
@@ -2055,14 +2058,14 @@ const pinnedDatesList = computed(() => {
 const BASE_THEMES = [
   { id: 'default', name: 'Liquid Glass (Clásico)', border: 'border-white/50', bgStyle: 'background: rgba(255, 255, 255, 0.65);' },
   { id: 'ruby', name: 'Atardecer Rubí', border: 'border-rose-400/70', bgStyle: 'background: linear-gradient(135deg, rgba(244,63,94,0.18) 0%, rgba(190,18,60,0.30) 100%);' },
-  { id: 'cyber', name: 'Neón Cyberpunk', border: 'border-cyan-400/80', bgStyle: 'background: linear-gradient(135deg, rgba(6,182,212,0.18) 0%, rgba(59,130,246,0.30) 100%);' },
   { id: 'gold', name: 'Oro Imperial (Élite)', border: 'border-amber-400/80', bgStyle: 'background: linear-gradient(135deg, rgba(245,158,11,0.22) 0%, rgba(217,119,6,0.34) 100%);' }
 ];
 
 const BASE_FRAMES = [
   { id: 'none', name: 'Sin Marco' },
   { id: 'ice', name: 'Corona Glacial' },
-  { id: 'gold', name: 'Aureola Dorada' }
+  { id: 'gold', name: 'Aureola Dorada' },
+  { id: 'black_elegance', name: 'Negro Elegante' }
 ];
 
 const availableThemes = computed(() => {

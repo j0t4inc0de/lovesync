@@ -146,7 +146,7 @@
           <div class="flex justify-between items-center glass p-3 rounded-xl border border-black/5">
             <div>
               <p class="text-[12px] font-bold">Sembrado Automático (Seeds)</p>
-              <p class="text-[10px] text-[var(--text-muted)]">Carga Sakura, Cosmic, Animated Hearts y Cyberpunk al catálogo</p>
+              <p class="text-[10px] text-[var(--text-muted)]">Carga Sakura, Cosmic, Animated Hearts y Black Elegance al catálogo</p>
             </div>
             <button @click="seedStoreCosmetics" class="btn-primary py-1.5 px-3 rounded-xl text-[11px] font-bold active:scale-95 transition-all">Sembrar Tienda</button>
           </div>
