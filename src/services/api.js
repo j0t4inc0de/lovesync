@@ -220,6 +220,17 @@ export const api = {
   getMyCosmetics: () => request('/api/profile/my-cosmetics'),
   buyCosmetic: (cosmeticId) => request('/api/store/cosmetics/buy', { method: 'POST', body: JSON.stringify({ cosmeticId }) }),
   
+  // Creators
+  registerCreator: (portfolio_name, payout_info) => request('/api/creators/register', { method: 'POST', body: JSON.stringify({ portfolio_name, payout_info }) }),
+  getCreatorMe: () => request('/api/creators/me'),
+  submitCreatorCosmetic: (data) => request('/api/creators/cosmetics', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Admin Payouts & Moderation
+  adminGetPendingCosmetics: () => request('/api/admin/cosmetics/pending'),
+  adminModCosmeticStatus: (id, approved) => request(`/api/admin/cosmetics/${id}/status`, { method: 'PUT', body: JSON.stringify({ approved }) }),
+  adminGetPayouts: () => request('/api/admin/payouts'),
+  adminLiquidateCreator: (creatorId, amount_clp) => request(`/api/admin/payouts/${creatorId}/liquidate`, { method: 'POST', body: JSON.stringify({ amount_clp }) }),
+
   logout: () => {
     removeToken();
   }

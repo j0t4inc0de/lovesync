@@ -7,11 +7,18 @@
 
       <div class="px-5 pb-3 flex justify-between items-center" style="border-bottom: 1px solid var(--border-subtle);">
         <button @click="$emit('close')" class="text-[15px] font-medium transition-all active:scale-95" style="color: var(--text-secondary);">Cerrar</button>
-        <div class="flex gap-2">
-          <button @click="currentTab = 'couples'" :class="currentTab === 'couples' ? 'bg-black/10 font-bold' : 'text-[var(--text-muted)] font-normal'" class="px-3 py-1 rounded-xl text-[13px] transition-all">Parejas</button>
-          <button @click="currentTab = 'reports'" :class="currentTab === 'reports' ? 'bg-red-500/15 text-red-600 font-bold' : 'text-[var(--text-muted)] font-normal'" class="px-3 py-1 rounded-xl text-[13px] transition-all flex items-center gap-1">
-            <span>Moderación</span>
-            <span v-if="reportedDates.length > 0" class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{{ reportedDates.length }}</span>
+        <div class="flex flex-wrap gap-1.5 items-center">
+          <button @click="currentTab = 'couples'" :class="currentTab === 'couples' ? 'bg-black/10 font-bold' : 'text-[var(--text-muted)] font-normal'" class="px-2.5 py-1 rounded-xl text-[12px] transition-all">Parejas</button>
+          <button @click="currentTab = 'reports'" :class="currentTab === 'reports' ? 'bg-red-500/15 text-red-600 font-bold' : 'text-[var(--text-muted)] font-normal'" class="px-2.5 py-1 rounded-xl text-[12px] transition-all flex items-center gap-1">
+            <span>Reportes</span>
+            <span v-if="reportedDates.length > 0" class="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold">{{ reportedDates.length }}</span>
+          </button>
+          <button @click="currentTab = 'cosmetics'" :class="currentTab === 'cosmetics' ? 'bg-purple-500/15 text-purple-600 font-bold' : 'text-[var(--text-muted)] font-normal'" class="px-2.5 py-1 rounded-xl text-[12px] transition-all flex items-center gap-1">
+            <span>Tienda</span>
+            <span v-if="pendingCosmetics.length > 0" class="bg-purple-600 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold">{{ pendingCosmetics.length }}</span>
+          </button>
+          <button @click="currentTab = 'payouts'" :class="currentTab === 'payouts' ? 'bg-emerald-500/15 text-emerald-600 font-bold' : 'text-[var(--text-muted)] font-normal'" class="px-2.5 py-1 rounded-xl text-[12px] transition-all">
+            <span>Creadores ($)</span>
           </button>
         </div>
         <div class="w-12"></div> <!-- spacer -->
@@ -133,6 +140,95 @@
             <p class="text-[11px] text-[var(--text-muted)]">No hay recuerdos ni citas reportadas por la comunidad en este momento.</p>
           </div>
         </div>
+
+        <!-- Tab 3: Store Cosmetics Moderation & Seed -->
+        <div v-else-if="currentTab === 'cosmetics'" class="space-y-4">
+          <div class="flex justify-between items-center glass p-3 rounded-xl border border-black/5">
+            <div>
+              <p class="text-[12px] font-bold">Sembrado Automático (Seeds)</p>
+              <p class="text-[10px] text-[var(--text-muted)]">Carga Sakura, Cosmic, Animated Hearts y Cyberpunk al catálogo</p>
+            </div>
+            <button @click="seedStoreCosmetics" class="btn-primary py-1.5 px-3 rounded-xl text-[11px] font-bold active:scale-95 transition-all">Sembrar Tienda</button>
+          </div>
+
+          <div class="space-y-3">
+            <h4 class="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Cosméticos Propuestos por Creadores (Pendientes de Aprobación)</h4>
+            <div v-for="cos in pendingCosmetics" :key="cos.id" class="glass rounded-xl p-4 border border-purple-500/20 space-y-2.5">
+              <div class="flex justify-between items-start">
+                <div>
+                  <span class="text-[9px] font-bold uppercase tracking-wider text-purple-600 bg-purple-50 px-2 py-0.5 rounded">{{ cos.type === 'frame' ? 'Marco' : cos.type === 'background' ? 'Fondo' : 'Animación' }} · {{ cos.price_in_slots }} Cupos</span>
+                  <p class="text-[13px] font-bold mt-1" style="color: var(--text-primary);">{{ cos.name }}</p>
+                  <p class="text-[11px] text-[var(--text-muted)]">Propuesto por: <strong class="text-[var(--text-primary)]">{{ cos.portfolio_name || cos.creator_user_name }}</strong> ({{ cos.creator_email }})</p>
+                </div>
+                <span class="text-[10px] text-[var(--text-muted)]">{{ formatDate(cos.created_at) }}</span>
+              </div>
+              <p v-if="cos.description" class="text-[12px]" style="color: var(--text-secondary);">{{ cos.description }}</p>
+              <div class="p-2 bg-black/5 rounded-lg flex items-center justify-between">
+                <span class="font-mono text-[10px] truncate max-w-[200px]" style="color: var(--text-muted);">{{ cos.resource_url }}</span>
+                <a :href="cos.resource_url" target="_blank" class="text-[10px] text-[var(--accent)] underline font-bold">Ver recurso</a>
+              </div>
+              <div class="flex gap-2 pt-1">
+                <button @click="moderateCosmetic(cos.id, false)" class="flex-1 py-1.5 px-3 rounded-xl bg-red-50 text-red-600 text-[11px] font-semibold hover:bg-red-100 active:scale-95 transition-all">
+                  Rechazar / Borrar
+                </button>
+                <button @click="moderateCosmetic(cos.id, true)" class="flex-1 py-1.5 px-3 rounded-xl bg-purple-600 text-white text-[11px] font-bold hover:bg-purple-700 active:scale-95 transition-all">
+                  ✨ Aprobar para Tienda
+                </button>
+              </div>
+            </div>
+            <div v-if="pendingCosmetics.length === 0" class="text-center py-8 space-y-1 text-[var(--text-muted)]">
+              <p class="text-[12px] font-medium">No hay cosméticos pendientes en cola de moderación.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Creators Payout Dashboard ($) -->
+        <div v-else-if="currentTab === 'payouts'" class="space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-[12px] font-bold" style="color: var(--text-secondary);">Tabla de Creadores y Liquidaciones en CLP</span>
+            <button @click="loadPayouts" class="text-[11px] text-[var(--accent)] font-semibold active:scale-95 transition-all">↻ Actualizar</button>
+          </div>
+          <div class="space-y-3">
+            <div v-for="cr in creatorPayouts" :key="cr.creator_id" class="glass rounded-xl p-4 border border-emerald-500/20 space-y-3">
+              <div class="flex justify-between items-start">
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[13px] font-bold" style="color: var(--text-primary);">🎨 {{ cr.portfolio_name }}</span>
+                    <span class="text-[9px] font-semibold bg-black/5 text-[var(--text-muted)] px-1.5 py-0.5 rounded">ID: {{ cr.creator_id }}</span>
+                  </div>
+                  <p class="text-[11px] text-[var(--text-muted)] mt-0.5">{{ cr.user_name }} ({{ cr.user_email }})</p>
+                </div>
+                <div class="text-right">
+                  <span class="text-[14px] font-extrabold text-emerald-600">${{ cr.total_earned_clp.toLocaleString('es-CL') }} CLP</span>
+                  <p class="text-[10px] text-[var(--text-muted)]">Por liquidar</p>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2 text-center bg-black/5 p-2 rounded-lg text-[11px]">
+                <div>
+                  <span class="block font-bold" style="color: var(--text-primary);">{{ cr.active_cosmetics }}</span>
+                  <span class="text-[10px] text-[var(--text-muted)]">Cosméticos en Tienda</span>
+                </div>
+                <div>
+                  <span class="block font-bold" style="color: var(--text-primary);">{{ cr.total_sales }}</span>
+                  <span class="text-[10px] text-[var(--text-muted)]">Ventas Acumuladas</span>
+                </div>
+              </div>
+              <div v-if="cr.payout_info" class="text-[11px] bg-emerald-50/50 p-2 rounded border border-emerald-500/10">
+                <span class="font-bold text-emerald-800 text-[10px] uppercase block">Datos Bancarios / Cobro:</span>
+                <span class="text-[11px] text-emerald-900 font-mono">{{ cr.payout_info }}</span>
+              </div>
+              <div class="flex justify-end pt-1">
+                <button v-if="cr.total_earned_clp > 0" @click="liquidateCreator(cr.creator_id, cr.portfolio_name, cr.total_earned_clp)" class="btn-primary bg-emerald-600 hover:bg-emerald-700 py-1.5 px-4 rounded-xl text-[11px] font-bold active:scale-95 transition-all">
+                  💸 Marcar como Liquidado (${{ cr.total_earned_clp.toLocaleString('es-CL') }})
+                </button>
+                <span v-else class="text-[11px] font-medium text-[var(--text-muted)] italic">Al día · Sin saldo pendiente</span>
+              </div>
+            </div>
+            <div v-if="creatorPayouts.length === 0" class="text-center py-8 text-[12px] text-[var(--text-muted)]">
+              Aún no hay creadores registrados en el programa o con ventas reportadas.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -163,6 +259,8 @@ const currentTab = ref('couples');
 const adminSearchQuery = ref('');
 const adminCouples = ref([]);
 const reportedDates = ref([]);
+const pendingCosmetics = ref([]);
+const creatorPayouts = ref([]);
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -193,9 +291,29 @@ const loadReportedDates = async () => {
   }
 };
 
+const loadPendingCosmetics = async () => {
+  try {
+    const list = await api.adminGetPendingCosmetics();
+    pendingCosmetics.value = list || [];
+  } catch (error) {
+    console.error('Error loading pending cosmetics:', error.message);
+  }
+};
+
+const loadPayouts = async () => {
+  try {
+    const list = await api.adminGetPayouts();
+    creatorPayouts.value = list || [];
+  } catch (error) {
+    console.error('Error loading creator payouts:', error.message);
+  }
+};
+
 onMounted(() => {
   loadCouples();
   loadReportedDates();
+  loadPendingCosmetics();
+  loadPayouts();
 });
 
 const filteredAdminCouples = computed(() => {
@@ -304,6 +422,50 @@ const deleteReportedDate = async (dateId) => {
     }
   } catch (error) {
     alert('Error al eliminar cita: ' + error.message);
+  }
+};
+
+const seedStoreCosmetics = async () => {
+  try {
+    const res = await api.adminSeedCosmetics();
+    if (res.ok) {
+      showPopup('🌱 ¡Sembrado completado! Cosméticos cargados al catálogo.');
+      await loadPendingCosmetics();
+    }
+  } catch (error) {
+    alert('Error al sembrar cosméticos: ' + error.message);
+  }
+};
+
+const moderateCosmetic = async (id, approved) => {
+  const confirmMsg = approved
+    ? '¿Aprobar y publicar este cosmético en la Tienda oficial de OurStory?'
+    : '¿Estás seguro de rechazar y eliminar esta propuesta?';
+  if (!confirm(confirmMsg)) return;
+
+  try {
+    const res = await api.adminModCosmeticStatus(id, approved);
+    if (res.success) {
+      showPopup(res.message);
+      await loadPendingCosmetics();
+    }
+  } catch (error) {
+    alert('Error en moderación: ' + error.message);
+  }
+};
+
+const liquidateCreator = async (creatorId, portfolioName, amount) => {
+  const confirmMsg = `¿Confirmas que has transferido o liquidado los $${amount.toLocaleString('es-CL')} CLP al creador "${portfolioName}"? Esto reiniciará su balance adeudado a $0.`;
+  if (!confirm(confirmMsg)) return;
+
+  try {
+    const res = await api.adminLiquidateCreator(creatorId, amount);
+    if (res.success) {
+      showPopup('💸 Liquidación registrada. Balance reseteado.');
+      await loadPayouts();
+    }
+  } catch (error) {
+    alert('Error al liquidar: ' + error.message);
   }
 };
 </script>

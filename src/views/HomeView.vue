@@ -2403,6 +2403,7 @@ const handleFirstLock = () => {
     setTimeout(() => {
       showMatchCelebration.value = false;
       doubleLockState.value = 'idle'; // Reset Persona 2 (matcher) to idle
+      showPopup(`❤️ ¡Sincronizado! ${partnerName.value || 'Tu pareja'} está completando los detalles del recuerdo en la bitácora...`);
     }, 1800);
   }
 };

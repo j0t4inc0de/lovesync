@@ -149,6 +149,11 @@ const initDatabase = async (retries = 10, delay = 3000) => {
           SELECT 'background', 'Animated Hearts', 'Un fondo animado con corazones flotantes', 40, '/backgrounds/glowing_hearts.svg', '{"animation": "float 10s infinite"}'::jsonb, true
           WHERE NOT EXISTS (SELECT 1 FROM cosmetics WHERE name = 'Animated Hearts');
         `);
+        await pool.query(`
+          INSERT INTO cosmetics (type, name, description, price_in_slots, resource_url, extra_styles, approved)
+          SELECT 'frame', 'Cyberpunk', 'Un marco neón futurista con estética ciberpunk', 25, '/frames/cyber_frame.png', '{"borderColor": "#00ffcc"}'::jsonb, true
+          WHERE NOT EXISTS (SELECT 1 FROM cosmetics WHERE name = 'Cyberpunk');
+        `);
         console.log('Cosmetics seed verificado correctamente.');
       } catch (e) {
         console.error('ERROR al sembrar cosméticos iniciales:', e.message);
@@ -722,9 +727,11 @@ app.post('/api/payments/webhook', async (req, res) => {
 
         if (paymentData.status === 'approved' && paymentData.external_reference) {
           try {
-            const checkRes = await pool.query('SELECT 1 FROM processed_payments WHERE payment_id = $1', [paymentId.toString()]);
-            if (checkRes.rowCount === 0) {
-              await pool.query('INSERT INTO processed_payments (payment_id) VALUES ($1)', [paymentId.toString()]);
+            const insertRes = await pool.query(
+              'INSERT INTO processed_payments (payment_id) VALUES ($1) ON CONFLICT (payment_id) DO NOTHING RETURNING 1',
+              [paymentId.toString()]
+            );
+            if (insertRes.rowCount > 0) {
               const refData = JSON.parse(paymentData.external_reference);
               const { coupleId, slotsAmount } = refData;
 
@@ -900,28 +907,39 @@ app.post('/api/profile/streak/rescue-rewards', authenticateToken, async (req, re
 
 // Rescue streak using 20 available monthly slots
 app.post('/api/profile/streak/rescue-slots', authenticateToken, async (req, res) => {
+  const client = await pool.connect();
   try {
-    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+    await client.query('BEGIN');
+    const userRes = await client.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
     const coupleId = userRes.rows[0]?.couple_id;
-    if (!coupleId) return res.status(400).json({ error: 'No tienes una pareja vinculada.' });
+    if (!coupleId) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'No tienes una pareja vinculada.' });
+    }
 
-    const cpRes = await pool.query('SELECT streak_count, previous_streak, slots AS base_slots, COALESCE(permanent_slots, 0) AS permanent_slots FROM couples WHERE id = $1', [coupleId]);
+    const cpRes = await client.query('SELECT streak_count, previous_streak, slots AS base_slots, COALESCE(permanent_slots, 0) AS permanent_slots FROM couples WHERE id = $1 FOR UPDATE', [coupleId]);
     const cp = cpRes.rows[0];
-    if (!cp) return res.status(404).json({ error: 'Pareja no encontrada.' });
-    if (cp.streak_count > 0 && cp.previous_streak <= 0) return res.status(400).json({ error: 'Tu racha actual está activa y no hay racha congelada para recuperar.' });
+    if (!cp) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Pareja no encontrada.' });
+    }
+    if (cp.streak_count > 0 && cp.previous_streak <= 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Tu racha actual está activa y no hay racha congelada para recuperar.' });
+    }
 
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
 
-    const extraRes = await pool.query(
+    const extraRes = await client.query(
       'SELECT COALESCE(SUM(amount), 0)::int AS extra_slots FROM couple_extra_slots WHERE couple_id = $1 AND year = $2 AND month = $3',
       [coupleId, currentYear, currentMonth]
     );
     const extraSlots = extraRes.rows[0]?.extra_slots || 0;
     const maxSlots = (cp.base_slots || 10) + (cp.permanent_slots || 0) + extraSlots;
 
-    const datesRes = await pool.query(
+    const datesRes = await client.query(
       `SELECT COUNT(*)::int AS used_slots FROM dates WHERE couple_id = $1 AND EXTRACT(YEAR FROM created_at)::int = $2 AND EXTRACT(MONTH FROM created_at)::int = $3`,
       [coupleId, currentYear, currentMonth]
     );
@@ -929,25 +947,30 @@ app.post('/api/profile/streak/rescue-slots', authenticateToken, async (req, res)
     const availableSlots = maxSlots - usedSlots;
 
     if (availableSlots < 20) {
+      await client.query('ROLLBACK');
       return res.status(400).json({ error: `Necesitas al menos 20 cupos de cita disponibles para salvar la racha. Actualmente tienes ${availableSlots} libres.` });
     }
 
     const restoredStreak = cp.previous_streak > 0 ? cp.previous_streak : (cp.streak_count || 1);
-    await pool.query(
+    await client.query(
       'UPDATE couples SET streak_count = $1, last_streak_date = CURRENT_DATE, previous_streak = 0 WHERE id = $2',
       [restoredStreak, coupleId]
     );
 
-    await pool.query(
+    await client.query(
       'INSERT INTO couple_extra_slots (couple_id, amount, year, month) VALUES ($1, -20, $2, $3)',
       [coupleId, currentYear, currentMonth]
     );
 
-    console.log(`🛡️ [Racha Rescatada con Cupos] Racha de ${restoredStreak} días restaurada para pareja ID ${coupleId} (-20 cupos de cita)`);
-    res.json({ success: true, message: `¡Racha de ${restoredStreak} días restaurada con éxito usando 20 cupos de cita!` });
+    await client.query('COMMIT');
+    console.log(`🛡️ [Racha Rescatada con Cupos] Racha de ${restoredStreak} días restaurada para pareja ID ${coupleId}`);
+    res.json({ success: true, message: `¡Racha de ${restoredStreak} días restaurada con éxito pagando 20 cupos del mes!` });
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Error rescatando racha con cupos:', error);
-    res.status(500).json({ error: 'Error del servidor al recuperar racha con cupos.' });
+    res.status(500).json({ error: 'Error del servidor al recuperar racha.' });
+  } finally {
+    client.release();
   }
 });
 
@@ -1718,85 +1741,97 @@ app.post('/api/dates', authenticateToken, async (req, res) => {
     return res.status(400).json({ error: 'Ubicación/Título, ciudad, fecha y descripción de la cita son obligatorios.' });
   }
 
-  try {
-    const userRes = await pool.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
-    const user = userRes.rows[0];
-    if (!user.couple_id) {
-      return res.status(400).json({ error: 'Debes estar vinculado a una pareja para crear citas.' });
-    }
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const userRes = await client.query('SELECT couple_id FROM users WHERE id = $1', [req.user.id]);
+      const user = userRes.rows[0];
+      if (!user?.couple_id) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Debes estar vinculado a una pareja para crear citas.' });
+      }
 
-    // Check monthly slots limit: base_slots + current month extra slots
-    const limitRes = await pool.query(
-      `SELECT 
-         c.slots AS base_slots,
-         COALESCE(
-           (SELECT SUM(amount) FROM couple_extra_slots 
+      // Lock the couple row to prevent race conditions during slot limit check and deduction
+      await client.query('SELECT id FROM couples WHERE id = $1 FOR UPDATE', [user.couple_id]);
+
+      // Check monthly slots limit: base_slots + current month extra slots
+      const limitRes = await client.query(
+        `SELECT 
+           c.slots AS base_slots,
+           COALESCE(
+             (SELECT SUM(amount) FROM couple_extra_slots 
+              WHERE couple_id = c.id 
+                AND year = EXTRACT(YEAR FROM CURRENT_DATE)::int
+                AND month = EXTRACT(MONTH FROM CURRENT_DATE)::int
+             ), 0
+           )::int AS extra_slots,
+           COALESCE(c.permanent_slots, 0) AS permanent_slots,
+           (SELECT COUNT(id) FROM dates 
             WHERE couple_id = c.id 
-              AND year = EXTRACT(YEAR FROM CURRENT_DATE)::int
-              AND month = EXTRACT(MONTH FROM CURRENT_DATE)::int
-           ), 0
-         )::int AS extra_slots,
-         COALESCE(c.permanent_slots, 0) AS permanent_slots,
-         (SELECT COUNT(id) FROM dates 
-          WHERE couple_id = c.id 
-            AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
-            AND created_at < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
-         )::int AS dates_this_month
-       FROM couples c
-       WHERE c.id = $1`,
-      [user.couple_id]
-    );
+              AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
+              AND created_at < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
+           )::int AS dates_this_month
+         FROM couples c
+         WHERE c.id = $1`,
+        [user.couple_id]
+      );
 
-    if (limitRes.rows.length > 0) {
-      const { base_slots, extra_slots, permanent_slots, dates_this_month } = limitRes.rows[0];
-      const monthlyFreeSlots = base_slots + extra_slots;
-      const totalAvailableSlots = monthlyFreeSlots + permanent_slots;
+      if (limitRes.rows.length > 0) {
+        const { base_slots, extra_slots, permanent_slots, dates_this_month } = limitRes.rows[0];
+        const monthlyFreeSlots = base_slots + extra_slots;
+        const totalAvailableSlots = monthlyFreeSlots + permanent_slots;
 
-      if (dates_this_month >= totalAvailableSlots) {
-        return res.status(400).json({
-          error: `Límite de citas alcanzado. Has registrado ${dates_this_month}/${totalAvailableSlots} citas este mes. Juega la Trivia o adquiere más cupos permanentes en la Tienda para continuar.`
-        });
+        if (dates_this_month >= totalAvailableSlots) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({
+            error: `Límite de citas alcanzado. Has registrado ${dates_this_month}/${totalAvailableSlots} citas este mes. Juega la Trivia o adquiere más cupos permanentes en la Tienda para continuar.`
+          });
+        }
+
+        // Si ya consumieron toda la cuota mensual gratis (base + trivia), consumimos 1 de sus cupos permanentes
+        if (dates_this_month >= monthlyFreeSlots && permanent_slots > 0) {
+          await client.query('UPDATE couples SET permanent_slots = GREATEST(0, permanent_slots - 1) WHERE id = $1', [user.couple_id]);
+          console.log(`🪙 [Gasto de Cupo Permanente] Pareja ID ${user.couple_id} consumió 1 cupo permanente en nueva cita.`);
+        }
       }
 
-      // Si ya consumieron toda la cuota mensual gratis (base + trivia), consumimos 1 de sus cupos permanentes
-      if (dates_this_month >= monthlyFreeSlots && permanent_slots > 0) {
-        await pool.query('UPDATE couples SET permanent_slots = GREATEST(0, permanent_slots - 1) WHERE id = $1', [user.couple_id]);
-        console.log(`🪙 [Gasto de Cupo Permanente] Pareja ID ${user.couple_id} consumió 1 cupo permanente en nueva cita.`);
-      }
+      const finalPhotoUrl = await uploadToR2IfBase64(
+        photo_url || 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80',
+        user.couple_id
+      );
+
+      const result = await client.query(
+        'INSERT INTO dates (couple_id, location, city, date_time, description, rating_user_1, rating_user_2, tags, photo_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+        [
+          user.couple_id,
+          location,
+          city,
+          date_time,
+          description,
+          rating_user_1 || 5.0,
+          rating_user_2 || 5.0,
+          tags || [],
+          finalPhotoUrl
+        ]
+      );
+
+      await client.query('COMMIT');
+
+      // Broadcast new date creation to the couple room via socket
+      io.to(`couple_${user.couple_id}`).emit('date_created', result.rows[0]);
+
+      // Update love streak when creating a date
+      const localDateStr = new Date().toLocaleDateString('sv-SE');
+      await updateCoupleStreak(user.couple_id, localDateStr);
+
+      res.status(201).json(result.rows[0]);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error(error);
+      res.status(500).json({ error: 'Error al registrar la cita.' });
+    } finally {
+      client.release();
     }
-
-    const finalPhotoUrl = await uploadToR2IfBase64(
-      photo_url || 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80',
-      user.couple_id
-    );
-
-    const result = await pool.query(
-      'INSERT INTO dates (couple_id, location, city, date_time, description, rating_user_1, rating_user_2, tags, photo_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
-      [
-        user.couple_id,
-        location,
-        city,
-        date_time,
-        description,
-        rating_user_1 || 5.0,
-        rating_user_2 || 5.0,
-        tags || [],
-        finalPhotoUrl
-      ]
-    );
-
-    // Broadcast new date creation to the couple room via socket
-    io.to(`couple_${user.couple_id}`).emit('date_created', result.rows[0]);
-
-    // Update love streak when creating a date
-    const localDateStr = new Date().toLocaleDateString('sv-SE');
-    await updateCoupleStreak(user.couple_id, localDateStr);
-
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al registrar la cita.' });
-  }
 });
 
 // Edit date (PUT /api/dates/:id) - Enforces 5-day window
@@ -1974,6 +2009,7 @@ app.post('/api/admin/seed-cosmetics', authenticateToken, async (req, res) => {
       { type: 'frame', name: 'Sakura', description: 'Un hermoso marco de flores de cerezo para tu perfil', price: 20, url: '/frames/sakura_frame.png', styles: '{"borderColor": "#ffb7c5"}' },
       { type: 'background', name: 'Cosmic', description: 'Un fondo interestelar lleno de estrellas y nebulosas', price: 30, url: '/backgrounds/cosmic_love.jpg', styles: '{"backgroundSize": "cover"}' },
       { type: 'background', name: 'Animated Hearts', description: 'Un fondo animado con corazones flotantes', price: 40, url: '/backgrounds/glowing_hearts.svg', styles: '{"animation": "float 10s infinite"}' },
+      { type: 'frame', name: 'Cyberpunk', description: 'Un marco neón futurista con estética ciberpunk', price: 25, url: '/frames/cyber_frame.png', styles: '{"borderColor": "#00ffcc"}' },
     ];
     for (const s of seeds) {
       const r = await pool.query(
@@ -2181,6 +2217,175 @@ app.post('/api/store/cosmetics/buy', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor al procesar la compra.' });
   } finally {
     client.release();
+  }
+});
+
+// ── CREATOR ENDPOINTS ──
+
+// Register as a creator
+app.post('/api/creators/register', authenticateToken, async (req, res) => {
+  const { portfolio_name, payout_info } = req.body;
+  if (!portfolio_name || !portfolio_name.trim()) {
+    return res.status(400).json({ error: 'El nombre artístico / portfolio es obligatorio.' });
+  }
+  try {
+    const resCheck = await pool.query('SELECT id FROM creators WHERE user_id = $1', [req.user.id]);
+    if (resCheck.rows.length > 0) {
+      const updated = await pool.query(
+        'UPDATE creators SET portfolio_name = $1, payout_info = $2 WHERE user_id = $3 RETURNING *',
+        [portfolio_name.trim(), payout_info || '', req.user.id]
+      );
+      return res.json({ success: true, creator: updated.rows[0], message: 'Perfil de creador actualizado.' });
+    }
+    const newCreator = await pool.query(
+      'INSERT INTO creators (user_id, portfolio_name, payout_info) VALUES ($1, $2, $3) RETURNING *',
+      [req.user.id, portfolio_name.trim(), payout_info || '']
+    );
+    res.status(201).json({ success: true, creator: newCreator.rows[0], message: '¡Bienvenido al programa de Creadores de OurStory!' });
+  } catch (error) {
+    console.error('Error registering creator:', error);
+    res.status(500).json({ error: 'Error al registrarte como creador.' });
+  }
+});
+
+// Get current user's creator status & submitted cosmetics
+app.get('/api/creators/me', authenticateToken, async (req, res) => {
+  try {
+    const creatorRes = await pool.query('SELECT * FROM creators WHERE user_id = $1', [req.user.id]);
+    if (creatorRes.rows.length === 0) {
+      return res.json({ isCreator: false });
+    }
+    const creator = creatorRes.rows[0];
+    const cosmeticsRes = await pool.query(
+      'SELECT id, type, name, description, price_in_slots, resource_url, approved, created_at FROM cosmetics WHERE creator_id = $1 ORDER BY id DESC',
+      [creator.id]
+    );
+    const logsRes = await pool.query(
+      `SELECT l.id, l.slots_spent, l.creator_payout_clp, l.paid_to_creator, l.created_at, c.name AS cosmetic_name
+       FROM cosmetic_purchases_log l
+       JOIN cosmetics c ON l.cosmetic_id = c.id
+       WHERE l.creator_id = $1 ORDER BY l.id DESC LIMIT 50`,
+      [creator.id]
+    );
+    res.json({
+      isCreator: true,
+      creator,
+      cosmetics: cosmeticsRes.rows,
+      payoutLogs: logsRes.rows
+    });
+  } catch (error) {
+    console.error('Error fetching creator profile:', error);
+    res.status(500).json({ error: 'Error al obtener tu perfil de creador.' });
+  }
+});
+
+// Submit a new cosmetic as a creator
+app.post('/api/creators/cosmetics', authenticateToken, async (req, res) => {
+  const { type, name, description, price_in_slots, resource_url, extra_styles } = req.body;
+  if (!type || !name || !price_in_slots || !resource_url) {
+    return res.status(400).json({ error: 'Tipo, nombre, precio (cupos) y URL del recurso son obligatorios.' });
+  }
+  try {
+    const creatorRes = await pool.query('SELECT id FROM creators WHERE user_id = $1', [req.user.id]);
+    if (creatorRes.rows.length === 0) {
+      return res.status(403).json({ error: 'Debes registrarte como Creador antes de proponer cosméticos.' });
+    }
+    const creatorId = creatorRes.rows[0].id;
+    const insertRes = await pool.query(
+      `INSERT INTO cosmetics (type, name, description, price_in_slots, resource_url, extra_styles, creator_id, approved)
+       VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, false) RETURNING *`,
+      [type, name.trim(), description || '', Math.max(10, parseInt(price_in_slots) || 20), resource_url, JSON.stringify(extra_styles || {}), creatorId]
+    );
+    res.status(201).json({ success: true, cosmetic: insertRes.rows[0], message: '¡Cosmético propuesto! Está en revisión por el equipo para aparecer en la Tienda.' });
+  } catch (error) {
+    console.error('Error submitting creator cosmetic:', error);
+    res.status(500).json({ error: 'Error al enviar el cosmético.' });
+  }
+});
+
+// ── ADMIN MODERATION & PAYOUTS ENDPOINTS ──
+
+// GET all pending cosmetics (submitted by creators)
+app.get('/api/admin/cosmetics/pending', authenticateToken, async (req, res) => {
+  if (!isAdmin(req.user.email)) return res.status(403).json({ error: 'Acceso denegado. Solo administradores.' });
+  try {
+    const result = await pool.query(
+      `SELECT c.*, cr.portfolio_name, u.name AS creator_user_name, u.email AS creator_email
+       FROM cosmetics c
+       LEFT JOIN creators cr ON c.creator_id = cr.id
+       LEFT JOIN users u ON cr.user_id = u.id
+       WHERE c.approved = false
+       ORDER BY c.id DESC`
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching pending cosmetics:', error);
+    res.status(500).json({ error: 'Error al obtener cosméticos pendientes.' });
+  }
+});
+
+// Approve or reject pending cosmetic
+app.put('/api/admin/cosmetics/:id/status', authenticateToken, async (req, res) => {
+  if (!isAdmin(req.user.email)) return res.status(403).json({ error: 'Acceso denegado. Solo administradores.' });
+  const { id } = req.params;
+  const { approved } = req.body;
+  try {
+    if (approved === false) {
+      await pool.query('DELETE FROM cosmetics WHERE id = $1 AND approved = false', [id]);
+      return res.json({ success: true, message: 'Cosmético rechazado y eliminado.' });
+    }
+    const updateRes = await pool.query(
+      'UPDATE cosmetics SET approved = true WHERE id = $1 RETURNING *',
+      [id]
+    );
+    if (updateRes.rows.length === 0) return res.status(404).json({ error: 'Cosmético no encontrado.' });
+    res.json({ success: true, cosmetic: updateRes.rows[0], message: '¡Cosmético aprobado y publicado en la Tienda!' });
+  } catch (error) {
+    console.error('Error updating cosmetic status:', error);
+    res.status(500).json({ error: 'Error al moderar cosmético.' });
+  }
+});
+
+// GET creators payout dashboard
+app.get('/api/admin/payouts', authenticateToken, async (req, res) => {
+  if (!isAdmin(req.user.email)) return res.status(403).json({ error: 'Acceso denegado. Solo administradores.' });
+  try {
+    const result = await pool.query(
+      `SELECT cr.id AS creator_id, cr.portfolio_name, cr.payout_info, cr.total_earned_clp, cr.created_at,
+              u.name AS user_name, u.email AS user_email,
+              (SELECT COUNT(*)::int FROM cosmetics WHERE creator_id = cr.id AND approved = true) AS active_cosmetics,
+              (SELECT COUNT(*)::int FROM cosmetic_purchases_log WHERE creator_id = cr.id) AS total_sales,
+              (SELECT COALESCE(SUM(creator_payout_clp), 0)::int FROM cosmetic_purchases_log WHERE creator_id = cr.id AND paid_to_creator = true) AS total_paid_clp
+       FROM creators cr
+       JOIN users u ON cr.user_id = u.id
+       ORDER BY cr.total_earned_clp DESC`
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching admin payouts:', error);
+    res.status(500).json({ error: 'Error al obtener liquidaciones.' });
+  }
+});
+
+// Mark payouts as liquidated/paid to a creator
+app.post('/api/admin/payouts/:creatorId/liquidate', authenticateToken, async (req, res) => {
+  if (!isAdmin(req.user.email)) return res.status(403).json({ error: 'Acceso denegado. Solo administradores.' });
+  const { creatorId } = req.params;
+  const { amount_clp } = req.body;
+  try {
+    await pool.query(
+      'UPDATE cosmetic_purchases_log SET paid_to_creator = true, payout_marked_at = CURRENT_TIMESTAMP WHERE creator_id = $1 AND paid_to_creator = false',
+      [creatorId]
+    );
+    if (amount_clp) {
+      await pool.query('UPDATE creators SET total_earned_clp = GREATEST(0, total_earned_clp - $1) WHERE id = $2', [amount_clp, creatorId]);
+    } else {
+      await pool.query('UPDATE creators SET total_earned_clp = 0 WHERE id = $1', [creatorId]);
+    }
+    res.json({ success: true, message: 'Liquidación procesada y marcada como pagada.' });
+  } catch (error) {
+    console.error('Error liquidating creator:', error);
+    res.status(500).json({ error: 'Error procesando liquidación.' });
   }
 });
 
