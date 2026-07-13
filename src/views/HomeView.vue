@@ -684,7 +684,12 @@
           <!-- Slot Balance Header -->
           <div class="glass rounded-2xl p-4 border border-white/50 flex justify-between items-center" style="background: rgba(255,255,255,0.45);">
             <div>
-              <p class="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-wider">Tus cupos disponibles</p>
+              <div class="flex items-center gap-1.5">
+                <p class="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-wider">Tus cupos disponibles</p>
+                <a href="#" @click.prevent="showStoreSlotsInfoModal = true" class="hover:opacity-80 transition-opacity">
+                  <svg class="w-4 h-4" style="color: #a2a8b3;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3m0 4h.01"/></svg>
+                </a>
+              </div>
               <p class="text-[16px] font-black text-rose-500 flex items-center gap-1.5 mt-0.5">
                 <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                 {{ Math.max(0, (baseSlots + extraSlots) - dateSlots) + permanentSlots }} cupos
@@ -1525,6 +1530,52 @@
       </div>
     </div>
 
+    <!-- Floating Store Slots Tooltip / Popup -->
+    <div v-if="showStoreSlotsInfoModal" 
+         class="fixed z-[9999] w-72 p-4 rounded-2xl glass text-[11px] leading-relaxed font-medium text-left space-y-2.5 border border-white/60 animate-tooltip-in" 
+         style="top: 175px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.96); backdrop-filter: blur(25px); color: var(--text-primary); box-shadow: 0 10px 30px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.03);">
+      
+      <div class="flex items-center justify-between border-b border-black/10 pb-2">
+        <span class="font-black text-[13px] text-rose-600 flex items-center gap-1.5" style="font-family: 'Comfortaa', sans-serif;">
+          <svg class="w-4 h-4 fill-current animate-bounce" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Tus Cupos Disponibles
+        </span>
+        <button @click="showStoreSlotsInfoModal = false" class="text-[var(--text-muted)] hover:text-black font-bold p-1">✕</button>
+      </div>
+
+      <div class="p-2.5 rounded-xl bg-rose-50/90 border border-rose-200/60 text-rose-950 font-bold leading-snug flex items-start gap-2">
+        <svg class="w-4 h-4 text-rose-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>Son tus <strong>cupos disponibles para añadir cita</strong>, y también funcionan como <strong>monedas</strong> en esta tienda.</span>
+      </div>
+
+      <div class="space-y-1.5 text-[11px] text-[var(--text-secondary)]">
+        <div class="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200/60">
+          <span class="font-bold text-slate-700 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-emerald-500 fill-current shrink-0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>
+            Gratuitos (10 al mes):
+          </span>
+          <div class="text-right">
+            <span class="px-2 py-0.5 rounded-full bg-emerald-100/80 text-emerald-800 font-extrabold text-[11px] border border-emerald-300/50">
+              {{ Math.max(0, (baseSlots + extraSlots) - dateSlots) }} disponibles
+            </span>
+            <span class="block text-[9.5px] font-semibold text-slate-400 mt-0.5">Se gastan primero</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-between p-2 rounded-xl bg-amber-50 border border-amber-200/60">
+          <span class="font-bold text-amber-900 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-amber-500 fill-current shrink-0" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Permanentes:
+          </span>
+          <div class="text-right">
+            <span class="px-2 py-0.5 rounded-full bg-amber-100/80 text-amber-900 font-extrabold text-[11px] border border-amber-300/50">
+              {{ permanentSlots }} disponibles
+            </span>
+            <span class="block text-[9.5px] font-semibold text-amber-700/80 mt-0.5">¡Nunca caducan!</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Floating Liquid Glass Tab Bar -->
     <div class="fixed bottom-6 left-4 right-4 z-30 max-w-md mx-auto py-2 px-3 flex items-center justify-around rounded-3xl border" style="background: rgba(255,255,255,0.72); backdrop-filter: blur(35px) saturate(200%); -webkit-backdrop-filter: blur(35px) saturate(200%); border-color: rgba(255,255,255,0.55); box-shadow: 0 12px 35px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.02);">
       <button v-for="tab in tabs" :key="tab.id" @click="currentTab = tab.id"
@@ -1644,6 +1695,15 @@ const isProductPreviewActive = ref(false);
 const previewedCosmetic = ref(null);
 
 const storeSubTab = ref('all');
+const showStoreSlotsInfoModal = ref(false);
+const hasSeenStoreSlotsInfo = ref(false);
+
+watch(currentTab, (newTab) => {
+  if (newTab === 'store' && !hasSeenStoreSlotsInfo.value) {
+    hasSeenStoreSlotsInfo.value = true;
+    showStoreSlotsInfoModal.value = true;
+  }
+});
 
 const storeCategoryTabs = [
   { id: 'all', name: 'Todos' },
